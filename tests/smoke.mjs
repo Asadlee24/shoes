@@ -16,6 +16,9 @@ try {
     "/src/main.tsx",
     "/src/Home.tsx",
     "/src/Admin.tsx",
+    "/src/Showroom.tsx",
+    "/src/theme.tsx",
+    "/products/hero-textured.png",
     "/products/hero-loafer.png",
     "/brand/approved-logo.png",
   ]) {

@@ -14,8 +14,11 @@ import {
   ChevronDown,
   Check,
   LoaderCircle,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useStore } from "./store";
+import { useTheme } from "./theme";
 import { money } from "./api";
 import type { Product } from "./types";
 
@@ -37,6 +40,7 @@ export function Brand({ dark = false }: { dark?: boolean }) {
 }
 export function Header() {
   const { settings, cart, wishlist, setBagOpen } = useStore();
+  const { theme, toggleTheme } = useTheme();
   const [menu, setMenu] = useState(false),
     [search, setSearch] = useState(false);
   const location = useLocation(),
@@ -69,6 +73,15 @@ export function Header() {
             <Link to="/about">Our perspective</Link>
           </nav>
           <div className="header-actions">
+            <button
+              className="theme-toggle"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+              title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+              aria-pressed={theme === "dark"}
+            >
+              {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
             <button
               aria-label="Search the collection"
               onClick={() => setSearch(true)}
@@ -247,10 +260,16 @@ export function ProductCard({
 }) {
   const { wishlist, toggleWish, setQuick } = useStore();
   const saved = wishlist.includes(product.id);
+  const studioImage =
+    product.id === "textured-bit"
+      ? "/products/hero-textured.png"
+      : product.id === "suede-penny"
+        ? "/products/hero-loafer.png"
+        : null;
   return (
     <article className="product-card reveal">
       <div
-        className={`product-media ${product.id === "midnight-penny" ? "midnight-media" : ""}`}
+        className={`product-media ${product.id === "midnight-penny" ? "midnight-media" : ""} ${studioImage ? "cutout-card" : ""} ${product.id === "textured-bit" ? "textured-cutout-card" : ""}`}
       >
         <span className="product-index">0{index + 1} / QF</span>
         <Link
@@ -258,9 +277,13 @@ export function ProductCard({
           aria-label={`View ${product.name}`}
         >
           <img
-            src={product.image}
+            src={studioImage || product.image}
             alt={product.subtitle}
-            style={{ objectPosition: product.imagePosition }}
+            style={
+              studioImage
+                ? undefined
+                : { objectPosition: product.imagePosition }
+            }
             loading="lazy"
             width="900"
             height="1200"

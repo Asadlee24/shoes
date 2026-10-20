@@ -1,6 +1,6 @@
 # QADAM FLEX
 
-A complete local footwear boutique built around the owner's actual loafer photographs and approved logo. Includes an animated photographic showroom, product browsing, persistent bag and wishlist, customer enquiries, configurable cash-on-delivery checkout, and protected store management.
+A complete local footwear boutique built around the owner's loafer photographs and approved logo. Includes a monochrome light/dark storefront, an interactive Three.js studio, product browsing, persistent bag and wishlist, customer enquiries, configurable cash-on-delivery checkout, and protected store management.
 
 ## Run locally
 
@@ -29,7 +29,9 @@ To use another port: `npm run dev -- --port 3001`. The server binds to 127.0.0.1
 
 ## Storefront
 
-- Art-directed charcoal/ivory homepage, photographic product depth, GSAP transitions, pointer-driven tilt and reduced-motion alternatives.
+- Black/chalk monochrome design, bold display typography, a persistent light/dark toggle and a new editorial homepage.
+- Lazy-loaded Three.js studio with a dimensional display plinth, scene lighting, alpha-aware product shadows and limited pointer-driven perspective. Switch between the black textured and brown suede pairs.
+- Scroll-linked detail imagery, responsive product cards, GSAP transitions and reduced-motion alternatives. The WebGL scene pauses offscreen and retains a photographic fallback on unsupported devices.
 - Four published products from the supplied photos; the unpictured dark-brown textured loafer is retained as a draft.
 - Shop with URL-based search, collection/color/size filters and sorting.
 - Product galleries, quick view, image enlargement, size selector and related products.
@@ -63,15 +65,18 @@ Online card payments, courier bookings, live email/SMS and a public deployment a
 - `server/catalog.mjs`: initial catalog and default settings, seeded once for a new database.
 - `server/index.mjs`: HTTP server, API, authentication, checkout and file uploads.
 - `server/store.mjs`: SQLite persistence, catalog and input validation, total calculation.
-- `src/Home.tsx`, `src/styles.css`: showroom layout and motion/design system.
+- `src/Home.tsx`, `src/monochrome.css`: redesigned showroom layout and monochrome design system.
+- `src/Showroom.tsx`: optional Three.js display scene, lighting and product presentation.
+- `src/theme.tsx`: persistent light/dark theme; the head script in `index.html` applies the saved choice before rendering.
+- `src/styles.css`: shared storefront and administration components.
 - `src/Pages.tsx`: storefront routes and forms.
 - `src/Admin.tsx`: protected management UI.
-- `public/products`: owner-supplied photographs and the hero cutout derived from the brown loafer photo.
+- `public/products`: owner-supplied photographs and the black/brown studio cutouts.
 - `public/brand/approved-logo.png`: approved logo.
 - `data/store.db`: runtime SQLite database (ignored by Git).
 - `.env`: private local configuration (ignored by Git).
 
-The hero is an AI-assisted photographic cutout for visual presentation. Original product photographs remain available in each gallery. Photographic depth/tilt is not a genuine 360-degree product model; no unrelated shoe model is substituted.
+The black and brown studio images are AI-assisted photographic cutouts for visual presentation. Original product photographs remain available in each gallery. The display environment uses actual Three.js geometry and lighting; the shoes remain photo-textured planes with tightly limited perspective. This is not a genuine 360-degree product model; no unrelated shoe model is substituted.
 
 Back up `data/`, uploaded photos under `public/products/upload-*`, and `.env` privately. Do not commit customer data or secrets to GitHub. Editing seed data does not overwrite an existing database: use the administrator for ongoing changes.
 
