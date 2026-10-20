@@ -89,7 +89,10 @@ export function Header() {
     <>
       <div className={`announcement ${home ? "dark" : ""}`}>
         <span>
-          {settings?.announcement || "A considered collection. A better step."}
+          {settings?.announcement &&
+          settings.announcement !== "A considered collection. A better step."
+            ? settings.announcement
+            : "Loafers & formal shoes · Sizes 7–11"}
         </span>
         <span className="announcement-right">PAKISTAN · PKR</span>
       </div>
@@ -105,7 +108,7 @@ export function Header() {
             </Link>
             <Link to="/shop?category=Loafers">Loafers</Link>
             <Link to="/shop?category=Formal+shoes">Formal shoes</Link>
-            <Link to="/about">Our perspective</Link>
+            <Link to="/about">About</Link>
           </nav>
           <div className="header-actions">
             <button
@@ -176,13 +179,13 @@ export function Header() {
             Formal shoes <ArrowUpRight />
           </Link>
           <Link to="/about">
-            Our perspective <ArrowUpRight />
+            About <ArrowUpRight />
           </Link>
           <Link to="/contact">
             Get in touch <ArrowUpRight />
           </Link>
         </nav>
-        <p className="eyebrow">A considered collection. A better step.</p>
+        <p className="eyebrow">Sizes 7–11 · Pakistan</p>
       </Modal>
       <Modal
         open={search}
@@ -630,8 +633,8 @@ export function BagDrawer() {
       ) : (
         <div className="empty-state">
           <ShoppingBag size={38} strokeWidth={1} />
-          <h3>A little room for your next pair.</h3>
-          <p>Your bag is currently empty.</p>
+          <h3>Your bag is empty.</h3>
+          <p>Add a pair from the collection.</p>
           <Link className="button" to="/shop" onClick={() => setBagOpen(false)}>
             Explore the collection <ArrowRight size={17} />
           </Link>
@@ -647,14 +650,8 @@ export function Footer() {
       <div className="footer-top">
         <div>
           <Brand signature />
-          <p className="eyebrow">GOOD SHOES. CONSIDERED CHOICES.</p>
-          <h2>
-            Find your
-            <br />
-            next everyday.
-          </h2>
           <Link to="/shop" className="footer-action">
-            Explore the collection <ArrowUpRight />
+            Shop all <ArrowUpRight />
           </Link>
         </div>
         <div className="footer-links">
@@ -670,12 +667,9 @@ export function Footer() {
             <Link to="/contact">Get in touch</Link>
             <Link to="/faq">Questions & answers</Link>
             <Link to="/shipping">Delivery & exchanges</Link>
-            <Link to="/about">Our perspective</Link>
+            <Link to="/about">About</Link>
           </div>
         </div>
-      </div>
-      <div className="footer-wordmark">
-        QADAM<span>FLEX</span>
       </div>
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} QADAM FLEX</span>

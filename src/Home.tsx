@@ -1,8 +1,7 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDown,
-  ArrowRight,
   ArrowUpRight,
   MoveUpRight,
   MousePointer2,
@@ -13,7 +12,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useStore } from "./store";
 import { useTheme } from "./theme";
 import { ProductCard } from "./components";
-const Showroom = lazy(() => import("./Showroom"));
+import Showroom from "./Showroom";
+import { money } from "./api";
 gsap.registerPlugin(ScrollTrigger);
 const focusPairs = [
   {
@@ -66,31 +66,19 @@ export default function Home() {
           { opacity: 1, y: 0, duration: 1.15 },
           0.15,
         );
-      gsap.utils
-        .toArray<HTMLElement>(".mono-reveal")
-        .forEach((el) =>
-          gsap.fromTo(
-            el,
-            { y: 35, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.85,
-              ease: "power3.out",
-              scrollTrigger: { trigger: el, start: "top 91%", once: true },
-            },
-          ),
-        );
-      gsap.to(".mono-ticker-track", {
-        xPercent: -10,
-        ease: "none",
-        scrollTrigger: {
-          trigger: ".mono-ticker",
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 1.2,
-        },
-      });
+      gsap.utils.toArray<HTMLElement>(".mono-reveal").forEach((el) =>
+        gsap.fromTo(
+          el,
+          { y: 35, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.85,
+            ease: "power3.out",
+            scrollTrigger: { trigger: el, start: "top 91%", once: true },
+          },
+        ),
+      );
       gsap.fromTo(
         ".closeup-shoe",
         { rotation: 9, y: 60 },
@@ -123,10 +111,8 @@ export default function Home() {
     <main className="home mono-home" ref={root}>
       <section className="mono-hero">
         <div className="mono-topline">
-          <span className="mono-label">
-            <span className="edition-dot" /> THE QADAM EDIT — VOL. 01
-          </span>
-          <span className="mono-label">LOAFERS / FORMAL FOOTWEAR</span>
+          <span className="mono-label">MEN’S FOOTWEAR</span>
+          <span className="mono-label">SIZES 7–11</span>
         </div>
         <div className="mono-hero-layout">
           <div className="mono-hero-copy">
@@ -138,10 +124,7 @@ export default function Home() {
                 <span>FORM.</span>
               </span>
             </h1>
-            <p className="mono-intro">
-              Your day. Your pace.
-              <br />A pair with a little more character.
-            </p>
+            <p className="mono-intro">Loafers and formal shoes.</p>
             <div className="mono-hero-actions">
               <Link className="mono-button" to="/shop">
                 Shop the collection{" "}
@@ -157,40 +140,17 @@ export default function Home() {
                 <ArrowDown size={18} />
               </a>
             </div>
-            <div className="mono-hero-caption">
-              <span>AN EVERYDAY POINT OF VIEW.</span>
-              <span>SIZES 7—11</span>
-            </div>
           </div>
           <div className="mono-stage">
-            <div className="stage-axis" aria-hidden="true">
-              <span>QF / STUDIO</span>
-              <span>001—002</span>
-            </div>
-            <Suspense
-              fallback={
-                <div className="showroom showroom-placeholder">
-                  <div className="showroom-fallback">
-                    <span className="fallback-plinth" />
-                    <img
-                      src={pair.image}
-                      alt={pair.name}
-                      className={focus === 0 ? "black-cutout" : "brown-cutout"}
-                    />
-                  </div>
-                </div>
-              }
-            >
-              <Showroom
-                key={pair.id}
-                image={pair.image}
-                dark={theme === "dark"}
-                reset={reset}
-              />
-            </Suspense>
+            <Showroom
+              key={pair.id}
+              image={pair.image}
+              dark={theme === "dark"}
+              reset={reset}
+            />
             <div className="stage-interaction">
               <span>
-                <MousePointer2 size={12} /> MOVE TO EXPLORE
+                <MousePointer2 size={12} /> MOVE MOUSE · DRAG
               </span>
               <button
                 onClick={() => setReset((v) => v + 1)}
@@ -201,12 +161,14 @@ export default function Home() {
             </div>
             <div className="stage-product">
               <div>
-                <span className="mono-label">IN THE STUDIO / {pair.index}</span>
                 <Link to={`/product/${pair.slug}`}>
                   {pair.name}
                   <ArrowUpRight size={19} />
                 </Link>
-                <p>{pair.color}</p>
+                <p>
+                  {pair.color} ·{" "}
+                  {money(products.find((p) => p.id === pair.id)?.price ?? null)}
+                </p>
               </div>
               <div
                 className="stage-pair-picker"
@@ -228,32 +190,11 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="mono-hero-bottom">
-          <span>LESS ORDINARY. MORE YOU.</span>
-          <a href="#collection">
-            THE COLLECTION <ArrowDown size={12} />
-          </a>
-        </div>
       </section>
-      <div className="mono-ticker" aria-hidden="true">
-        <div className="mono-ticker-track">
-          <span>GOOD SHOES.</span>
-          <span className="ticker-outline">YOUR WAY.</span>
-          <ArrowUpRight />
-          <span>QADAM FLEX.</span>
-          <span className="ticker-outline">GOOD FORM.</span>
-          <ArrowUpRight />
-        </div>
-      </div>
       <section className="mono-collection section-pad" id="collection">
         <div className="mono-section-heading mono-reveal">
           <div>
-            <span className="mono-label">01 / THE LINEUP</span>
-            <h2>
-              A SMALL EDIT.
-              <br />
-              <span>A STRONG POINT OF VIEW.</span>
-            </h2>
+            <h2>THE COLLECTION.</h2>
           </div>
           <Link className="mono-text-link" to="/shop">
             All {products.length} styles <ArrowUpRight size={18} />
@@ -267,43 +208,26 @@ export default function Home() {
               <ProductCard key={p.id} product={p} index={i} />
             ))}
         </div>
-        <div className="collection-footnote">
-          <p>Choose your pair. Select your size. Start a conversation.</p>
-          <span>QADAM FLEX / COLLECTION 01</span>
-        </div>
       </section>
       <section className="mono-closeup">
         <div className="closeup-copy mono-reveal">
-          <span className="mono-label">02 / DETAIL STUDY</span>
           <h2>
             LOOK
             <br />
             <span>CLOSER.</span>
           </h2>
-          <p>
-            A textured upper. Dark metal detailing.
-            <br />
-            The small things that bring it together.
-          </p>
+          <p>Textured upper. Metal strap.</p>
           <Link
             className="mono-button mono-button-inverse"
             to="/product/black-textured-loafer"
           >
-            Meet the Textured Bit{" "}
+            View details{" "}
             <span>
               <ArrowUpRight size={20} />
             </span>
           </Link>
-          <div className="closeup-spec">
-            <span>PATTERNED UPPER</span>
-            <span>DEFINED SOLE</span>
-            <span>SLIP-ON FORM</span>
-          </div>
         </div>
         <div className="closeup-scene">
-          <span className="closeup-large-index" aria-hidden="true">
-            02
-          </span>
           <div className="closeup-light" />
           <img
             className="closeup-shoe"
@@ -324,18 +248,8 @@ export default function Home() {
       <section className="mono-occasions section-pad">
         <div className="mono-section-heading mono-reveal">
           <div>
-            <span className="mono-label">03 / TWO SIDES OF YOUR DAY</span>
-            <h2>
-              THE EVERYDAY.
-              <br />
-              <span>AND THE EXTRA.</span>
-            </h2>
+            <h2>BY STYLE.</h2>
           </div>
-          <p>
-            From a regular routine
-            <br />
-            to a reason to dress up.
-          </p>
         </div>
         <div className="occasion-grid">
           <Link
@@ -348,15 +262,13 @@ export default function Home() {
                 alt="Dark penny loafers for everyday outfits"
                 loading="lazy"
               />
-              <span className="occasion-index">01 / EVERYDAY</span>
             </div>
             <div className="occasion-name">
-              <h3>OFF THE CLOCK.</h3>
+              <h3>LOAFERS</h3>
               <span className="occasion-arrow">
                 <ArrowUpRight size={25} />
               </span>
             </div>
-            <p>Explore loafers</p>
           </Link>
           <Link
             to="/shop?category=Formal+shoes"
@@ -368,43 +280,14 @@ export default function Home() {
                 alt="Polished black formal loafers"
                 loading="lazy"
               />
-              <span className="occasion-index">02 / OCCASION</span>
             </div>
             <div className="occasion-name">
-              <h3>ON YOUR TERMS.</h3>
+              <h3>FORMAL SHOES</h3>
               <span className="occasion-arrow">
                 <ArrowUpRight size={25} />
               </span>
             </div>
-            <p>Explore formal shoes</p>
           </Link>
-        </div>
-      </section>
-      <section className="mono-note section-pad">
-        <span className="mono-label mono-reveal">OUR POINT OF VIEW</span>
-        <div className="mono-note-layout">
-          <h2 className="mono-reveal">
-            STYLE IS
-            <br />
-            PERSONAL.
-            <br />
-            <span>START THERE.</span>
-          </h2>
-          <div className="mono-note-copy mono-reveal">
-            <span className="note-asterisk" aria-hidden="true">
-              ✳
-            </span>
-            <p>
-              We keep the collection focused.
-              <br />
-              Loafers and formal shoes with details
-              <br />
-              that stand out in their own way.
-            </p>
-            <Link className="mono-text-link" to="/about">
-              Get to know Qadam <ArrowRight size={18} />
-            </Link>
-          </div>
         </div>
       </section>
     </main>

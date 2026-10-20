@@ -17,6 +17,8 @@ try {
     "/src/Home.tsx",
     "/src/Admin.tsx",
     "/src/Showroom.tsx",
+    "/src/StudioScene.tsx",
+    "/src/studio-motion.ts",
     "/src/theme.tsx",
     "/products/hero-textured.png",
     "/products/hero-loafer.png",

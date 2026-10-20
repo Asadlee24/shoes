@@ -39,7 +39,7 @@ function Storefront() {
     const page = location.pathname.startsWith("/product/")
       ? "The collection"
       : location.pathname.split("/")[1]?.replace(/^./, (s) => s.toUpperCase());
-    document.title = `${page ? page + " — " : ""}QADAM FLEX — A considered step.`;
+    document.title = `${page ? page + " — " : ""}QADAM FLEX`;
   }, [location.pathname]);
   return (
     <>

@@ -31,8 +31,10 @@ To use another port: `npm run dev -- --port 3001`. The server binds to 127.0.0.1
 
 - The owner-selected second “GOOD FORM” design: black/chalk monochrome palette, bold typography, responsive layouts and a persistent light/dark switch.
 - Clear horizontal logo lockups in the header/menu and the full approved stacked logo in the footer.
-- Lazy-loaded Three.js studio with a display plinth, lighting, photo-textured footwear and subtle mouse-driven perspective. Switch between black textured and brown suede pairs.
-- GSAP entrance/scroll motion, reduced-motion support, offscreen pause and photographic loading/WebGL fallbacks.
+- Lazy-loaded Three.js studio with a display plinth, lighting, photo-textured footwear and visible mouse-driven perspective. Switch between black textured and brown suede pairs.
+- Mouse movement, horizontal/touch drag, arrow-key controls and a reset button share one motion controller. The interactive photo works immediately, including during WebGL loading or failure.
+- The optional renderer loads separately and draws on demand. Reduced-motion mode keeps intentional controls available without interpolation; offscreen motion and settled animation loops stop.
+- Short product-focused copy replaces the repeated slogans, ticker and brand manifesto. GSAP entrance/scroll transitions remain.
 - Four published products from the supplied photos; the unpictured dark-brown textured loafer is retained as a draft.
 - Shop with URL-based search, collection/color/size filters and sorting.
 - Product galleries, quick view, image enlargement, size selector and related products.
@@ -68,7 +70,9 @@ Online card payments, courier bookings, live email/SMS and a public deployment a
 - `server/store.mjs`: SQLite persistence, catalog and input validation, total calculation.
 - `src/Home.tsx`, `src/monochrome.css`: the selected second storefront layout and monochrome design system.
 - `src/styles.css`: shared storefront and administration components.
-- `src/Showroom.tsx`: Three.js display scene with photographic footwear and limited pointer perspective.
+- `src/Showroom.tsx`: immediate input handling and the interactive photographic fallback.
+- `src/StudioScene.tsx`: optional on-demand Three.js scene with photo-textured footwear.
+- `src/studio-motion.ts`: shared bounded movement and animation scheduling, independent of the renderer.
 - `src/theme.tsx`: persistent light/dark theme. The head script applies the stored preference before rendering.
 - `src/brand.css`: approved logo placement, theme-context contrast and responsive lockups.
 - `src/styles.css`: shared storefront and administration components.
@@ -91,7 +95,7 @@ npm run build
 npm run smoke
 ```
 
-Tests cover real HTTP requests, enquiry persistence, idempotency, validation, authentication/CSRF, discount totals, size inventory, checkout rollback and cancellation restoration. Test prices and customer records use a temporary database; they never enter the real store catalog.
+Tests cover real HTTP requests, enquiry persistence, idempotency, validation, authentication/CSRF, discount totals, size inventory, checkout rollback and cancellation restoration. Motion tests cover stage coordinates, visible rotation limits, reduced-motion manual input, frame settling, offscreen pause/resume and cleanup. Test prices and customer records use a temporary database; they never enter the real store catalog.
 
 ## Deployment notes
 

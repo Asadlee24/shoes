@@ -285,12 +285,16 @@ a:focus-visible {
   inset: 0;
   isolation: isolate;
   touch-action: pan-y;
+  perspective: 1000px;
+  cursor: grab;
+  user-select: none;
 }
 .showroom-canvas {
   position: absolute !important;
   inset: 0;
   opacity: 0;
   transition: opacity 0.65s ease;
+  pointer-events: none !important;
 }
 .scene-ready .showroom-canvas {
   opacity: 1;
@@ -301,6 +305,7 @@ a:focus-visible {
   opacity: 1;
   transition: opacity 0.65s ease;
   pointer-events: none;
+  perspective: 1000px;
 }
 .scene-ready .showroom-fallback {
   opacity: 0;
@@ -2058,5 +2063,92 @@ a:focus-visible {
   }
   .header-actions {
     gap: 10px;
+  }
+}
+
+/* Pointer movement remains available before and without the WebGL renderer. */
+.mono-stage {
+  touch-action: pan-y;
+}
+.mono-stage[data-dragging="true"] .showroom {
+  cursor: grabbing;
+}
+.showroom:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -8px;
+}
+.showroom-object {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.showroom-object > img {
+  position: absolute;
+  width: 76%;
+  height: 80%;
+  top: 5%;
+  left: 12%;
+  object-fit: contain;
+  filter: drop-shadow(0 25px 13px #0002);
+  pointer-events: none;
+}
+.showroom-object > img.black-cutout {
+  transform: rotate(25deg);
+}
+.showroom-object > img.brown-cutout {
+  transform: rotate(-7deg);
+  width: 93%;
+  left: 3%;
+  top: 4%;
+  height: 85%;
+}
+.showroom-help {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.stage-interaction > span {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.stage-product p {
+  font-size: 11px;
+}
+.mono-hero-copy .mono-intro {
+  max-width: 280px;
+}
+.mono-collection {
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+.mono-section-heading h2 {
+  font-size: clamp(34px, 4.3vw, 65px);
+}
+.mono-closeup .closeup-copy > p {
+  max-width: 230px;
+}
+.footer {
+  padding-top: 52px;
+}
+.footer-top {
+  align-items: center;
+}
+.footer .brand-signature {
+  margin-bottom: 24px;
+}
+.footer-bottom {
+  margin-top: 45px;
+}
+@media (max-width: 800px) {
+  .mono-collection {
+    padding-top: 45px;
+    padding-bottom: 45px;
+  }
+  .stage-interaction > span {
+    font-size: 9px;
   }
 }
