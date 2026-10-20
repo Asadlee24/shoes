@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { RefObject } from "react";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import {
   DoubleSide,
+  OrthographicCamera,
   MeshDepthMaterial,
   RGBADepthPacking,
   SRGBColorSpace,
@@ -10,7 +11,7 @@ import {
 } from "three";
 import type { Group } from "three";
 import { studioPose } from "./studio-motion";
-import { studioPhoto, studioPhotoHeight } from "./studio-photo";
+import { studioPhoto, studioPhotoHeight, studioZoom } from "./studio-photo";
 import type { StudioPosition } from "./studio-motion";
 
 type Props = {
@@ -21,6 +22,14 @@ type Props = {
 };
 function DisplayWorld({ image, dark, onReady, motion }: Props) {
   const texture = useLoader(TextureLoader, image);
+  const { camera, size, invalidate } = useThree();
+  useEffect(() => {
+    if (camera instanceof OrthographicCamera) {
+      camera.zoom = studioZoom(size.width, size.height);
+      camera.updateProjectionMatrix();
+      invalidate();
+    }
+  }, [camera, size.width, size.height, invalidate]);
   const shoe = useRef<Group>(null);
   const layout = studioPhoto(image);
   const depth = useMemo(
@@ -45,7 +54,7 @@ function DisplayWorld({ image, dark, onReady, motion }: Props) {
     shoe.current.rotation.set(pose.pitch, pose.yaw, pose.roll);
     shoe.current.position.set(0, studioPhotoHeight(layout, pose), 0.3);
     camera.position.x = motion.current.x * 0.12;
-    camera.lookAt(0, 0.85, 0);
+    camera.lookAt(0, 0.95, 0);
   });
   return (
     <>
@@ -77,10 +86,6 @@ function DisplayWorld({ image, dark, onReady, motion }: Props) {
           metalness={0.65}
           roughness={0.3}
         />
-      </mesh>
-      <mesh position={[0, -0.26, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[200, 200]} />
-        <meshBasicMaterial color={dark ? "#101010" : "#f4f4f2"} />
       </mesh>
       <group ref={shoe}>
         <group position={[layout.offsetX, layout.offsetY, 0]}>
@@ -117,14 +122,15 @@ export default function StudioScene({
   return (
     <Canvas
       className="showroom-canvas"
-      camera={{ position: [0, 2.7, 10.3], fov: 35, near: 0.1, far: 250 }}
+      orthographic
+      camera={{ position: [0, 3.2, 10.3], zoom: 50, near: 0.1, far: 250 }}
       dpr={[1, 1.5]}
       shadows
       frameloop="demand"
       style={{ pointerEvents: "none" }}
       gl={{ alpha: true, antialias: true, powerPreference: "default" }}
       onCreated={({ camera, gl, invalidate }) => {
-        camera.lookAt(0, 0.85, 0);
+        camera.lookAt(0, 0.95, 0);
         gl.setClearAlpha(0);
         onInvalidate(invalidate);
         gl.domElement.addEventListener(

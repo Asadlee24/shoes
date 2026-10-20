@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { api, money } from "./api";
+import { previewDashboard } from "./admin-preview";
 import { useStore } from "./store";
 import { Modal } from "./components";
 import type { Discount, Product, Settings, StoreRequest } from "./types";
@@ -25,7 +26,7 @@ type Dashboard = {
   settings: Settings;
   requests: StoreRequest[];
 };
-export default function Admin() {
+export default function Admin({ preview = false }: { preview?: boolean }) {
   const { reload } = useStore();
   const [csrf, setCsrf] = useState(""),
     [loading, setLoading] = useState(true),
@@ -43,15 +44,26 @@ export default function Admin() {
   const headers = { "X-CSRF-Token": csrf };
   const refresh = useCallback(async () => {
     try {
-      const d = await api<Dashboard>("/api/admin/dashboard");
+      const d = preview
+        ? previewDashboard(
+            await api<{ products: Product[]; settings: Settings }>(
+              "/api/catalog",
+            ),
+          )
+        : await api<Dashboard>("/api/admin/dashboard");
       setData(d);
       setSettings(d.settings);
       setError("");
     } catch (e) {
       setError((e as Error).message);
     }
-  }, []);
+  }, [preview]);
   useEffect(() => {
+    if (preview) {
+      setCsrf("preview");
+      void refresh().finally(() => setLoading(false));
+      return;
+    }
     void api<{ csrf: string }>("/api/admin/session")
       .then((s) => {
         setCsrf(s.csrf);
@@ -59,7 +71,7 @@ export default function Admin() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [refresh]);
+  }, [preview, refresh]);
   async function login(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -84,7 +96,7 @@ export default function Admin() {
   }
   async function saveProduct(e: React.FormEvent) {
     e.preventDefault();
-    if (!edit) return;
+    if (!edit || preview) return;
     setBusy(true);
     setError("");
     try {
@@ -109,7 +121,7 @@ export default function Admin() {
   }
   async function saveSettings(e: React.FormEvent) {
     e.preventDefault();
-    if (!settings) return;
+    if (!settings || preview) return;
     setBusy(true);
     setError("");
     try {
@@ -128,6 +140,7 @@ export default function Admin() {
     }
   }
   async function changeStatus(r: StoreRequest, status: string) {
+    if (preview) return;
     setBusy(true);
     setError("");
     try {
@@ -146,7 +159,7 @@ export default function Admin() {
     }
   }
   async function upload(files: FileList | null) {
-    if (!files || !edit) return;
+    if (!files || !edit || preview) return;
     setBusy(true);
     setError("");
     try {
@@ -222,11 +235,7 @@ export default function Admin() {
             <ShoppingBag size={29} />
           </span>
           <p className="eyebrow">WELCOME BACK</p>
-          <h1>
-            A considered
-            <br />
-            store.
-          </h1>
+          <h1>Store management.</h1>
           <p className="muted">
             Sign in to manage your collection and enquiries.
           </p>
@@ -257,6 +266,9 @@ export default function Admin() {
               <ArrowUpRight size={17} />
             </button>
           </form>
+          <Link className="text-link admin-demo-link" to="/admin/demo">
+            Preview the admin panel <ArrowUpRight size={15} />
+          </Link>
           <p className="admin-setup-note">
             First time? Run <code>npm run admin:setup</code> in the project
             terminal, then restart the server.
@@ -302,20 +314,33 @@ export default function Admin() {
           <Link to="/" target="_blank">
             View storefront <ArrowUpRight size={16} />
           </Link>
-          <button onClick={() => void logout()}>
-            <LogOut size={16} />
-            Sign out
-          </button>
+          {!preview && (
+            <button onClick={() => void logout()}>
+              <LogOut size={16} />
+              Sign out
+            </button>
+          )}
         </div>
       </aside>
       <main className="admin-main">
+        {preview && (
+          <div className="admin-preview-banner" role="note">
+            <span>
+              <strong>Admin preview</strong> · Changes are not saved. Customer
+              data is hidden.
+            </span>
+            <Link to="/admin">
+              Secure sign-in <ArrowUpRight size={14} />
+            </Link>
+          </div>
+        )}
         <header className="admin-topbar">
           <span>
             QADAM FLEX /{" "}
             {tab === "requests" ? "ORDERS & ENQUIRIES" : tab.toUpperCase()}
           </span>
           <span className="admin-user">
-            ADMIN <span className="user-dot">A</span>
+            {preview ? "PREVIEW" : "ADMIN"} <span className="user-dot">A</span>
           </span>
         </header>
         <div className="admin-body">
@@ -344,7 +369,7 @@ export default function Admin() {
                   <div className="admin-page-heading">
                     <div>
                       <p className="eyebrow">YOUR STORE, AT A GLANCE</p>
-                      <h1>Good to see you.</h1>
+                      <h1>Store overview.</h1>
                       <p className="muted">
                         Your collection and customer conversations.
                       </p>
@@ -392,8 +417,8 @@ export default function Admin() {
                         <h3>A few details to finish.</h3>
                         <p>
                           {incomplete} published products need prices or stock.
-                          They currently accept enquiries. Add your business
-                          contact and delivery details in store settings.
+                          Confirm prices, size stock and delivery before
+                          accepting orders.
                         </p>
                       </div>
                       <button
@@ -424,7 +449,7 @@ export default function Admin() {
                   <div className="admin-page-heading">
                     <div>
                       <p className="eyebrow">THE COLLECTION</p>
-                      <h1>Every pair, considered.</h1>
+                      <h1>Your collection.</h1>
                     </div>
                     <button className="button" onClick={createProduct}>
                       Add a product <Plus size={16} />
@@ -507,7 +532,7 @@ export default function Admin() {
                   <div className="admin-page-heading">
                     <div>
                       <p className="eyebrow">THE BUSINESS DETAILS</p>
-                      <h1>Make it your store.</h1>
+                      <h1>Store settings.</h1>
                     </div>
                   </div>
                   <form
@@ -821,8 +846,12 @@ export default function Admin() {
                         );
                       })}
                     </section>
-                    <button className="button" disabled={busy}>
-                      {busy ? "Saving…" : "Save store settings"}
+                    <button className="button" disabled={busy || preview}>
+                      {preview
+                        ? "Saving unavailable in preview"
+                        : busy
+                          ? "Saving…"
+                          : "Save store settings"}
                       <Save size={17} />
                     </button>
                   </form>
@@ -843,7 +872,7 @@ export default function Admin() {
         {edit && (
           <form className="customer-form product-editor" onSubmit={saveProduct}>
             <div className="modal-heading">
-              <h2>{creating ? "A new pair." : "Edit this pair."}</h2>
+              <h2>{creating ? "Add a product" : "Edit product"}</h2>
               <button
                 type="button"
                 aria-label="Close editor"
@@ -1062,7 +1091,7 @@ export default function Admin() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 multiple
-                disabled={busy}
+                disabled={busy || preview}
                 onChange={(e) => void upload(e.target.files)}
               />
             </label>
@@ -1086,8 +1115,12 @@ export default function Admin() {
               />
               Feature on the homepage
             </label>
-            <button className="button full" disabled={busy}>
-              {busy ? "Saving…" : "Save product"}
+            <button className="button full" disabled={busy || preview}>
+              {preview
+                ? "Saving unavailable in preview"
+                : busy
+                  ? "Saving…"
+                  : "Save product"}
               <Save size={17} />
             </button>
           </form>
@@ -1120,7 +1153,7 @@ export default function Admin() {
               <span className="eyebrow">STATUS</span>
               <select
                 aria-label="Request status"
-                disabled={busy}
+                disabled={busy || preview}
                 value={request.status}
                 onChange={(e) => void changeStatus(request, e.target.value)}
               >

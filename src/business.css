@@ -222,3 +222,31 @@
     top: 20px;
   }
 }
+
+.admin-preview-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 40px;
+  background: #202020;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.admin-preview-banner a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.admin-demo-link {
+  margin-top: 22px;
+}
+@media (max-width: 600px) {
+  .admin-preview-banner {
+    padding: 14px 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

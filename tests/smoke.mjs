@@ -16,6 +16,8 @@ try {
     "/src/studio-photo.ts",
     "/product/brown-suede-loafer",
     "/admin",
+    "/admin/demo",
+    "/src/admin-preview.ts",
     "/api/catalog",
     "/src/main.tsx",
     "/src/Home.tsx",

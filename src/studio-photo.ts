@@ -48,3 +48,8 @@ export function studioPhotoHeight(
     0.24 + Math.abs(yOfX) * photo.halfWidth + Math.abs(yOfY) * photo.halfHeight
   );
 }
+
+// Fit the whole shoe and plinth with a margin on narrow and wide displays.
+export function studioZoom(width: number, height: number) {
+  return Math.min(Math.max(width, 1) / 7, Math.max(height, 1) / 4.8);
+}

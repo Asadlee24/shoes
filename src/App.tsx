@@ -109,7 +109,11 @@ export default function App() {
             <ScrollPosition />
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/admin/*" element={<Admin />} />
+                <Route
+                  path="/admin/demo"
+                  element={<Admin key="preview" preview />}
+                />
+                <Route path="/admin/*" element={<Admin key="live" />} />
                 <Route path="*" element={<Storefront />} />
               </Routes>
             </Suspense>

@@ -102,3 +102,5 @@ Tests cover real HTTP requests, enquiry persistence, idempotency, validation, au
 This implementation requires a persistent **Node.js process and writable disk** for SQLite and uploaded images. A static-only host cannot run the backend. Keep one application instance, or migrate persistence to a shared database before scaling. Set `SECURE_COOKIES=true` when serving behind HTTPS. Complete the actual business details and applicable policies before accepting public purchases.
 
 Typography: DM Sans and Manrope, loaded from Google Fonts with local system fallbacks. Interface icons: Lucide. Product photography supplied by the store owner.
+
+The `/admin/demo` route previews the admin interface using published catalog data only. Customer records and discount codes are excluded, and saves/uploads are disabled. It does not grant access to the protected admin API. Use `/admin` with the running Node backend for real store management.
