@@ -32,6 +32,7 @@ export type Settings = {
   brand: string;
   currency: string;
   email: string;
+  orderNotificationEmail?: string;
   whatsapp: string;
   instagram: string;
   website: string;

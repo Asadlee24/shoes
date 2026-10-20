@@ -151,6 +151,7 @@ export const initialSettings = {
   brand: "QADAM FLEX",
   currency: "PKR",
   email: "",
+  orderNotificationEmail: "",
   ...officialDetails,
   address: "",
   announcement: "A considered collection. A better step.",
@@ -162,3 +163,8 @@ export const initialSettings = {
     "Please enquire about the exchange and return terms for your selected pair before placing an order.",
   discounts: [],
 };
+
+export function publicSettings(settings) {
+  const { discounts, orderNotificationEmail, ...visible } = settings;
+  return visible;
+}

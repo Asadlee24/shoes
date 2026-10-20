@@ -8,7 +8,11 @@ export function previewDashboard(catalog: {
     products: catalog.products
       .filter((product) => product.published)
       .map((product) => structuredClone(product)),
-    settings: { ...structuredClone(catalog.settings), discounts: [] },
+    settings: {
+      ...structuredClone(catalog.settings),
+      discounts: [],
+      orderNotificationEmail: "",
+    },
     requests: [] as StoreRequest[],
   };
 }

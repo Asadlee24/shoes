@@ -68,6 +68,15 @@ export function openStore(path) {
         new Date().toISOString(),
       );
     }
+    const currentSettings = JSON.parse(
+      db.prepare("SELECT data FROM settings WHERE id=1").get().data,
+    );
+    if (typeof currentSettings.orderNotificationEmail !== "string") {
+      currentSettings.orderNotificationEmail = "";
+      db.prepare("UPDATE settings SET data=? WHERE id=1").run(
+        JSON.stringify(currentSettings),
+      );
+    }
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");

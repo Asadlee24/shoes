@@ -612,6 +612,36 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                       </label>
                     </section>
                     <section>
+                      <h2>Order notifications</h2>
+                      <label>
+                        Private notification email
+                        <input
+                          type="email"
+                          maxLength={254}
+                          disabled={preview}
+                          value={
+                            preview ? "" : settings.orderNotificationEmail || ""
+                          }
+                          placeholder={
+                            preview
+                              ? "Private address hidden in preview"
+                              : "orders@example.com"
+                          }
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              orderNotificationEmail: e.target.value,
+                            })
+                          }
+                        />
+                      </label>
+                      <p className="muted">
+                        {preview
+                          ? "This address is only visible after signing in."
+                          : "Private receiving address for order alerts. Automatic email delivery is not connected yet."}
+                      </p>
+                    </section>
+                    <section>
                       <h2>Official details & manual payments</h2>
                       {(
                         [

@@ -78,12 +78,14 @@ test("official details migrate into existing stores once and preserve later admi
       easypaisaNumber: "",
     };
     delete settings.tiktok;
+    delete settings.orderNotificationEmail;
     legacy
       .prepare("INSERT INTO settings VALUES(1,?)")
       .run(JSON.stringify(settings));
     legacy.close();
     store = openStore(path);
     assert.equal(store.settings().phone, "03237205097");
+    assert.equal(store.settings().orderNotificationEmail, "");
     assert.equal(store.settings().instagram, "owner_custom");
     assert.equal(store.settings().tiktok, "qadamflexoffical");
     assert.equal(store.settings().bankAccountNumber, "0011935002260015");
@@ -91,11 +93,16 @@ test("official details migrate into existing stores once and preserve later admi
       ...store.settings(),
       phone: "03001234567",
       easypaisaNumber: "",
+      orderNotificationEmail: "new-owner@example.test",
     });
     store.db.close();
     store = openStore(path);
     assert.equal(store.settings().phone, "03001234567");
     assert.equal(store.settings().easypaisaNumber, "");
+    assert.equal(
+      store.settings().orderNotificationEmail,
+      "new-owner@example.test",
+    );
   } finally {
     store?.db.close();
     await rm(dir, { recursive: true, force: true });

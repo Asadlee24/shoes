@@ -61,6 +61,7 @@ test("catalog contains four published styles, confirmed PKR prices and size labe
   );
   assert.ok(r.data.products.every((p) => p.sizes.join(",") === "7,8,9,10,11"));
   assert.equal("discounts" in r.data.settings, false);
+  assert.equal("orderNotificationEmail" in r.data.settings, false);
   product = r.data.products[0];
 });
 test("private management requires a session", async () => {
@@ -394,6 +395,44 @@ test("manual payment settings validate account identifiers before saving", async
   assert.equal(saved.status, 200);
   assert.equal(app.store.settings().bankIban, "PK84ABPA0011935002260015");
   assert.equal(app.store.settings().bankAccountNumber, "0011935002260015");
+});
+test("order notification recipients are editable only through admin and absent from the public catalog", async () => {
+  const settings = app.store.settings();
+  const saved = await request(
+    "/api/admin/settings",
+    "PUT",
+    { ...settings, orderNotificationEmail: "testing@example.test" },
+    adminHeaders(),
+  );
+  assert.equal(saved.status, 200);
+  const dashboard = await request("/api/admin/dashboard", "GET", null, {
+    Cookie: cookie,
+  });
+  assert.equal(
+    dashboard.data.settings.orderNotificationEmail,
+    "testing@example.test",
+  );
+  assert.equal(
+    "orderNotificationEmail" in (await request("/api/catalog")).data.settings,
+    false,
+  );
+  const invalid = await request(
+    "/api/admin/settings",
+    "PUT",
+    { ...settings, orderNotificationEmail: "not-an-email" },
+    adminHeaders(),
+  );
+  assert.equal(invalid.status, 400);
+  assert.equal(
+    app.store.settings().orderNotificationEmail,
+    "testing@example.test",
+  );
+  const reopened = openStore(join(dir, "store.db"));
+  assert.equal(
+    reopened.settings().orderNotificationEmail,
+    "testing@example.test",
+  );
+  reopened.db.close();
 });
 test("administrator logout invalidates the session", async () => {
   assert.equal(

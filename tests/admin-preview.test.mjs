@@ -9,6 +9,7 @@ test("admin preview uses public products and contains no customer records or dis
     settings: {
       ...structuredClone(initialSettings),
       discounts: [{ code: "PRIVATE" }],
+      orderNotificationEmail: "owner@example.test",
     },
     requests: [{ data: { customer: { name: "Private customer" } } }],
   };
@@ -16,6 +17,7 @@ test("admin preview uses public products and contains no customer records or dis
   assert.ok(preview.products.every((p) => p.published));
   assert.deepEqual(preview.requests, []);
   assert.deepEqual(preview.settings.discounts, []);
+  assert.equal(preview.settings.orderNotificationEmail, "");
   preview.products[0].price = 1;
   preview.settings.phone = "changed";
   assert.notEqual(catalog.products[0].price, 1);

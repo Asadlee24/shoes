@@ -1,4 +1,5 @@
 import http from "node:http";
+import { publicSettings } from "./catalog.mjs";
 import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { resolve, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -121,7 +122,7 @@ export async function createApplication(options = {}) {
       }
     }
     if (method === "GET" && path === "/api/catalog") {
-      const { discounts, ...settings } = store.settings();
+      const settings = publicSettings(store.settings());
       return json(res, 200, {
         products: store.products().filter((p) => p.published),
         settings,
@@ -218,6 +219,7 @@ export async function createApplication(options = {}) {
           "easypaisaHolder",
           "easypaisaNumber",
           "email",
+          "orderNotificationEmail",
           "whatsapp",
           "instagram",
           "address",
@@ -250,6 +252,12 @@ export async function createApplication(options = {}) {
           throw new HttpError(400, "Enter a valid bank account number.");
         if (s.easypaisaNumber && !/^03\d{9}$/.test(s.easypaisaNumber))
           throw new HttpError(400, "Enter a valid Easypaisa mobile number.");
+        if (
+          s.orderNotificationEmail &&
+          (s.orderNotificationEmail.length > 254 ||
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.orderNotificationEmail))
+        )
+          throw new HttpError(400, "Enter a valid order notification email.");
         if (s.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email))
           throw new HttpError(400, "Enter a valid contact email.");
         if (s.whatsapp && !/^\d{10,15}$/.test(s.whatsapp))
