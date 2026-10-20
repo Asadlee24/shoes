@@ -167,19 +167,15 @@
 .product-media.textured-cutout-card:hover > a > img {
   transform: translate(-4.1%, -2.7%) rotate(-38deg) scale(0.71);
 }
-.showroom-object > img.black-cutout {
-  transform: rotate(-30deg);
-  width: 78%;
-  height: 65%;
-  left: 11%;
-  top: 9%;
-}
-.showroom-object > img.brown-cutout {
-  transform: rotate(-7deg);
-  width: 88%;
-  height: 65%;
-  left: 6%;
-  top: 9%;
+.showroom-object > svg {
+  position: absolute;
+  left: 9%;
+  bottom: 31%;
+  width: 82%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 22px 12px #0002);
+  pointer-events: none;
 }
 .showroom-fallback .fallback-plinth {
   bottom: 12%;

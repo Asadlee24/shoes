@@ -13,7 +13,7 @@ try {
     "/payments",
     "/contact",
     "/src/Business.tsx",
-    "/models/qadam-loafers.glb",
+    "/src/studio-photo.ts",
     "/product/brown-suede-loafer",
     "/admin",
     "/api/catalog",

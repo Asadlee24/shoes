@@ -6,8 +6,6 @@ import {
   MoveUpRight,
   MousePointer2,
   RotateCcw,
-  Pause,
-  Play,
 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -42,8 +40,7 @@ export default function Home() {
   const { theme } = useTheme();
   const root = useRef<HTMLElement>(null);
   const [focus, setFocus] = useState(0),
-    [reset, setReset] = useState(0),
-    [rotating, setRotating] = useState(true);
+    [reset, setReset] = useState(0);
   const pair = focusPairs[focus];
   useEffect(() => {
     if (!root.current || matchMedia("(prefers-reduced-motion: reduce)").matches)
@@ -150,23 +147,12 @@ export default function Home() {
               image={pair.image}
               dark={theme === "dark"}
               reset={reset}
-              rotating={rotating}
             />
             <div className="stage-interaction">
               <span>
-                <MousePointer2 size={12} /> DRAG TO ROTATE 360°
+                <MousePointer2 size={12} /> MOVE MOUSE · DRAG
               </span>
               <div className="stage-buttons">
-                <button
-                  type="button"
-                  onClick={() => setRotating((value) => !value)}
-                  aria-label={
-                    rotating ? "Pause auto rotation" : "Start auto rotation"
-                  }
-                  aria-pressed={rotating}
-                >
-                  {rotating ? <Pause size={14} /> : <Play size={14} />}
-                </button>
                 <button
                   type="button"
                   onClick={() => setReset((v) => v + 1)}

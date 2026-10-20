@@ -20,14 +20,13 @@ export function pointerPosition(
 }
 
 export function studioPose(position: StudioPosition) {
-  const x = Number.isFinite(position.x) ? position.x : 0,
+  const x = clampAxis(position.x),
     y = clampAxis(position.y);
-  const photoTilt = Math.sin(x * Math.PI);
   return {
-    yaw: -Math.PI * 0.12 + x * Math.PI,
-    cameraHeight: 4.2 - y * 1.5,
-    // Only the solid GLB has a back. The photo fallback stays a photograph.
-    css: `translate3d(${photoTilt * 12}px, ${y * 5}px, 0) rotateX(${-y * 8}deg) rotateY(${photoTilt * 16}deg)`,
+    yaw: x * 0.38,
+    pitch: y * 0.16,
+    roll: -x * 0.035,
+    css: `rotateX(${-y * 9.17}deg) rotateY(${x * 21.77}deg) rotateZ(${-x * 2}deg)`,
   };
 }
 
@@ -47,7 +46,6 @@ export function createStudioMotion(options: Options) {
     last = 0;
   let active = true,
     disposed = false,
-    rotating = false,
     reduced = options.reduced ?? false;
   const stop = () => {
     if (frame !== null) options.cancelFrame(frame);
@@ -60,7 +58,6 @@ export function createStudioMotion(options: Options) {
     if (!active || disposed) return;
     const delta = last ? Math.min((time - last) / 1000, 0.05) : 1 / 60;
     last = time;
-    if (rotating && !reduced) target.x += delta * 0.085;
     const blend = 1 - Math.exp(-12 * delta);
     position.x += (target.x - position.x) * blend;
     position.y += (target.y - position.y) * blend;
@@ -69,7 +66,7 @@ export function createStudioMotion(options: Options) {
       0.0006;
     if (settled) position = { ...target };
     emit();
-    if (!settled || (rotating && !reduced)) frame = options.requestFrame(tick);
+    if (!settled) frame = options.requestFrame(tick);
     else last = 0;
   };
   const wake = () => {
@@ -83,7 +80,7 @@ export function createStudioMotion(options: Options) {
   return {
     moveTo(next: StudioPosition) {
       target = {
-        x: Number.isFinite(next.x) ? next.x : 0,
+        x: clampAxis(next.x),
         y: clampAxis(next.y),
       };
       wake();
@@ -95,10 +92,6 @@ export function createStudioMotion(options: Options) {
     },
     setReduced(value: boolean) {
       reduced = value;
-      wake();
-    },
-    setRotating(value: boolean) {
-      rotating = value;
       wake();
     },
     setActive(value: boolean) {

@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { RefObject } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import {
+  DoubleSide,
+  MeshDepthMaterial,
+  RGBADepthPacking,
+  SRGBColorSpace,
+  TextureLoader,
+} from "three";
 import type { Group } from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { studioPose } from "./studio-motion";
-import { prepareStudioModel } from "./studio-model";
+import { studioPhoto, studioPhotoHeight } from "./studio-photo";
 import type { StudioPosition } from "./studio-motion";
 
 type Props = {
@@ -14,29 +20,40 @@ type Props = {
   onReady: () => void;
 };
 function DisplayWorld({ image, dark, onReady, motion }: Props) {
-  const gltf = useLoader(GLTFLoader, "/models/qadam-loafers.glb");
+  const texture = useLoader(TextureLoader, image);
   const shoe = useRef<Group>(null);
-  const model = useMemo(() => {
-    const name = image.includes("textured") ? "HERO_BLACK" : "HERO_SUEDE";
-    const original = gltf.scene.getObjectByName(name);
-    if (!original) throw new Error("Shoe model unavailable");
-    return prepareStudioModel(original);
-  }, [gltf, image]);
-  useEffect(() => onReady(), [model, onReady]);
+  const layout = studioPhoto(image);
+  const depth = useMemo(
+    () =>
+      new MeshDepthMaterial({
+        map: texture,
+        alphaTest: 0.125,
+        depthPacking: RGBADepthPacking,
+        side: DoubleSide,
+      }),
+    [texture],
+  );
+  useEffect(() => {
+    texture.colorSpace = SRGBColorSpace;
+    texture.needsUpdate = true;
+    onReady();
+  }, [texture, onReady]);
+  useEffect(() => () => depth.dispose(), [depth]);
   useFrame(({ camera }) => {
     if (!shoe.current) return;
     const pose = studioPose(motion.current);
-    shoe.current.rotation.y = pose.yaw;
-    camera.position.y = pose.cameraHeight;
-    camera.lookAt(0, 0.5, 0);
+    shoe.current.rotation.set(pose.pitch, pose.yaw, pose.roll);
+    shoe.current.position.set(0, studioPhotoHeight(layout, pose), 0.3);
+    camera.position.x = motion.current.x * 0.12;
+    camera.lookAt(0, 0.85, 0);
   });
   return (
     <>
-      <ambientLight intensity={0.9} />
-      <hemisphereLight args={["#ffffff", dark ? "#404040" : "#b9b9b9", 1.9]} />
+      <ambientLight intensity={1.1} />
+      <hemisphereLight args={["#ffffff", dark ? "#303030" : "#b9b9b9", 1.5]} />
       <directionalLight
         position={[-3, 7, 5]}
-        intensity={3.4}
+        intensity={2.7}
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-5}
@@ -46,7 +63,6 @@ function DisplayWorld({ image, dark, onReady, motion }: Props) {
         shadow-bias={-0.0002}
         shadow-normalBias={0.025}
       />
-      <directionalLight position={[4, 3, -5]} intensity={2.4} />
       <mesh position={[0, -0.11, 0]} receiveShadow>
         <cylinderGeometry args={[2.8, 2.83, 0.22, 96]} />
         <meshStandardMaterial
@@ -62,19 +78,27 @@ function DisplayWorld({ image, dark, onReady, motion }: Props) {
           roughness={0.3}
         />
       </mesh>
-      <mesh
-        position={[0, -0.26, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-      >
+      <mesh position={[0, -0.26, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[200, 200]} />
-        <meshStandardMaterial
-          color={dark ? "#101010" : "#f4f4f2"}
-          roughness={1}
-        />
+        <meshBasicMaterial color={dark ? "#101010" : "#f4f4f2"} />
       </mesh>
-      <group ref={shoe} dispose={null}>
-        <primitive object={model} />
+      <group ref={shoe}>
+        <group position={[layout.offsetX, layout.offsetY, 0]}>
+          <mesh
+            rotation={[0, 0, (-layout.angle * Math.PI) / 180]}
+            castShadow
+            customDepthMaterial={depth}
+          >
+            <planeGeometry args={[layout.planeWidth, layout.planeHeight]} />
+            <meshBasicMaterial
+              map={texture}
+              transparent
+              alphaTest={0.125}
+              side={DoubleSide}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
       </group>
     </>
   );
@@ -93,14 +117,14 @@ export default function StudioScene({
   return (
     <Canvas
       className="showroom-canvas"
-      camera={{ position: [3.4, 4.2, 10], fov: 36, near: 0.1, far: 250 }}
+      camera={{ position: [0, 2.7, 10.3], fov: 35, near: 0.1, far: 250 }}
       dpr={[1, 1.5]}
       shadows
       frameloop="demand"
       style={{ pointerEvents: "none" }}
       gl={{ alpha: true, antialias: true, powerPreference: "default" }}
       onCreated={({ camera, gl, invalidate }) => {
-        camera.lookAt(0, 0.5, 0);
+        camera.lookAt(0, 0.85, 0);
         gl.setClearAlpha(0);
         onInvalidate(invalidate);
         gl.domElement.addEventListener(

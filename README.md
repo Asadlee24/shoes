@@ -83,7 +83,7 @@ Online card payments, courier bookings, live email/SMS and a public deployment a
 - `data/store.db`: runtime SQLite database (ignored by Git).
 - `.env`: private local configuration (ignored by Git).
 
-The homepage uses two solid GLB loafer illustrations with unlimited yaw rotation, mouse movement, touch dragging, keyboard controls, and pausable auto rotation. Both models have an equal 4.5-unit length and a fixed 0.1-unit clearance above the plinth. They are illustrative reconstructions, not exact product scans; original product photographs remain in the galleries. The photographic fallback is labelled and used when WebGL is unavailable. The reproducible Blender script is in scripts/build-loafer-assets.py.
+The homepage displays the approved black textured and brown suede photographic cutouts, with mouse/touch perspective movement above a Three.js plinth. Both have the same visible width, and their lowest visible pixels stay above the platform throughout supported tilts. Product identity, texture and buckle are preserved. These are photographs with a perspective effect; an exact full 360-degree product view needs a product scan or complete turntable photography. Original product photographs remain in the galleries.
 
 Back up `data/`, uploaded photos under `public/products/upload-*`, and `.env` privately. Do not commit customer data or secrets to GitHub. Ordinary seed edits do not overwrite an existing database. The one-time owner price migration fills the four previously unpriced entries on startup and preserves administrator price edits, size inventory and customer records. Use the administrator for ongoing changes.
 
