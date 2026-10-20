@@ -12,6 +12,8 @@ import {
   QuickView,
 } from "./components";
 import Home from "./Home";
+import { AccountProvider } from "./customer-account";
+const Account = lazy(() => import("./Account"));
 import { Payments } from "./Business";
 import {
   Cart,
@@ -61,6 +63,14 @@ function Storefront() {
             <Route path="wishlist" element={<Wishlist />} />
             <Route path="cart" element={<Cart />} />
             <Route path="checkout" element={<Checkout />} />
+            <Route
+              path="account"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <Account />
+                </Suspense>
+              }
+            />
             <Route path="confirmation" element={<Confirmation />} />
             <Route path="contact" element={<Contact />} />
             <Route path="payments" element={<Payments />} />
@@ -106,17 +116,19 @@ export default function App() {
       <ThemeProvider>
         <BrowserRouter>
           <StoreProvider>
-            <ScrollPosition />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route
-                  path="/admin/demo"
-                  element={<Admin key="preview" preview />}
-                />
-                <Route path="/admin/*" element={<Admin key="live" />} />
-                <Route path="*" element={<Storefront />} />
-              </Routes>
-            </Suspense>
+            <AccountProvider>
+              <ScrollPosition />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route
+                    path="/admin/demo"
+                    element={<Admin key="preview" preview />}
+                  />
+                  <Route path="/admin/*" element={<Admin key="live" />} />
+                  <Route path="*" element={<Storefront />} />
+                </Routes>
+              </Suspense>
+            </AccountProvider>
           </StoreProvider>
         </BrowserRouter>
       </ThemeProvider>

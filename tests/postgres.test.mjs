@@ -275,3 +275,109 @@ test("cloud logout invalidates the Postgres session", async () => {
     401,
   );
 });
+
+test("cloud customer accounts and private receipts persist across handler and adapter restarts", async () => {
+  const signup = await request("/api/account/register", "POST", {
+    name: "Cloud Customer",
+    email: "cloud@example.test",
+    password: "cloud-customer-password-only",
+  });
+  assert.equal(signup.status, 200);
+  assert.match(signup.headers["Set-Cookie"], /Secure/);
+  const own = {
+    cookie: signup.headers["Set-Cookie"].split(";")[0],
+    "x-customer-csrf": signup.data.csrf,
+  };
+  const placed = await request(
+    "/api/requests",
+    "POST",
+    {
+      customer,
+      items: [{ id: "suede-penny", size: "7", quantity: 1 }],
+      paymentMethod: "bank",
+    },
+    { ...own, "idempotency-key": randomUUID() },
+  );
+  assert.equal(placed.status, 201);
+  assert.equal(placed.data.kind, "order");
+  const bytes = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j2fQAAAAASUVORK5CYII=",
+    "base64",
+  );
+  assert.equal(
+    (
+      await request(
+        `/api/account/orders/${placed.data.reference}/proof`,
+        "POST",
+        {
+          type: "image/png",
+          data: bytes.toString("base64"),
+          reference: "CLOUD-TEST-TRANSFER",
+        },
+        own,
+      )
+    ).status,
+    201,
+  );
+  store = await openPostgresStore({ poolFactory });
+  handler = createCloudHandler({ store, adminHash: passwordHash(password) });
+  const orders = await request("/api/account/orders", "GET", undefined, own);
+  assert.equal(orders.status, 200);
+  assert.equal(orders.data.orders.length, 1);
+  const payment = orders.data.orders[0].data.payment;
+  assert.equal(payment.status, "under_review");
+  assert.equal(
+    (await request(`/api/account/proofs/${payment.proofId}`)).status,
+    401,
+  );
+  const image = await request(
+    `/api/account/proofs/${payment.proofId}`,
+    "GET",
+    undefined,
+    own,
+  );
+  assert.deepEqual(Buffer.from(image.raw), bytes);
+  assert.equal(image.headers["Cache-Control"], "private, no-store");
+  const login = await request("/api/admin/login", "POST", {
+    username: "admin",
+    password,
+  });
+  const owner = {
+    cookie: login.headers["Set-Cookie"].split(";")[0],
+    "x-csrf-token": login.data.csrf,
+  };
+  assert.equal(
+    (
+      await request(
+        `/api/admin/payments/${payment.proofId}`,
+        "PATCH",
+        { status: "approved" },
+        owner,
+      )
+    ).status,
+    200,
+  );
+  const updated = await request("/api/account/orders", "GET", undefined, own);
+  assert.equal(updated.data.orders[0].data.payment.status, "paid");
+  const catalog = await request("/api/catalog");
+  assert.equal(
+    JSON.stringify(catalog.data).includes("cloud@example.test"),
+    false,
+  );
+  assert.equal(JSON.stringify(catalog.data).includes(payment.proofId), false);
+});
+
+test("cloud customer rate limits survive rolled-back login failures and fresh handlers", async () => {
+  const input = { email: "unknown-cloud@example.test", password: "incorrect" };
+  const headers = { "x-forwarded-for": "customer-cloud-rate-address" };
+  for (let i = 0; i < 10; i++)
+    assert.equal(
+      (await request("/api/account/login", "POST", input, headers)).status,
+      401,
+    );
+  handler = createCloudHandler({ store, adminHash: passwordHash(password) });
+  assert.equal(
+    (await request("/api/account/login", "POST", input, headers)).status,
+    429,
+  );
+});

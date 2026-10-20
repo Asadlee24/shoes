@@ -1,4 +1,6 @@
 import http from "node:http";
+import { paymentAdminApi } from "./payments.mjs";
+import { customerApi, paymentDetails } from "./customer.mjs";
 import { publicSettings } from "./catalog.mjs";
 import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { resolve, join, extname } from "node:path";
@@ -136,6 +138,15 @@ export async function createApplication(options = {}) {
     if (item.count > max)
       throw new HttpError(429, "Please wait a little before trying again.");
   };
+  const paymentAdmin = paymentAdminApi({ store, body, json });
+  const customers = customerApi({
+    store,
+    body,
+    json,
+    secureCookies:
+      options.secureCookies || process.env.SECURE_COOKIES === "true",
+    limited: (key, max, minutes) => limited(attempts, key, max, minutes),
+  });
   async function api(req, res, path) {
     const method = req.method;
     const ip = options.trustProxy
@@ -155,6 +166,8 @@ export async function createApplication(options = {}) {
         throw new HttpError(403, "This request must come from the store.");
       }
     }
+    if (path.startsWith("/api/account/"))
+      return customers.handle(req, res, path, ip);
     if (method === "GET" && path === "/api/catalog") {
       const settings = publicSettings(await store.settings());
       return json(res, 200, {
@@ -200,6 +213,7 @@ export async function createApplication(options = {}) {
           403,
           "Your session has changed. Please sign in again.",
         );
+      if (await paymentAdmin(req, res, path)) return;
       if (method === "GET" && path === "/api/admin/session")
         return json(res, 200, { csrf: session.csrf, username: adminUser });
       if (method === "POST" && path === "/api/admin/logout") {
@@ -361,6 +375,17 @@ export async function createApplication(options = {}) {
                 "delivered",
                 "cancelled",
               ];
+        const requestData = JSON.parse(r.data);
+        if (
+          r.kind === "order" &&
+          ["bank", "easypaisa"].includes(requestData.payment?.method) &&
+          requestData.payment.status !== "paid" &&
+          !["pending", "cancelled"].includes(b.status)
+        )
+          throw new HttpError(
+            409,
+            "Review and approve the payment receipt before processing this order.",
+          );
         if (!statuses.includes(b.status))
           throw new HttpError(400, "Invalid status.");
         if (
@@ -506,11 +531,25 @@ export async function createApplication(options = {}) {
           400,
           "Please refresh and submit your request again.",
         );
+      const account = await customers.sessionFor(req);
+      if (account && req.headers["x-customer-csrf"] !== account.csrf)
+        throw new HttpError(403, "Please refresh your account session.");
       const customer = validateCustomer(b.customer || {});
+      const method = b.paymentMethod || "cod";
+      if (!["cod", "bank", "easypaisa", "inquiry"].includes(method))
+        throw new HttpError(400, "Choose an available payment method.");
+      if (["bank", "easypaisa"].includes(method) && !account)
+        throw new HttpError(
+          401,
+          "Sign in to track your order and submit payment proof.",
+        );
       const items = await validateItems(store, b.items);
       const fingerprint = hash(
         JSON.stringify({
           customer,
+          accountId: account?.user.id || null,
+          paymentMethod: method,
+          discountCode: String(b.discountCode || "").slice(0, 30),
           items: items.map(({ id, size, quantity }) => ({
             id,
             size,
@@ -538,7 +577,13 @@ export async function createApplication(options = {}) {
       );
       const kind =
         totals.total !== null &&
-        s.codEnabled &&
+        (method === "cod"
+          ? s.codEnabled
+          : method === "bank"
+            ? Boolean(s.bankIban && s.bankAccountHolder)
+            : method === "easypaisa"
+              ? Boolean(s.easypaisaNumber && s.easypaisaHolder)
+              : false) &&
         items.every((i) => i.stock !== null)
           ? "order"
           : "inquiry";
@@ -570,10 +615,26 @@ export async function createApplication(options = {}) {
               customer,
               items: items.map(({ stock, ...item }) => item),
               totals,
-              discountCode: b.discountCode || "",
+              discountCode: String(b.discountCode || "").slice(0, 30),
+              payment: {
+                method,
+                status:
+                  kind === "inquiry"
+                    ? "not_required"
+                    : method === "cod"
+                      ? "cod"
+                      : "awaiting_payment",
+                recipient: kind === "order" ? paymentDetails(s, method) : null,
+              },
             }),
             new Date().toISOString(),
           );
+        if (account)
+          await store.db
+            .prepare(
+              "INSERT INTO customer_orders(request_id,user_id) VALUES(?,?)",
+            )
+            .run(reference, account.user.id);
         await store.db.exec("COMMIT");
       } catch (e) {
         await store.db.exec("ROLLBACK");

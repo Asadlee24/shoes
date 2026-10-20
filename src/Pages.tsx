@@ -21,6 +21,9 @@ import {
 } from "lucide-react";
 import { useStore } from "./store";
 import { BusinessLinks } from "./Business";
+import { useAccount } from "./customer-account";
+import { PaymentDestination } from "./Payment";
+import type { Payment } from "./types";
 import { api, money, requestId } from "./api";
 import {
   Accordion,
@@ -526,6 +529,8 @@ export function Cart() {
 
 export function Checkout() {
   const { cart, products, settings, clear } = useStore();
+  const account = useAccount();
+  const [paymentMethod, setPaymentMethod] = useState<Payment["method"]>("bank");
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [discountCode, setDiscountCode] = useState(""),
@@ -535,7 +540,7 @@ export function Checkout() {
   const requestRef = useRef({ payload: "", key: requestId() }),
     navigate = useNavigate();
   const canOrder = Boolean(
-    settings?.codEnabled &&
+    settings &&
     settings.shippingFee !== null &&
     cart.length &&
     cart.every((i) => {
@@ -547,8 +552,14 @@ export function Checkout() {
     e.preventDefault();
     setBusy(true);
     setError("");
+    if (!account.user) {
+      setBusy(false);
+      navigate("/account?next=/checkout");
+      return;
+    }
     const f = new FormData(e.currentTarget);
     const payload = JSON.stringify({
+      paymentMethod,
       customer: Object.fromEntries(f),
       items: cart,
       discountCode: applied,
@@ -561,12 +572,17 @@ export function Checkout() {
         {
           method: "POST",
           body: payload,
-          headers: { "Idempotency-Key": requestRef.current.key },
+          headers: {
+            ...account.headers,
+            "Idempotency-Key": requestRef.current.key,
+          },
         },
       );
       sessionStorage.setItem("qf-last-confirmation", JSON.stringify(result));
       clear();
-      navigate("/confirmation", { state: result, replace: true });
+      navigate(`/account?order=${encodeURIComponent(result.reference)}`, {
+        replace: true,
+      });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -617,17 +633,36 @@ export function Checkout() {
           <h1>{canOrder ? "Make them yours." : "Let’s find your pair."}</h1>
           <p className="muted checkout-intro">
             {canOrder
-              ? "Confirm your details to place a cash-on-delivery order."
+              ? "Confirm your details and choose how to pay."
               : "Share a few details. We will confirm the price, your size and delivery before you decide."}
           </p>
+          <div className="checkout-account">
+            {account.loading ? (
+              <p role="status">Checking your account…</p>
+            ) : account.user ? (
+              <p>
+                Signed in as <strong>{account.user.email}</strong> ·{" "}
+                <Link to="/account">My account</Link>
+              </p>
+            ) : (
+              <p>
+                <Link to="/account?next=/checkout">Sign in</Link> or{" "}
+                <Link to="/account?mode=register&next=/checkout">
+                  create an account
+                </Link>{" "}
+                to track your order and submit payment proof.
+              </p>
+            )}
+          </div>
           <form className="customer-form" onSubmit={submit}>
-            <fieldset disabled={busy}>
+            <fieldset disabled={busy} key={account.user?.id || "guest"}>
               <legend>Your details</legend>
               <div className="form-row">
                 <label>
                   Full name
                   <input
                     name="name"
+                    defaultValue={account.user?.name}
                     autoComplete="name"
                     required
                     maxLength={80}
@@ -638,6 +673,7 @@ export function Checkout() {
                   Mobile number
                   <input
                     name="phone"
+                    defaultValue={account.user?.phone}
                     autoComplete="tel"
                     type="tel"
                     required
@@ -650,6 +686,7 @@ export function Checkout() {
                 City
                 <input
                   name="city"
+                  defaultValue={account.user?.city}
                   autoComplete="address-level2"
                   required
                   maxLength={80}
@@ -660,6 +697,7 @@ export function Checkout() {
                 Delivery address
                 <textarea
                   name="address"
+                  defaultValue={account.user?.address}
                   autoComplete="street-address"
                   required
                   maxLength={500}
@@ -677,23 +715,97 @@ export function Checkout() {
                 />
               </label>
             </fieldset>
+            <fieldset className="checkout-payment-options" disabled={busy}>
+              <legend>Payment method</legend>
+              {(
+                [
+                  ["bank", "Bank transfer", "Pay to the owner’s bank account"],
+                  [
+                    "easypaisa",
+                    "Easypaisa",
+                    "Transfer from your Easypaisa app",
+                  ],
+                  ...(settings?.codEnabled
+                    ? [
+                        [
+                          "cod",
+                          "Cash on delivery",
+                          "Pay when your order arrives",
+                        ],
+                      ]
+                    : []),
+                ] as const
+              ).map(([method, label, description]) => (
+                <label
+                  key={method}
+                  className={`payment-option ${paymentMethod === method ? "selected" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="payment-choice"
+                    checked={paymentMethod === method}
+                    onChange={() =>
+                      setPaymentMethod(method as Payment["method"])
+                    }
+                  />
+                  <span>
+                    <strong>{label}</strong>
+                    <small>{description}</small>
+                  </span>
+                </label>
+              ))}
+              {canOrder && paymentMethod !== "cod" && (
+                <PaymentDestination
+                  payment={{
+                    method: paymentMethod,
+                    status: "awaiting_payment",
+                    recipient:
+                      paymentMethod === "bank"
+                        ? {
+                            holder: settings?.bankAccountHolder || "",
+                            iban: settings?.bankIban,
+                            account: settings?.bankAccountNumber,
+                          }
+                        : {
+                            holder: settings?.easypaisaHolder || "",
+                            number: settings?.easypaisaNumber,
+                          },
+                  }}
+                />
+              )}
+            </fieldset>
             <div className="checkout-reassurance">
               <CheckCircle2 size={21} />
               <div>
                 <strong>
-                  {canOrder ? "Cash on delivery" : "No payment required"}
+                  {canOrder
+                    ? paymentMethod === "cod"
+                      ? "Cash on delivery"
+                      : "Payment proof, kept private"
+                    : "Confirm first. Pay later."}
                 </strong>
                 <p>
                   {canOrder
-                    ? "Pay the confirmed amount when your order arrives."
-                    : "This is an enquiry, with no commitment to buy."}
+                    ? paymentMethod === "cod"
+                      ? "Pay the confirmed total when your order arrives."
+                      : "Place your order, then upload your transfer receipt on the payment step. The owner will review it."
+                    : "Send your selection. The store will confirm stock and delivery in your account before you pay."}
                 </p>
               </div>
             </div>
             <p className="field-error" role="alert">
               {error}
             </p>
-            <button type="submit" className="button full" disabled={busy}>
+            <button
+              type={account.user ? "submit" : "button"}
+              onClick={
+                !account.user
+                  ? () => navigate("/account?next=/checkout")
+                  : undefined
+              }
+              className="button full"
+              disabled={busy || account.loading}
+            >
               {busy ? (
                 <>
                   <LoaderCircle className="spin" size={17} />
@@ -701,7 +813,13 @@ export function Checkout() {
                 </>
               ) : (
                 <>
-                  {canOrder ? "Place order" : "Send my enquiry"}
+                  {!account.user
+                    ? "Sign in to continue"
+                    : canOrder
+                      ? paymentMethod === "cod"
+                        ? "Place order"
+                        : "Place order & view payment"
+                      : "Send my enquiry"}
                   <ArrowRight size={18} />
                 </>
               )}
@@ -962,15 +1080,15 @@ export function InfoPage({ page }: { page: string }) {
       sections: [
         [
           "What is collected",
-          "Forms collect the contact and delivery details you enter, your selected products and sizes, and any notes you provide.",
+          "Forms collect your name, email, contact and delivery details, selected products and sizes, and order notes. Accounts store a password hash and recovery-code hash. Manual payment orders may include a transaction reference and the receipt image you upload.",
         ],
         [
           "How it is used",
-          "The store uses this information to review requests, respond to questions and manage orders. Only the protected store management area provides access to these records.",
+          "The store uses these details to manage your account, orders and payment review. You can view your own records after signing in. The store administrator can review orders and receipts; other customers cannot access them. Receipt images are not published as product images.",
         ],
         [
           "Essential browser storage",
-          "Your bag and wishlist are saved in your browser. An essential session cookie is used for administrator sign-in. This website does not include advertising trackers.",
+          "Your bag and wishlist are saved in your browser. Essential, HTTP-only session cookies keep customers and the administrator signed in. Customer sessions last up to seven days unless you sign out or reset your password. This website does not include advertising trackers.",
         ],
         [
           "Questions or removal requests",
@@ -994,7 +1112,7 @@ export function InfoPage({ page }: { page: string }) {
         ],
         [
           "Orders & payments",
-          "An enquiry is not a purchase. Where configured, a cash-on-delivery order is recorded with a reference and awaits store confirmation. No online payment is taken by an enquiry.",
+          "An enquiry is not a purchase. Confirmed orders support bank transfer, Easypaisa or cash on delivery where available. Upload transfer receipts in your account; the store confirms payments manually. Do not pay for an enquiry until the store confirms the order and total.",
         ],
         [
           "Delivery & exchanges",

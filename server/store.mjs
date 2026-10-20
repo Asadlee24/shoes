@@ -16,6 +16,14 @@ export function openStore(path) {
  CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS requests(id TEXT PRIMARY KEY, idempotency TEXT UNIQUE NOT NULL, fingerprint TEXT NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL, data TEXT NOT NULL, created TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires INTEGER NOT NULL);
+
+ CREATE TABLE IF NOT EXISTS customers(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,name TEXT NOT NULL,phone TEXT NOT NULL,city TEXT NOT NULL,address TEXT NOT NULL,password_hash TEXT NOT NULL,recovery_hash TEXT NOT NULL,created TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS customer_sessions(token TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES customers(id),csrf TEXT NOT NULL,expires BIGINT NOT NULL);
+ CREATE TABLE IF NOT EXISTS customer_orders(request_id TEXT PRIMARY KEY REFERENCES requests(id),user_id TEXT NOT NULL REFERENCES customers(id));
+ CREATE TABLE IF NOT EXISTS payment_proofs(id TEXT PRIMARY KEY,request_id TEXT NOT NULL REFERENCES requests(id),user_id TEXT NOT NULL REFERENCES customers(id),type TEXT NOT NULL,data BLOB NOT NULL,reference TEXT NOT NULL,status TEXT NOT NULL,note TEXT NOT NULL,created TEXT NOT NULL,reviewed TEXT NOT NULL);
+ CREATE INDEX IF NOT EXISTS customer_orders_user ON customer_orders(user_id);
+ CREATE INDEX IF NOT EXISTS customer_sessions_expires ON customer_sessions(expires);
+ CREATE INDEX IF NOT EXISTS payment_proofs_request ON payment_proofs(request_id);
  CREATE TABLE IF NOT EXISTS migrations(id TEXT PRIMARY KEY,applied TEXT NOT NULL);`);
   if (!db.prepare("SELECT id FROM settings WHERE id=1").get()) {
     db.prepare("INSERT INTO settings VALUES(1,?)").run(

@@ -1,3 +1,11 @@
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+  }
+}
 export async function api<T>(
   path: string,
   options: RequestInit = {},
@@ -12,7 +20,8 @@ export async function api<T>(
   const data = await response.json().catch(() => ({
     error: "The store could not be reached. Please try again.",
   }));
-  if (!response.ok) throw new Error(data.error || "Something went wrong.");
+  if (!response.ok)
+    throw new ApiError(data.error || "Something went wrong.", response.status);
   return data as T;
 }
 export const money = (value: number | null) =>

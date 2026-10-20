@@ -58,6 +58,7 @@ export type StoreRequest = {
   status: string;
   created: string;
   data: {
+    payment?: Payment;
     customer: {
       name: string;
       phone: string;
@@ -73,4 +74,24 @@ export type StoreRequest = {
       discount: number;
     };
   };
+};
+
+export type Payment = {
+  method: "bank" | "easypaisa" | "cod" | "inquiry";
+  status:
+    | "awaiting_payment"
+    | "under_review"
+    | "paid"
+    | "rejected"
+    | "cod"
+    | "not_required";
+  recipient?: {
+    holder: string;
+    iban?: string;
+    account?: string;
+    number?: string;
+  } | null;
+  proofId?: string;
+  reference?: string;
+  note?: string;
 };

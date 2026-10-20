@@ -137,3 +137,46 @@ separate email provider and is not enabled by attaching a database.
 The backend uses `@neondatabase/serverless` WebSocket pools scoped to each request.
 `npm test` also exercises the adapter against embedded Postgres (PGlite), including
 persistence, transactions, protected admin actions, orders, media and rate limits.
+
+### Customer accounts and manual transfer receipts
+
+Customers register/sign in at `/account` with email and a password of at least
+12 characters. This uses the existing store session architecture with separate
+customer cookies and CSRF tokens, asynchronous scrypt password hashing, persistent
+cloud rate limits and private per-customer order associations. Administrator and
+customer sessions never grant one another's permissions. An email address is a
+login identifier; it is not marked verified and no verification email is sent.
+
+Registration shows a private recovery code once. The customer must save it.
+`Forgot password` accepts this code, rotates it on use and invalidates all old
+sessions. Changing a password also signs out other sessions. Never ask a customer
+to share their recovery code. Email password reset requires a configured mail
+provider and is not enabled here.
+
+Checkout requires customer sign-in in the storefront. Existing guest COD/enquiry
+API clients remain compatible; guest requests cannot be claimed by merely knowing
+an email or phone number. A confirmed, priced order reserves size stock and records
+the selected payment method and a snapshot of the owner's account details. If
+stock, price or delivery is unknown, it remains an enquiry and cannot accept a
+receipt. In Admin → Orders & enquiries, open it and choose `Confirm enquiry as
+order` after configuring prices, size stock, shipping and the payment method.
+
+Bank and Easypaisa orders appear in the customer's account with the exact amount,
+copyable recipient details and private receipt upload. JPG/PNG/WebP receipts are
+limited to 2 MB and checked against their file signatures. Their bytes live in
+SQLite/Postgres, not in public product image storage. Only the owning customer or
+an authenticated admin can access them; responses are `private, no-store`.
+
+Admin → Orders & enquiries shows payment status and the receipt. Approve only
+after independently checking the actual transfer; a receipt is not automatic
+payment verification. Rejection requires a note and permits a replacement receipt.
+Unreviewed transfers cannot move into confirmed/processing/shipped/delivered.
+Cancelled orders cannot accept more receipts, and cancellation restores stock
+only once. Any money already transferred must be refunded manually by the owner.
+
+New `qf_customers`, `qf_customer_sessions`, `qf_customer_orders` and
+`qf_payment_proofs` tables are created automatically on the next cloud startup;
+existing inventory, orders and administrator settings are preserved. No new
+third-party account, API secret, card gateway or paid service is required for
+these manual transfers. Order and receipt notifications are visible in admin;
+automatic email sending still needs a verified sender and mail provider.

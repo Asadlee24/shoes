@@ -5,7 +5,8 @@ import { HttpError } from "./store.mjs";
 
 const context = new AsyncLocalStorage();
 const writeLock = 814202610;
-const tables = /\b(products|settings|requests|sessions|migrations)\b/g;
+const tables =
+  /\b(products|settings|requests|sessions|migrations|customers|customer_sessions|customer_orders|payment_proofs)\b/g;
 
 // Only internally defined SQL passes through this adapter; values stay bound.
 export function postgresSql(sql) {
@@ -166,6 +167,14 @@ export async function openPostgresStore(options = {}) {
       CREATE TABLE IF NOT EXISTS qf_sessions(token TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires BIGINT NOT NULL);
       CREATE TABLE IF NOT EXISTS qf_media(name TEXT PRIMARY KEY,type TEXT NOT NULL,data BYTEA NOT NULL);
       CREATE TABLE IF NOT EXISTS qf_limits(id TEXT PRIMARY KEY,count INTEGER NOT NULL,until_ms BIGINT NOT NULL);
+
+ CREATE TABLE IF NOT EXISTS qf_customers(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,name TEXT NOT NULL,phone TEXT NOT NULL,city TEXT NOT NULL,address TEXT NOT NULL,password_hash TEXT NOT NULL,recovery_hash TEXT NOT NULL,created TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS qf_customer_sessions(token TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES qf_customers(id),csrf TEXT NOT NULL,expires BIGINT NOT NULL);
+ CREATE TABLE IF NOT EXISTS qf_customer_orders(request_id TEXT PRIMARY KEY REFERENCES qf_requests(id),user_id TEXT NOT NULL REFERENCES qf_customers(id));
+ CREATE TABLE IF NOT EXISTS qf_payment_proofs(id TEXT PRIMARY KEY,request_id TEXT NOT NULL REFERENCES qf_requests(id),user_id TEXT NOT NULL REFERENCES qf_customers(id),type TEXT NOT NULL,data BYTEA NOT NULL,reference TEXT NOT NULL,status TEXT NOT NULL,note TEXT NOT NULL,created TEXT NOT NULL,reviewed TEXT NOT NULL);
+ CREATE INDEX IF NOT EXISTS qf_customer_orders_user ON qf_customer_orders(user_id);
+ CREATE INDEX IF NOT EXISTS qf_customer_sessions_expires ON qf_customer_sessions(expires);
+ CREATE INDEX IF NOT EXISTS qf_payment_proofs_request ON qf_payment_proofs(request_id);
       CREATE INDEX IF NOT EXISTS qf_requests_created ON qf_requests(created DESC);
       CREATE INDEX IF NOT EXISTS qf_sessions_expires ON qf_sessions(expires);`);
     const seeded = await query(

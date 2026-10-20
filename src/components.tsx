@@ -7,6 +7,7 @@ import {
   Search,
   Heart,
   ShoppingBag,
+  UserRound,
   Menu,
   X,
   Plus,
@@ -20,6 +21,7 @@ import {
 import { useStore } from "./store";
 import { useTheme } from "./theme";
 import { BusinessLinks } from "./Business";
+import { SocialLinks } from "./Social";
 import { money } from "./api";
 import type { Product } from "./types";
 
@@ -128,6 +130,14 @@ export function Header() {
               <Search size={19} />
             </button>
             <Link
+              className="account-nav"
+              to="/account"
+              aria-label="Your account and orders"
+              title="Your account"
+            >
+              <UserRound size={19} />
+            </Link>
+            <Link
               className="wish-nav"
               to="/wishlist"
               aria-label={`Wishlist, ${wishlist.length} saved products`}
@@ -170,6 +180,9 @@ export function Header() {
           </button>
         </div>
         <nav className="mobile-links">
+          <Link to="/account">
+            Your account & orders <UserRound />
+          </Link>
           <Link to="/shop">
             Shop all <ArrowUpRight />
           </Link>
@@ -186,6 +199,7 @@ export function Header() {
             Get in touch <ArrowUpRight />
           </Link>
         </nav>
+        <SocialLinks />
         <p className="eyebrow">Sizes 7–11 · Pakistan</p>
       </Modal>
       <Modal
@@ -645,7 +659,6 @@ export function BagDrawer() {
   );
 }
 export function Footer() {
-  const { settings } = useStore();
   return (
     <footer className="footer">
       <div className="footer-top">
@@ -665,6 +678,7 @@ export function Footer() {
           </div>
           <div>
             <p>HERE TO HELP</p>
+            <Link to="/account">Your account & orders</Link>
             <Link to="/contact">Get in touch</Link>
             <Link to="/faq">Questions & answers</Link>
             <Link to="/payments">Bank & Easypaisa</Link>
@@ -681,15 +695,7 @@ export function Footer() {
         <span>© {new Date().getFullYear()} QADAM FLEX</span>
         <span>PAKISTAN · PKR</span>
         <div>
-          {settings?.instagram && (
-            <a
-              href={`https://www.instagram.com/${settings.instagram.replace("@", "")}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Instagram
-            </a>
-          )}
+          <SocialLinks />
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
         </div>

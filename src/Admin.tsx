@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { api, money } from "./api";
+import { AdminPayment, paymentLabel } from "./Payment";
 import { previewDashboard } from "./admin-preview";
 import { useStore } from "./store";
 import { Modal } from "./components";
@@ -401,8 +402,12 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                         data.requests.filter((r) => r.kind === "order").length,
                       ],
                       [
-                        "Draft products",
-                        data.products.filter((p) => !p.published).length,
+                        "Receipts to review",
+                        data.requests.filter(
+                          (r) =>
+                            r.data.payment?.status === "under_review" &&
+                            r.status !== "cancelled",
+                        ).length,
                       ],
                     ].map(([label, value]) => (
                       <div className="admin-stat" key={label}>
@@ -515,13 +520,17 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                       <option value="inquiry">Enquiries</option>
                       <option value="order">Orders</option>
                       <option value="new">New enquiries</option>
+                      <option value="receipts">Receipts to review</option>
                     </select>
                   </div>
                   <RequestTable
                     requests={data.requests.filter((r) =>
-                      requestFilter === "all" || requestFilter === "new"
-                        ? requestFilter === "all" || r.status === "new"
-                        : r.kind === requestFilter,
+                      requestFilter === "receipts"
+                        ? r.data.payment?.status === "under_review" &&
+                          r.status !== "cancelled"
+                        : requestFilter === "all" || requestFilter === "new"
+                          ? requestFilter === "all" || r.status === "new"
+                          : r.kind === requestFilter,
                     )}
                     onSelect={setRequest}
                   />
@@ -1216,6 +1225,17 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 </div>
               )}
             </div>
+            <AdminPayment
+              key={request.id}
+              order={request}
+              headers={headers}
+              preview={preview}
+              onUpdated={(updated) => {
+                setRequest(updated);
+                void refresh();
+                setNotice("Order payment updated.");
+              }}
+            />
             {request.data.items.map((i) => (
               <div className="request-item" key={`${i.id}:${i.size}`}>
                 <div>
@@ -1260,6 +1280,7 @@ function RequestTable({
             <th>Customer</th>
             <th>Type</th>
             <th>Status</th>
+            <th>Payment</th>
             <th>Received</th>
             <th />
           </tr>
@@ -1283,6 +1304,9 @@ function RequestTable({
                 >
                   {r.status}
                 </span>
+              </td>
+              <td>
+                {r.data.payment ? paymentLabel(r.data.payment.status) : "—"}
               </td>
               <td>{new Date(r.created).toLocaleDateString()}</td>
               <td>

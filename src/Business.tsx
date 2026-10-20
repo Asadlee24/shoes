@@ -3,12 +3,12 @@ import {
   ArrowUpRight,
   Copy,
   Phone,
-  MessageCircle,
   Instagram,
   Globe,
   CreditCard,
 } from "lucide-react";
 import { useStore } from "./store";
+import { TikTokIcon, WhatsAppIcon } from "./Social";
 export function BusinessLinks() {
   const { settings: s } = useStore();
   if (!s) return null;
@@ -21,7 +21,7 @@ export function BusinessLinks() {
     s.whatsapp && {
       href: `https://wa.me/${s.whatsapp}`,
       text: "WhatsApp",
-      icon: MessageCircle,
+      icon: WhatsAppIcon,
     },
     s.instagram && {
       href: `https://www.instagram.com/${s.instagram.replace(/^@/, "")}`,
@@ -31,7 +31,7 @@ export function BusinessLinks() {
     s.tiktok && {
       href: `https://www.tiktok.com/@${s.tiktok.replace(/^@/, "")}`,
       text: "TikTok",
-      icon: ArrowUpRight,
+      icon: TikTokIcon,
     },
     s.website && {
       href: s.website,
@@ -92,8 +92,9 @@ export function Payments() {
         <p className="eyebrow">PAYMENT DETAILS · PKR</p>
         <h1>Bank & Easypaisa.</h1>
         <p>
-          Confirm your order, size and delivery before paying. Share your
-          receipt and reference on WhatsApp; transfers are confirmed manually.
+          Confirm your order, size and delivery before paying. Sign in to your
+          account to upload your receipt and transaction reference; transfers
+          are confirmed manually.
         </p>
       </div>
       <div className="payment-grid">
@@ -140,6 +141,9 @@ export function Payments() {
             Confirm on WhatsApp <ArrowUpRight size={18} />
           </a>
         )}
+        <Link className="text-link" to="/account">
+          Orders & payment proof
+        </Link>
         <Link className="text-link" to="/shop">
           Back to shoes
         </Link>
