@@ -13,8 +13,6 @@ import {
   CheckCircle2,
   Heart,
   LoaderCircle,
-  Mail,
-  MapPin,
   MessageCircle,
   Search,
   ShoppingBag,
@@ -22,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useStore } from "./store";
+import { BusinessLinks } from "./Business";
 import { api, money, requestId } from "./api";
 import {
   Accordion,
@@ -709,7 +708,8 @@ export function Checkout() {
             </button>
             <p className="legal-note">
               Your details are used to respond to this request.{" "}
-              <Link to="/privacy">Privacy information</Link>
+              <Link to="/privacy">Privacy information</Link> ·{" "}
+              <Link to="/payments">Bank & Easypaisa</Link>
             </p>
           </form>
         </section>
@@ -795,7 +795,6 @@ export function Confirmation() {
 }
 
 export function Contact() {
-  const { settings } = useStore();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [reference, setReference] = useState("");
@@ -819,46 +818,17 @@ export function Contact() {
   }
   return (
     <main className="contact-page section-pad">
-      <p className="eyebrow">A CONVERSATION STARTS HERE</p>
+      <p className="eyebrow">CONTACT</p>
       <div className="contact-layout">
         <section>
-          <h1>
-            Let’s talk
-            <br />
-            about your
-            <br />
-            <em>next step.</em>
-          </h1>
-          <p className="muted">
-            A question about a pair, your size or delivery?
-            <br />
-            Leave us a note.
-          </p>
+          <h1>Get in touch.</h1>
+          <p className="muted">Questions about sizes, orders or delivery.</p>
           <div className="contact-details">
-            {settings?.email && (
-              <a href={`mailto:${settings.email}`}>
-                <Mail size={18} />
-                {settings.email}
-                <ArrowUpRight size={16} />
-              </a>
-            )}
-            {settings?.whatsapp && (
-              <a
-                href={`https://wa.me/${settings.whatsapp}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <MessageCircle size={18} />
-                Chat on WhatsApp <ArrowUpRight size={16} />
-              </a>
-            )}
-            {settings?.address && (
-              <p>
-                <MapPin size={18} />
-                {settings.address}
-              </p>
-            )}
+            <BusinessLinks />
           </div>
+          <Link to="/payments" className="contact-payment-link">
+            Bank & Easypaisa details <ArrowUpRight size={16} />
+          </Link>
         </section>
         <section>
           {reference ? (
@@ -916,7 +886,8 @@ export function Contact() {
               </button>
               <p className="legal-note">
                 Your contact details are used to respond to your note.{" "}
-                <Link to="/privacy">Privacy information</Link>
+                <Link to="/privacy">Privacy information</Link> ·{" "}
+                <Link to="/payments">Bank & Easypaisa</Link>
               </p>
             </form>
           )}

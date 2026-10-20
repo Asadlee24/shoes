@@ -12,6 +12,7 @@ import {
   QuickView,
 } from "./components";
 import Home from "./Home";
+import { Payments } from "./Business";
 import {
   Cart,
   Checkout,
@@ -62,6 +63,7 @@ function Storefront() {
             <Route path="checkout" element={<Checkout />} />
             <Route path="confirmation" element={<Confirmation />} />
             <Route path="contact" element={<Contact />} />
+            <Route path="payments" element={<Payments />} />
             <Route path="faq" element={<FAQ />} />
             {["about", "shipping", "privacy", "terms"].map((p) => (
               <Route key={p} path={p} element={<InfoPage page={p} />} />

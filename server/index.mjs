@@ -209,6 +209,14 @@ export async function createApplication(options = {}) {
         const b = await body(req),
           s = store.settings();
         for (const key of [
+          "website",
+          "phone",
+          "tiktok",
+          "bankAccountHolder",
+          "bankIban",
+          "bankAccountNumber",
+          "easypaisaHolder",
+          "easypaisaNumber",
           "email",
           "whatsapp",
           "instagram",
@@ -218,6 +226,30 @@ export async function createApplication(options = {}) {
           "returnsText",
         ])
           if (typeof b[key] === "string") s[key] = b[key].trim().slice(0, 1500);
+        if (s.website && !/^https:\/\/[^\s/]+(?:\/[^\s]*)?$/.test(s.website))
+          throw new HttpError(400, "Use a valid HTTPS website address.");
+        if (s.phone && !/^(?:\+92|92|0)3\d{9}$/.test(s.phone))
+          throw new HttpError(400, "Enter a valid Pakistani contact number.");
+        if (s.tiktok && !/^[a-zA-Z0-9_.]{1,60}$/.test(s.tiktok))
+          throw new HttpError(
+            400,
+            "Use the TikTok username without @ or a URL.",
+          );
+        if (s.bankIban) {
+          s.bankIban = s.bankIban.replace(/\s/g, "").toUpperCase();
+          if (!/^PK\d{2}[A-Z]{4}\d{16}$/.test(s.bankIban))
+            throw new HttpError(400, "Enter a valid Pakistani IBAN.");
+          const digits = (s.bankIban.slice(4) + s.bankIban.slice(0, 4)).replace(
+            /[A-Z]/g,
+            (c) => String(c.charCodeAt(0) - 55),
+          );
+          if (BigInt(digits) % 97n !== 1n)
+            throw new HttpError(400, "The IBAN checksum is invalid.");
+        }
+        if (s.bankAccountNumber && !/^\d{8,24}$/.test(s.bankAccountNumber))
+          throw new HttpError(400, "Enter a valid bank account number.");
+        if (s.easypaisaNumber && !/^03\d{9}$/.test(s.easypaisaNumber))
+          throw new HttpError(400, "Enter a valid Easypaisa mobile number.");
         if (s.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email))
           throw new HttpError(400, "Enter a valid contact email.");
         if (s.whatsapp && !/^\d{10,15}$/.test(s.whatsapp))

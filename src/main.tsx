@@ -4,6 +4,7 @@ import App from "./App";
 import "./styles.css";
 import "./monochrome.css";
 import "./brand.css";
+import "./business.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

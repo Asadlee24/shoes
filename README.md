@@ -48,20 +48,20 @@ To use another port: `npm run dev -- --port 3001`. The server binds to 127.0.0.1
 
 - Products: add/edit products, photos, gallery order, descriptions, category, color, size labels, price and **inventory for each size**; publish/unpublish and choose homepage features.
 - Enquiries/orders: view saved customer details and selections; change statuses.
-- Settings: contact email, WhatsApp, Instagram, address, announcement, delivery price, delivery/return wording and cash-on-delivery availability.
+- Settings: official website, phone, WhatsApp, Instagram, TikTok, bank/Easypaisa details, email, address, announcement, delivery price, delivery/return wording and cash-on-delivery availability.
 - Discounts: percentage/fixed codes, minimum spend and expiry.
 
 Passwords are hashed with scrypt. Sessions use hashed random tokens and HTTP-only SameSite cookies. Admin changes require a session and CSRF token. Customer records and the local database are not public assets.
 
 ## Real business data still needed
 
-The owner supplied these PKR prices: brown suede Rs 3,500; black textured Rs 2,200; black formal Rs 2,800; dark brown textured Rs 2,200. The dark brown textured style remains a draft until its full product photograph is supplied. The separate dark suede style remains unpriced because it does not appear in the supplied price list. Size-specific stock, the sizing system, shipping fees, business contacts and final exchange/return terms are still needed.
+The owner supplied these PKR prices: brown suede Rs 3,500; black textured Rs 2,200; black formal Rs 2,800; dark brown textured Rs 2,200. The dark brown textured style remains a draft until its full product photograph is supplied. The separate dark suede style remains unpriced because it does not appear in the supplied price list. Size-specific stock, the sizing system, shipping fees and final exchange/return terms are still needed.
 
 Confirmed prices appear on cards, product pages and bag subtotals. Unpriced products show **Price on request**. Customers can submit an enquiry without payment or a false purchase confirmation. When a product has a price and known inventory for the selected size, shipping is configured, and COD is enabled, the same form can create a local cash-on-delivery order. Availability and totals are validated on the server. Stock is reserved transactionally and restored once if an order is cancelled.
 
 The supplied labels are **7–11**; do not describe them as UK/US/EU or add conversion tables without confirmation. Product material descriptions reflect appearance, not certifications. Confirm the dark suede loafer's final black/navy color name. Manufacturer markings in the photographs are preserved.
 
-Online card payments, courier bookings, live email/SMS and a public deployment are not connected. A recorded enquiry is visible in the administrator area; it is not automatically sent to a phone or email address. WhatsApp links appear only after a valid business number is configured.
+Online card payments, courier bookings, live email/SMS and a public deployment are not connected. A recorded enquiry is visible in the administrator area; it is not automatically sent to a phone or email address. Official phone and social links are configured. The Bank & Easypaisa page has copyable account details; customers confirm their order before transferring, and receipts are checked manually. Bank details do not create or verify a payment.
 
 ## Files and data
 
@@ -83,7 +83,7 @@ Online card payments, courier bookings, live email/SMS and a public deployment a
 - `data/store.db`: runtime SQLite database (ignored by Git).
 - `.env`: private local configuration (ignored by Git).
 
-The black and brown studio images are AI-assisted photographic cutouts. Original product photographs remain in the galleries. The display environment uses Three.js geometry and lighting; the footwear is photo-textured with limited perspective, not a genuine 360-degree product model.
+The homepage uses two solid GLB loafer illustrations with unlimited yaw rotation, mouse movement, touch dragging, keyboard controls, and pausable auto rotation. Both models have an equal 4.5-unit length and a fixed 0.1-unit clearance above the plinth. They are illustrative reconstructions, not exact product scans; original product photographs remain in the galleries. The photographic fallback is labelled and used when WebGL is unavailable. The reproducible Blender script is in scripts/build-loafer-assets.py.
 
 Back up `data/`, uploaded photos under `public/products/upload-*`, and `.env` privately. Do not commit customer data or secrets to GitHub. Ordinary seed edits do not overwrite an existing database. The one-time owner price migration fills the four previously unpriced entries on startup and preserves administrator price edits, size inventory and customer records. Use the administrator for ongoing changes.
 

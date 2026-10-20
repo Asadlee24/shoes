@@ -587,6 +587,35 @@ export default function Admin() {
                       </label>
                     </section>
                     <section>
+                      <h2>Official details & manual payments</h2>
+                      {(
+                        [
+                          ["website", "Official website"],
+                          ["phone", "Contact number"],
+                          ["tiktok", "TikTok username"],
+                          ["bankAccountHolder", "Bank account holder"],
+                          ["bankIban", "Bank IBAN"],
+                          ["bankAccountNumber", "Bank account number"],
+                          ["easypaisaHolder", "Easypaisa account holder"],
+                          ["easypaisaNumber", "Easypaisa number"],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <label key={key}>
+                          {label}
+                          <input
+                            value={settings[key] || ""}
+                            onChange={(e) =>
+                              setSettings({
+                                ...settings,
+                                [key]: e.target.value,
+                              })
+                            }
+                            maxLength={200}
+                          />
+                        </label>
+                      ))}
+                    </section>
+                    <section>
                       <h2>Delivery & checkout</h2>
                       <label>
                         Delivery fee in PKR

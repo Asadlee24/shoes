@@ -34,6 +34,14 @@ export type Settings = {
   email: string;
   whatsapp: string;
   instagram: string;
+  website: string;
+  phone: string;
+  tiktok: string;
+  bankAccountHolder: string;
+  bankIban: string;
+  bankAccountNumber: string;
+  easypaisaHolder: string;
+  easypaisaNumber: string;
   address: string;
   announcement: string;
   shippingFee: number | null;

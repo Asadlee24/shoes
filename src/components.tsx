@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useStore } from "./store";
 import { useTheme } from "./theme";
+import { BusinessLinks } from "./Business";
 import { money } from "./api";
 import type { Product } from "./types";
 
@@ -666,8 +667,13 @@ export function Footer() {
             <p>HERE TO HELP</p>
             <Link to="/contact">Get in touch</Link>
             <Link to="/faq">Questions & answers</Link>
+            <Link to="/payments">Bank & Easypaisa</Link>
             <Link to="/shipping">Delivery & exchanges</Link>
             <Link to="/about">About</Link>
+          </div>
+          <div>
+            <p>CONTACT</p>
+            <BusinessLinks />
           </div>
         </div>
       </div>

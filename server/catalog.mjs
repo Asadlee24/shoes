@@ -135,12 +135,23 @@ export const initialProducts = [
     details: [],
   },
 ];
+export const officialDetails = {
+  website: "https://qadamflex.bond",
+  phone: "03237205097",
+  whatsapp: "923237205097",
+  instagram: "qadamflex",
+  tiktok: "qadamflexoffical",
+  bankAccountHolder: "Ammar Alamgir",
+  bankIban: "PK84ABPA0011935002260015",
+  bankAccountNumber: "0011935002260015",
+  easypaisaHolder: "Ammar Alamgir",
+  easypaisaNumber: "03149537795",
+};
 export const initialSettings = {
   brand: "QADAM FLEX",
   currency: "PKR",
   email: "",
-  whatsapp: "",
-  instagram: "",
+  ...officialDetails,
   address: "",
   announcement: "A considered collection. A better step.",
   shippingFee: null,

@@ -55,9 +55,9 @@ test("manual movement visibly rotates both render paths and stops scheduling fra
   flush();
   assert.deepEqual(rendered.at(-1), { x: 1, y: -1 });
   const pose = studioPose(rendered.at(-1));
-  assert.ok(pose.yaw > 0.7);
-  assert.ok(pose.pitch < -0.35);
-  assert.match(pose.css, /rotateY\(41.25deg\)/);
+  assert.ok(pose.yaw > 2.7);
+  assert.equal(pose.cameraHeight, 5.7);
+  assert.match(pose.css, /rotateY/);
   assert.equal(queue.size, 0);
   controller.reset();
   flush();
@@ -81,9 +81,47 @@ test("offscreen motion pauses, resumes at the requested view and cleans up pendi
   assert.equal(rendered.length, 0);
   controller.setActive(true);
   flush();
-  assert.deepEqual(rendered.at(-1), { x: 1, y: -1 });
+  assert.deepEqual(rendered.at(-1), { x: 10, y: -1 });
   controller.moveTo({ x: 0, y: 0 });
   assert.equal(queue.size, 1);
   controller.dispose();
   assert.equal(queue.size, 0);
+});
+
+// Multiple complete turns must remain possible in either direction.
+test("continuous yaw crosses both full revolutions without snapping or clamping", () => {
+  const { controller, rendered } = harness(true);
+  for (const x of [-8, -2.1, 0, 2.1, 8]) {
+    controller.moveTo({ x, y: 0 });
+    assert.equal(rendered.at(-1).x, x);
+    assert.ok(
+      Math.abs(
+        studioPose({ x: x + 2, y: 0 }).yaw -
+          studioPose({ x, y: 0 }).yaw -
+          Math.PI * 2,
+      ) < 1e-12,
+    );
+  }
+});
+test("automatic rotation advances, pauses offscreen, and respects reduced motion", () => {
+  const { controller, queue, rendered } = harness();
+  controller.setRotating(true);
+  const step = (time) => {
+    const [key, cb] = queue.entries().next().value;
+    queue.delete(key);
+    cb(time);
+  };
+  step(16);
+  step(32);
+  step(48);
+  assert.ok(rendered.at(-1).x > rendered[0].x);
+  controller.setActive(false);
+  assert.equal(queue.size, 0);
+  controller.setActive(true);
+  assert.equal(queue.size, 1);
+  controller.setReduced(true);
+  assert.equal(queue.size, 0);
+  controller.moveTo({ x: 4, y: 0 });
+  assert.equal(rendered.at(-1).x, 4);
+  controller.dispose();
 });

@@ -10,6 +10,10 @@ try {
   for (const path of [
     "/",
     "/shop",
+    "/payments",
+    "/contact",
+    "/src/Business.tsx",
+    "/models/qadam-loafers.glb",
     "/product/brown-suede-loafer",
     "/admin",
     "/api/catalog",

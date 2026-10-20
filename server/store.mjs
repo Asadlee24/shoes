@@ -5,6 +5,7 @@ import {
   initialProducts,
   initialSettings,
   confirmedPrices,
+  officialDetails,
 } from "./catalog.mjs";
 
 export function openStore(path) {
@@ -47,6 +48,23 @@ export function openStore(path) {
       }
       db.prepare("INSERT INTO migrations VALUES(?,?)").run(
         revision,
+        new Date().toISOString(),
+      );
+    }
+    const detailsRevision = "owner-official-details-2026-10-20";
+    if (
+      !db.prepare("SELECT id FROM migrations WHERE id=?").get(detailsRevision)
+    ) {
+      const settings = JSON.parse(
+        db.prepare("SELECT data FROM settings WHERE id=1").get().data,
+      );
+      for (const [key, value] of Object.entries(officialDetails))
+        if (!settings[key]) settings[key] = value;
+      db.prepare("UPDATE settings SET data=? WHERE id=1").run(
+        JSON.stringify(settings),
+      );
+      db.prepare("INSERT INTO migrations VALUES(?,?)").run(
+        detailsRevision,
         new Date().toISOString(),
       );
     }

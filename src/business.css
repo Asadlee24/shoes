@@ -1,0 +1,228 @@
+.business-links {
+  display: grid;
+  gap: 14px;
+}
+.business-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.business-links a:hover {
+  opacity: 0.65;
+}
+.footer-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+}
+.footer .business-links a {
+  font-size: 12px;
+}
+.payments-page {
+  min-height: 70vh;
+  padding-top: 65px;
+  padding-bottom: 85px;
+}
+.payment-intro {
+  max-width: 660px;
+}
+.payment-intro h1 {
+  font-size: clamp(38px, 5vw, 70px);
+  line-height: 1.05;
+  margin: 18px 0 25px;
+}
+.payment-intro > p:last-child {
+  max-width: 560px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.payment-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 25px;
+  margin-top: 45px;
+}
+.payment-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 32px;
+}
+.payment-card-heading {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+.payment-card-heading h2 {
+  font-size: 23px;
+}
+.payment-card dl {
+  margin: 0;
+}
+.payment-row {
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.payment-row dt {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 9px;
+}
+.payment-row dd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.payment-code {
+  font-family: ui-monospace, monospace;
+  font-size: clamp(12px, 1.3vw, 17px);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.payment-row button {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+.payment-row button:hover {
+  background: var(--surface);
+}
+.payment-followup {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+.contact-details .business-links {
+  margin-top: 12px;
+}
+.contact-payment-link {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 25px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+}
+.studio-disclosure {
+  position: absolute;
+  left: 19%;
+  top: 28px;
+  font-size: 9px;
+  color: var(--muted);
+  z-index: 3;
+  pointer-events: none;
+}
+.stage-interaction {
+  gap: 12px;
+}
+.stage-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+.stage-buttons button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+}
+/* Equal visual footprint and neutral pose for both studio cutouts. */
+.product-media.cutout-card > a {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.product-media.cutout-card > a > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+  object-fit: contain !important;
+  transform: translate(-2.7%, -1.1%) rotate(-22deg) scale(0.942);
+}
+.product-media.textured-cutout-card > a > img {
+  transform: translate(-4.1%, -1.5%) rotate(-38deg) scale(0.69);
+}
+.product-media.cutout-card:hover > a > img {
+  transform: translate(-2.7%, -2.2%) rotate(-22deg) scale(0.97);
+}
+.product-media.textured-cutout-card:hover > a > img {
+  transform: translate(-4.1%, -2.7%) rotate(-38deg) scale(0.71);
+}
+.showroom-object > img.black-cutout {
+  transform: rotate(-30deg);
+  width: 78%;
+  height: 65%;
+  left: 11%;
+  top: 9%;
+}
+.showroom-object > img.brown-cutout {
+  transform: rotate(-7deg);
+  width: 88%;
+  height: 65%;
+  left: 6%;
+  top: 9%;
+}
+.showroom-fallback .fallback-plinth {
+  bottom: 12%;
+  height: 15%;
+  left: 14%;
+  width: 72%;
+}
+.mono-stage {
+  overflow: hidden;
+}
+.showroom {
+  bottom: 120px;
+}
+.stage-product {
+  bottom: 20px;
+}
+.stage-interaction {
+  bottom: 115px;
+}
+@media (max-width: 800px) {
+  .payment-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .footer-links > div:last-child {
+    grid-column: 1/-1;
+  }
+  .footer .business-links {
+    grid-template-columns: 1fr 1fr;
+  }
+  .payment-card {
+    padding: 24px;
+  }
+  .payments-page {
+    padding-top: 40px;
+  }
+  .payment-grid {
+    margin-top: 30px;
+  }
+  .studio-disclosure {
+    left: 10%;
+    top: 20px;
+  }
+}

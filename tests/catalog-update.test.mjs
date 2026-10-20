@@ -59,3 +59,45 @@ test("existing stores receive confirmed prices once without overwriting admin ed
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("official details migrate into existing stores once and preserve later administrator edits", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "qadam-details-"));
+  const path = join(dir, "legacy.db");
+  let store;
+  try {
+    const legacy = new DatabaseSync(path);
+    legacy.exec(
+      "CREATE TABLE products(id TEXT PRIMARY KEY,data TEXT NOT NULL); CREATE TABLE settings(id INTEGER PRIMARY KEY,data TEXT NOT NULL);",
+    );
+    const settings = {
+      ...initialSettings,
+      instagram: "owner_custom",
+      phone: "",
+      bankIban: "",
+      bankAccountNumber: "",
+      easypaisaNumber: "",
+    };
+    delete settings.tiktok;
+    legacy
+      .prepare("INSERT INTO settings VALUES(1,?)")
+      .run(JSON.stringify(settings));
+    legacy.close();
+    store = openStore(path);
+    assert.equal(store.settings().phone, "03237205097");
+    assert.equal(store.settings().instagram, "owner_custom");
+    assert.equal(store.settings().tiktok, "qadamflexoffical");
+    assert.equal(store.settings().bankAccountNumber, "0011935002260015");
+    store.saveSettings({
+      ...store.settings(),
+      phone: "03001234567",
+      easypaisaNumber: "",
+    });
+    store.db.close();
+    store = openStore(path);
+    assert.equal(store.settings().phone, "03001234567");
+    assert.equal(store.settings().easypaisaNumber, "");
+  } finally {
+    store?.db.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});

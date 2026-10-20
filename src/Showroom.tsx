@@ -36,16 +36,20 @@ export default function Showroom({
   image,
   dark,
   reset,
+  rotating,
 }: {
   image: string;
   dark: boolean;
   reset: number;
+  rotating: boolean;
 }) {
   const element = useRef<HTMLDivElement>(null),
     photo = useRef<HTMLDivElement>(null);
   const motion = useRef<StudioPosition>({ x: 0, y: 0 });
   const control = useRef<StudioMotion | null>(null);
   const invalidate = useRef<() => void>(() => {});
+  const autoRotate = useRef(false),
+    hovering = useRef(false);
   const [ready, setReady] = useState(false),
     [supported, setSupported] = useState(false);
   const help = useId();
@@ -82,21 +86,36 @@ export default function Showroom({
       y: number;
       start: StudioPosition;
     } | null = null;
+    let previousMouse: { x: number; y: number } | null = null;
     const move = (event: PointerEvent) => {
       const bounds = surface.getBoundingClientRect();
+      controller.setRotating(false);
       if (drag && event.pointerId === drag.id) {
         controller.moveTo({
           x:
             drag.start.x +
-            ((event.clientX - drag.x) / Math.max(bounds.width, 1)) * 3.2,
+            ((event.clientX - drag.x) / Math.max(bounds.width, 1)) * 2.4,
           y:
             drag.start.y +
             ((event.clientY - drag.y) / Math.max(bounds.height, 1)) * 2.5,
         });
-      } else if (event.pointerType !== "touch")
-        controller.moveTo(
-          pointerPosition(event.clientX, event.clientY, bounds),
-        );
+      } else if (event.pointerType !== "touch") {
+        const target = controller.readTarget();
+        const vertical = pointerPosition(
+          event.clientX,
+          event.clientY,
+          bounds,
+        ).y;
+        if (previousMouse)
+          controller.moveTo({
+            x:
+              target.x +
+              ((event.clientX - previousMouse.x) / Math.max(bounds.width, 1)) *
+                2.4,
+            y: vertical,
+          });
+        previousMouse = { x: event.clientX, y: event.clientY };
+      }
     };
     const down = (event: PointerEvent) => {
       if (
@@ -111,6 +130,7 @@ export default function Showroom({
         y: event.clientY,
         start: controller.readTarget(),
       };
+      controller.setRotating(false);
       surface.dataset.dragging = "true";
       surface.setPointerCapture(event.pointerId);
       if (event.pointerType !== "touch") event.preventDefault();
@@ -121,9 +141,17 @@ export default function Showroom({
       delete surface.dataset.dragging;
       if (surface.hasPointerCapture(event.pointerId))
         surface.releasePointerCapture(event.pointerId);
+      if (event.pointerType === "touch")
+        controller.setRotating(autoRotate.current);
+    };
+    const enter = () => {
+      hovering.current = true;
+      controller.setRotating(false);
     };
     const leave = () => {
-      if (!drag) controller.reset();
+      hovering.current = false;
+      previousMouse = null;
+      if (!drag) controller.setRotating(autoRotate.current);
     };
     const change = () => controller.setReduced(media.matches);
     surface.addEventListener("pointermove", move, true);
@@ -132,6 +160,7 @@ export default function Showroom({
     surface.addEventListener("pointercancel", end, true);
     surface.addEventListener("lostpointercapture", end, true);
     surface.addEventListener("pointerleave", leave);
+    surface.addEventListener("pointerenter", enter);
     media.addEventListener("change", change);
     const observer =
       typeof IntersectionObserver !== "undefined"
@@ -159,6 +188,7 @@ export default function Showroom({
       surface.removeEventListener("pointercancel", end, true);
       surface.removeEventListener("lostpointercapture", end, true);
       surface.removeEventListener("pointerleave", leave);
+      surface.removeEventListener("pointerenter", enter);
       media.removeEventListener("change", change);
       delete surface.dataset.dragging;
     };
@@ -166,6 +196,10 @@ export default function Showroom({
   useEffect(() => {
     control.current?.reset();
   }, [image, reset]);
+  useEffect(() => {
+    autoRotate.current = ready && rotating;
+    control.current?.setRotating(autoRotate.current && !hovering.current);
+  }, [ready, rotating]);
   return (
     <div
       className={`showroom ${ready ? "scene-ready" : ""}`}
@@ -191,15 +225,18 @@ export default function Showroom({
         if (step) {
           event.preventDefault();
           control.current?.moveTo({
-            x: clampAxis(position.x + step.x),
+            x: position.x + step.x,
             y: clampAxis(position.y + step.y),
           });
         }
       }}
     >
       <span className="showroom-help" id={help}>
-        Move your mouse or drag to tilt the shoe. Arrow keys adjust the view.
-        Home resets it.
+        Move your mouse or drag left and right for a full 360 degree view. Arrow
+        keys adjust the view. Home resets it.
+      </span>
+      <span className="studio-disclosure">
+        {ready ? "3D illustration · Drag 360°" : "Product photograph"}
       </span>
       <div className="showroom-fallback" aria-hidden="true">
         <span className="fallback-plinth" />

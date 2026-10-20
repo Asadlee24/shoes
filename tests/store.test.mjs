@@ -352,6 +352,49 @@ test("image magic bytes are verified, even for an allowed MIME type", async () =
   );
   assert.equal(r.status, 400);
 });
+test("official contact and manual payment details are public and retain leading zeroes", async () => {
+  const r = await request("/api/catalog");
+  const s = r.data.settings;
+  assert.equal(s.website, "https://qadamflex.bond");
+  assert.equal(s.phone, "03237205097");
+  assert.equal(s.whatsapp, "923237205097");
+  assert.equal(s.instagram, "qadamflex");
+  assert.equal(s.tiktok, "qadamflexoffical");
+  assert.equal(s.bankAccountHolder, "Ammar Alamgir");
+  assert.equal(s.bankIban, "PK84ABPA0011935002260015");
+  assert.equal(s.bankAccountNumber, "0011935002260015");
+  assert.equal(s.easypaisaHolder, "Ammar Alamgir");
+  assert.equal(s.easypaisaNumber, "03149537795");
+});
+test("manual payment settings validate account identifiers before saving", async () => {
+  const s = app.store.settings();
+  for (const patch of [
+    { bankIban: "PK85ABPA0011935002260015" },
+    { bankAccountNumber: "ABC12345" },
+    { easypaisaNumber: "3149537795" },
+    { website: "javascript:alert(1)" },
+  ])
+    assert.equal(
+      (
+        await request(
+          "/api/admin/settings",
+          "PUT",
+          { ...s, ...patch },
+          adminHeaders(),
+        )
+      ).status,
+      400,
+    );
+  const saved = await request(
+    "/api/admin/settings",
+    "PUT",
+    { ...s, bankIban: "PK84 ABPA 0011 9350 0226 0015" },
+    adminHeaders(),
+  );
+  assert.equal(saved.status, 200);
+  assert.equal(app.store.settings().bankIban, "PK84ABPA0011935002260015");
+  assert.equal(app.store.settings().bankAccountNumber, "0011935002260015");
+});
 test("administrator logout invalidates the session", async () => {
   assert.equal(
     (await request("/api/admin/logout", "POST", {}, adminHeaders())).status,
