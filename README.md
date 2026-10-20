@@ -1,6 +1,6 @@
 # QADAM FLEX
 
-A complete local footwear boutique built around the owner's loafer photographs and approved logo. Includes the original “A considered step” storefront, the approved transparent logo, pointer-driven shoe motion, product browsing, persistent bag and wishlist, customer enquiries, configurable cash-on-delivery checkout, and protected store management.
+A complete local footwear boutique built around the owner's loafer photographs and approved logo. Includes the second “GOOD FORM” monochrome storefront, the approved transparent logo, an interactive Three.js studio, product browsing, persistent bag and wishlist, customer enquiries, configurable cash-on-delivery checkout, and protected store management.
 
 ## Run locally
 
@@ -29,9 +29,10 @@ To use another port: `npm run dev -- --port 3001`. The server binds to 127.0.0.1
 
 ## Storefront
 
-- Original dark olive/chalk storefront, serif display typography, curved shoe display and responsive layouts, restored at the owner’s request.
+- The owner-selected second “GOOD FORM” design: black/chalk monochrome palette, bold typography, responsive layouts and a persistent light/dark switch.
 - Clear horizontal logo lockups in the header/menu and the full approved stacked logo in the footer.
-- Pointer-driven shoe perspective, GSAP entrance/scroll transitions and reduced-motion alternatives.
+- Lazy-loaded Three.js studio with a display plinth, lighting, photo-textured footwear and subtle mouse-driven perspective. Switch between black textured and brown suede pairs.
+- GSAP entrance/scroll motion, reduced-motion support, offscreen pause and photographic loading/WebGL fallbacks.
 - Four published products from the supplied photos; the unpictured dark-brown textured loafer is retained as a draft.
 - Shop with URL-based search, collection/color/size filters and sorting.
 - Product galleries, quick view, image enlargement, size selector and related products.
@@ -65,9 +66,11 @@ Online card payments, courier bookings, live email/SMS and a public deployment a
 - `server/catalog.mjs`: initial catalog and default settings, seeded once for a new database.
 - `server/index.mjs`: HTTP server, API, authentication, checkout and file uploads.
 - `server/store.mjs`: SQLite persistence, catalog and input validation, total calculation.
-- `src/Home.tsx`, `src/styles.css`: original restored storefront layout and design system.
+- `src/Home.tsx`, `src/monochrome.css`: the selected second storefront layout and monochrome design system.
+- `src/styles.css`: shared storefront and administration components.
+- `src/Showroom.tsx`: Three.js display scene with photographic footwear and limited pointer perspective.
+- `src/theme.tsx`: persistent light/dark theme. The head script applies the stored preference before rendering.
 - `src/brand.css`: approved logo placement, theme-context contrast and responsive lockups.
-- The earlier monochrome/Three.js experiment is retained in Git history; its optional source modules are not used by the restored storefront.
 - `src/styles.css`: shared storefront and administration components.
 - `src/Pages.tsx`: storefront routes and forms.
 - `src/Admin.tsx`: protected management UI.
@@ -76,7 +79,7 @@ Online card payments, courier bookings, live email/SMS and a public deployment a
 - `data/store.db`: runtime SQLite database (ignored by Git).
 - `.env`: private local configuration (ignored by Git).
 
-The brown hero is an AI-assisted photographic cutout. Original product photographs remain in the cards and galleries. The restored display uses limited photographic perspective, not a 360-degree shoe model.
+The black and brown studio images are AI-assisted photographic cutouts. Original product photographs remain in the galleries. The display environment uses Three.js geometry and lighting; the footwear is photo-textured with limited perspective, not a genuine 360-degree product model.
 
 Back up `data/`, uploaded photos under `public/products/upload-*`, and `.env` privately. Do not commit customer data or secrets to GitHub. Ordinary seed edits do not overwrite an existing database. The one-time owner price migration fills the four previously unpriced entries on startup and preserves administrator price edits, size inventory and customer records. Use the administrator for ongoing changes.
 

@@ -24,8 +24,8 @@
   height: 54px;
   filter: brightness(0.62) saturate(0.88);
 }
-.brand-on-dark .brand-emblem,
-.brand-on-dark .brand-wordmark {
+:root[data-theme="dark"] .brand-emblem,
+:root[data-theme="dark"] .brand-wordmark {
   filter: none;
 }
 .header-inner {
