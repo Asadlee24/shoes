@@ -46,15 +46,20 @@ after(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
-test("catalog contains four real published styles, honest prices and size labels", async () => {
+test("catalog contains four published styles, confirmed PKR prices and size labels", async () => {
   const r = await request("/api/catalog");
   assert.equal(r.status, 200);
   assert.equal(r.data.products.length, 4);
-  assert.ok(
-    r.data.products.every(
-      (p) => p.price === null && p.sizes.join(",") === "7,8,9,10,11",
-    ),
+  assert.deepEqual(
+    Object.fromEntries(r.data.products.map((p) => [p.id, p.price])),
+    {
+      "suede-penny": 350000,
+      "textured-bit": 220000,
+      "evening-bit": 280000,
+      "midnight-penny": null,
+    },
   );
+  assert.ok(r.data.products.every((p) => p.sizes.join(",") === "7,8,9,10,11"));
   assert.equal("discounts" in r.data.settings, false);
   product = r.data.products[0];
 });
@@ -102,7 +107,10 @@ test("admin writes require a valid CSRF token", async () => {
 });
 test("unpriced selections save an inquiry, with no invented total", async () => {
   const key = randomUUID(),
-    payload = { customer, items: selection() };
+    payload = {
+      customer,
+      items: [{ id: "midnight-penny", size: "7", quantity: 1 }],
+    };
   const r = await request("/api/requests", "POST", payload, {
     "Idempotency-Key": key,
   });

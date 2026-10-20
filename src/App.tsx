@@ -2,7 +2,6 @@ import { Component, lazy, Suspense, useEffect } from "react";
 import type { ReactNode } from "react";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { StoreProvider, useStore } from "./store";
-import { ThemeProvider } from "./theme";
 import {
   BagDrawer,
   ErrorState,
@@ -101,19 +100,17 @@ class StoreErrorBoundary extends Component<
 export default function App() {
   return (
     <StoreErrorBoundary>
-      <ThemeProvider>
-        <BrowserRouter>
-          <StoreProvider>
-            <ScrollPosition />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/admin/*" element={<Admin />} />
-                <Route path="*" element={<Storefront />} />
-              </Routes>
-            </Suspense>
-          </StoreProvider>
-        </BrowserRouter>
-      </ThemeProvider>
+      <BrowserRouter>
+        <StoreProvider>
+          <ScrollPosition />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/admin/*" element={<Admin />} />
+              <Route path="*" element={<Storefront />} />
+            </Routes>
+          </Suspense>
+        </StoreProvider>
+      </BrowserRouter>
     </StoreErrorBoundary>
   );
 }

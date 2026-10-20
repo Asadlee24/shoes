@@ -1,6 +1,6 @@
 # QADAM FLEX
 
-A complete local footwear boutique built around the owner's loafer photographs and approved logo. Includes a monochrome light/dark storefront, an interactive Three.js studio, product browsing, persistent bag and wishlist, customer enquiries, configurable cash-on-delivery checkout, and protected store management.
+A complete local footwear boutique built around the owner's loafer photographs and approved logo. Includes the original “A considered step” storefront, the approved transparent logo, pointer-driven shoe motion, product browsing, persistent bag and wishlist, customer enquiries, configurable cash-on-delivery checkout, and protected store management.
 
 ## Run locally
 
@@ -29,9 +29,9 @@ To use another port: `npm run dev -- --port 3001`. The server binds to 127.0.0.1
 
 ## Storefront
 
-- Black/chalk monochrome design, bold display typography, a persistent light/dark toggle and a new editorial homepage.
-- Lazy-loaded Three.js studio with a dimensional display plinth, scene lighting, alpha-aware product shadows and limited pointer-driven perspective. Switch between the black textured and brown suede pairs.
-- Scroll-linked detail imagery, responsive product cards, GSAP transitions and reduced-motion alternatives. The WebGL scene pauses offscreen and retains a photographic fallback on unsupported devices.
+- Original dark olive/chalk storefront, serif display typography, curved shoe display and responsive layouts, restored at the owner’s request.
+- Clear horizontal logo lockups in the header/menu and the full approved stacked logo in the footer.
+- Pointer-driven shoe perspective, GSAP entrance/scroll transitions and reduced-motion alternatives.
 - Four published products from the supplied photos; the unpictured dark-brown textured loafer is retained as a draft.
 - Shop with URL-based search, collection/color/size filters and sorting.
 - Product galleries, quick view, image enlargement, size selector and related products.
@@ -52,9 +52,9 @@ Passwords are hashed with scrypt. Sessions use hashed random tokens and HTTP-onl
 
 ## Real business data still needed
 
-The owner has not supplied prices, size-specific stock, the sizing system, shipping fees, business contacts or final exchange/return terms. These are intentionally **not invented**.
+The owner supplied these PKR prices: brown suede Rs 3,500; black textured Rs 2,200; black formal Rs 2,800; dark brown textured Rs 2,200. The dark brown textured style remains a draft until its full product photograph is supplied. The separate dark suede style remains unpriced because it does not appear in the supplied price list. Size-specific stock, the sizing system, shipping fees, business contacts and final exchange/return terms are still needed.
 
-All original products initially show **Price on request**. Customers can submit an enquiry without payment or a false purchase confirmation. When a product has a price and known inventory for the selected size, shipping is configured, and COD is enabled, the same form can create a local cash-on-delivery order. Availability and totals are validated on the server. Stock is reserved transactionally and restored once if an order is cancelled.
+Confirmed prices appear on cards, product pages and bag subtotals. Unpriced products show **Price on request**. Customers can submit an enquiry without payment or a false purchase confirmation. When a product has a price and known inventory for the selected size, shipping is configured, and COD is enabled, the same form can create a local cash-on-delivery order. Availability and totals are validated on the server. Stock is reserved transactionally and restored once if an order is cancelled.
 
 The supplied labels are **7–11**; do not describe them as UK/US/EU or add conversion tables without confirmation. Product material descriptions reflect appearance, not certifications. Confirm the dark suede loafer's final black/navy color name. Manufacturer markings in the photographs are preserved.
 
@@ -65,9 +65,9 @@ Online card payments, courier bookings, live email/SMS and a public deployment a
 - `server/catalog.mjs`: initial catalog and default settings, seeded once for a new database.
 - `server/index.mjs`: HTTP server, API, authentication, checkout and file uploads.
 - `server/store.mjs`: SQLite persistence, catalog and input validation, total calculation.
-- `src/Home.tsx`, `src/monochrome.css`: redesigned showroom layout and monochrome design system.
-- `src/Showroom.tsx`: optional Three.js display scene, lighting and product presentation.
-- `src/theme.tsx`: persistent light/dark theme; the head script in `index.html` applies the saved choice before rendering.
+- `src/Home.tsx`, `src/styles.css`: original restored storefront layout and design system.
+- `src/brand.css`: approved logo placement, theme-context contrast and responsive lockups.
+- The earlier monochrome/Three.js experiment is retained in Git history; its optional source modules are not used by the restored storefront.
 - `src/styles.css`: shared storefront and administration components.
 - `src/Pages.tsx`: storefront routes and forms.
 - `src/Admin.tsx`: protected management UI.
@@ -76,15 +76,16 @@ Online card payments, courier bookings, live email/SMS and a public deployment a
 - `data/store.db`: runtime SQLite database (ignored by Git).
 - `.env`: private local configuration (ignored by Git).
 
-The black and brown studio images are AI-assisted photographic cutouts for visual presentation. Original product photographs remain available in each gallery. The display environment uses actual Three.js geometry and lighting; the shoes remain photo-textured planes with tightly limited perspective. This is not a genuine 360-degree product model; no unrelated shoe model is substituted.
+The brown hero is an AI-assisted photographic cutout. Original product photographs remain in the cards and galleries. The restored display uses limited photographic perspective, not a 360-degree shoe model.
 
-Back up `data/`, uploaded photos under `public/products/upload-*`, and `.env` privately. Do not commit customer data or secrets to GitHub. Editing seed data does not overwrite an existing database: use the administrator for ongoing changes.
+Back up `data/`, uploaded photos under `public/products/upload-*`, and `.env` privately. Do not commit customer data or secrets to GitHub. Ordinary seed edits do not overwrite an existing database. The one-time owner price migration fills the four previously unpriced entries on startup and preserves administrator price edits, size inventory and customer records. Use the administrator for ongoing changes.
 
 ## Validation
 
 ```bash
 npm test
 npm run build
+npm run smoke
 ```
 
 Tests cover real HTTP requests, enquiry persistence, idempotency, validation, authentication/CSRF, discount totals, size inventory, checkout rollback and cancellation restoration. Test prices and customer records use a temporary database; they never enter the real store catalog.

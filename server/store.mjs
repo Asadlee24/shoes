@@ -1,7 +1,11 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import { initialProducts, initialSettings } from "./catalog.mjs";
+import {
+  initialProducts,
+  initialSettings,
+  confirmedPrices,
+} from "./catalog.mjs";
 
 export function openStore(path) {
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
@@ -10,7 +14,8 @@ export function openStore(path) {
   db.exec(`CREATE TABLE IF NOT EXISTS products(id TEXT PRIMARY KEY, data TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS requests(id TEXT PRIMARY KEY, idempotency TEXT UNIQUE NOT NULL, fingerprint TEXT NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL, data TEXT NOT NULL, created TEXT NOT NULL);
- CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires INTEGER NOT NULL);`);
+ CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires INTEGER NOT NULL);
+ CREATE TABLE IF NOT EXISTS migrations(id TEXT PRIMARY KEY,applied TEXT NOT NULL);`);
   if (!db.prepare("SELECT id FROM settings WHERE id=1").get()) {
     db.prepare("INSERT INTO settings VALUES(1,?)").run(
       JSON.stringify(initialSettings),
@@ -23,6 +28,32 @@ export function openStore(path) {
           stockBySize: Object.fromEntries(p.sizes.map((s) => [s, null])),
         }),
       );
+  }
+  // Apply the owner's confirmed prices to already-installed, unpriced stores.
+  // This runs once and preserves administrator prices, inventory and customer data.
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const revision = "owner-prices-2026-10-20";
+    if (!db.prepare("SELECT id FROM migrations WHERE id=?").get(revision)) {
+      const find = db.prepare("SELECT data FROM products WHERE id=?");
+      const update = db.prepare("UPDATE products SET data=? WHERE id=?");
+      for (const [id, price] of Object.entries(confirmedPrices)) {
+        const row = find.get(id);
+        if (!row) continue;
+        const product = JSON.parse(row.data);
+        if (product.price == null) {
+          update.run(JSON.stringify({ ...product, price }), id);
+        }
+      }
+      db.prepare("INSERT INTO migrations VALUES(?,?)").run(
+        revision,
+        new Date().toISOString(),
+      );
+    }
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
   }
   return {
     db,

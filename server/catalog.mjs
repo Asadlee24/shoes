@@ -1,3 +1,11 @@
+// Owner-confirmed PKR prices from the supplied 20 October 2026 price list.
+// Amounts are stored in paisa, as throughout the checkout API.
+export const confirmedPrices = {
+  "suede-penny": 350000,
+  "textured-bit": 220000,
+  "evening-bit": 280000,
+  "brown-textured": 220000,
+};
 export const initialProducts = [
   {
     id: "suede-penny",
@@ -8,7 +16,7 @@ export const initialProducts = [
     color: "Taupe brown",
     swatch: "#887365",
     sku: "QF-001",
-    price: null,
+    price: confirmedPrices["suede-penny"],
     stock: null,
     sizes: ["7", "8", "9", "10", "11"],
     published: true,
@@ -38,7 +46,7 @@ export const initialProducts = [
     color: "Black",
     swatch: "#242422",
     sku: "QF-002",
-    price: null,
+    price: confirmedPrices["textured-bit"],
     stock: null,
     sizes: ["7", "8", "9", "10", "11"],
     published: true,
@@ -64,7 +72,7 @@ export const initialProducts = [
     color: "Black",
     swatch: "#161716",
     sku: "QF-003",
-    price: null,
+    price: confirmedPrices["evening-bit"],
     stock: null,
     sizes: ["7", "8", "9", "10", "11"],
     published: true,
@@ -116,7 +124,7 @@ export const initialProducts = [
     color: "Dark brown",
     swatch: "#44342b",
     sku: "QF-005",
-    price: null,
+    price: confirmedPrices["brown-textured"],
     stock: null,
     sizes: ["7", "8", "9", "10", "11"],
     published: false,
