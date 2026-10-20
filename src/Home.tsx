@@ -150,7 +150,7 @@ export default function Home() {
             />
             <div className="stage-interaction">
               <span>
-                <MousePointer2 size={12} /> MOVE MOUSE · DRAG
+                <MousePointer2 size={12} /> MOVE MOUSE · DRAG TO FLIP
               </span>
               <div className="stage-buttons">
                 <button

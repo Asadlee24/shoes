@@ -55,8 +55,8 @@ test("manual movement visibly rotates both render paths and stops scheduling fra
   flush();
   assert.deepEqual(rendered.at(-1), { x: 1, y: -1 });
   const pose = studioPose(rendered.at(-1));
-  assert.equal(pose.yaw, 0.38);
-  assert.equal(pose.pitch, -0.16);
+  assert.equal(pose.yaw, Math.PI);
+  assert.equal(pose.pitch, -0.1);
   assert.match(pose.css, /rotateY/);
   assert.equal(queue.size, 0);
   controller.reset();
@@ -81,9 +81,22 @@ test("offscreen motion pauses, resumes at the requested view and cleans up pendi
   assert.equal(rendered.length, 0);
   controller.setActive(true);
   flush();
-  assert.deepEqual(rendered.at(-1), { x: 1, y: -1 });
+  assert.deepEqual(rendered.at(-1), { x: 10, y: -1 });
   controller.moveTo({ x: 0, y: 0 });
   assert.equal(queue.size, 1);
   controller.dispose();
   assert.equal(queue.size, 0);
+});
+
+test("successive drags keep turning beyond a full revolution without snapping back", () => {
+  const { controller, rendered, flush } = harness();
+  for (const x of [0.75, 1.25, 2, 2.75, 4, -4]) {
+    controller.moveTo({ x, y: 0 });
+    flush();
+    assert.equal(rendered.at(-1).x, x);
+    assert.equal(studioPose(rendered.at(-1)).yaw, x * Math.PI);
+  }
+  controller.reset();
+  flush();
+  assert.deepEqual(rendered.at(-1), { x: 0, y: 0 });
 });

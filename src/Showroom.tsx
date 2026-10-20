@@ -46,6 +46,7 @@ export default function Showroom({
     photo = useRef<HTMLDivElement>(null);
   const motion = useRef<StudioPosition>({ x: 0, y: 0 });
   const control = useRef<StudioMotion | null>(null);
+  const resting = useRef<StudioPosition>({ x: 0, y: 0 });
   const invalidate = useRef<() => void>(() => {});
   const [ready, setReady] = useState(false),
     [supported, setSupported] = useState(false);
@@ -90,15 +91,17 @@ export default function Showroom({
         controller.moveTo({
           x:
             drag.start.x +
-            ((event.clientX - drag.x) / Math.max(bounds.width, 1)) * 2.4,
+            ((event.clientX - drag.x) / Math.max(bounds.width, 1)) * 2,
           y:
             drag.start.y +
             ((event.clientY - drag.y) / Math.max(bounds.height, 1)) * 2.5,
         });
       } else if (event.pointerType !== "touch") {
-        controller.moveTo(
-          pointerPosition(event.clientX, event.clientY, bounds),
-        );
+        const pointer = pointerPosition(event.clientX, event.clientY, bounds);
+        controller.moveTo({
+          x: resting.current.x + pointer.x * 0.18,
+          y: clampAxis(resting.current.y + pointer.y * 0.5),
+        });
       }
     };
     const down = (event: PointerEvent) => {
@@ -120,13 +123,14 @@ export default function Showroom({
     };
     const end = (event: PointerEvent) => {
       if (!drag || event.pointerId !== drag.id) return;
+      resting.current = controller.readTarget();
       drag = null;
       delete surface.dataset.dragging;
       if (surface.hasPointerCapture(event.pointerId))
         surface.releasePointerCapture(event.pointerId);
     };
     const leave = () => {
-      if (!drag) controller.reset();
+      if (!drag) controller.moveTo(resting.current);
     };
     const change = () => controller.setReduced(media.matches);
     surface.addEventListener("pointermove", move, true);
@@ -167,6 +171,7 @@ export default function Showroom({
     };
   }, []);
   useEffect(() => {
+    resting.current = { x: 0, y: 0 };
     control.current?.reset();
   }, [image, reset]);
   return (
@@ -181,6 +186,7 @@ export default function Showroom({
         const position = control.current?.readTarget() || { x: 0, y: 0 };
         if (event.key === "Home" || event.key === "0") {
           event.preventDefault();
+          resting.current = { x: 0, y: 0 };
           control.current?.reset();
           return;
         }
@@ -193,16 +199,17 @@ export default function Showroom({
         const step = keys[event.key];
         if (step) {
           event.preventDefault();
-          control.current?.moveTo({
-            x: clampAxis(position.x + step.x),
+          resting.current = {
+            x: position.x + step.x,
             y: clampAxis(position.y + step.y),
-          });
+          };
+          control.current?.moveTo(resting.current);
         }
       }}
     >
       <span className="showroom-help" id={help}>
-        Move your mouse or drag to tilt the shoe photograph. Arrow keys adjust
-        the view. Home resets it.
+        Move your mouse to tilt the shoe photograph. Drag left or right to flip
+        the display. Arrow keys rotate it. Home resets it.
       </span>
       <div className="showroom-fallback" aria-hidden="true">
         <span className="fallback-plinth" />

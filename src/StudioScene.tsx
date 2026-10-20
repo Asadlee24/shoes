@@ -53,7 +53,7 @@ function DisplayWorld({ image, dark, onReady, motion }: Props) {
     const pose = studioPose(motion.current);
     shoe.current.rotation.set(pose.pitch, pose.yaw, pose.roll);
     shoe.current.position.set(0, studioPhotoHeight(layout, pose), 0.3);
-    camera.position.x = motion.current.x * 0.12;
+    camera.position.x = Math.sin(pose.yaw) * 0.12;
     camera.lookAt(0, 0.95, 0);
   });
   return (

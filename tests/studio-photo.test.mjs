@@ -8,14 +8,14 @@ import {
 } from "../src/studio-photo.ts";
 import { studioPose } from "../src/studio-motion.ts";
 
-test("approved photo crops have equal visible width and clear the platform at every supported tilt", () => {
+test("approved photo crops have equal visible width and clear the platform at every full-turn angle", () => {
   for (const image of [
     "/products/hero-textured.png",
     "/products/hero-loafer.png",
   ]) {
     const photo = studioPhoto(image);
     assert.ok(Math.abs(photo.cropWidth * photo.unit - 4.8) < 1e-9);
-    for (let x = -1; x <= 1; x += 0.1)
+    for (let x = -4; x <= 4; x += 0.125)
       for (let y = -1; y <= 1; y += 0.1) {
         const pose = studioPose({ x, y }),
           rotation = new Euler(pose.pitch, pose.yaw, pose.roll);
@@ -65,10 +65,13 @@ test("shoe and platform fit inside desktop and mobile frames without clipping", 
     };
     for (const image of ["textured", "suede"]) {
       const photo = studioPhoto(image);
-      for (const x of [-1, 0, 1])
+      for (let x = -4; x <= 4; x += 0.125)
         for (const y of [-1, 0, 1]) {
           const pose = studioPose({ x, y }),
             r = new Euler(pose.pitch, pose.yaw, pose.roll);
+          camera.position.x = Math.sin(pose.yaw) * 0.12;
+          camera.lookAt(0, 0.95, 0);
+          camera.updateMatrixWorld(true);
           for (const a of [-1, 1])
             for (const b of [-1, 1])
               inside(

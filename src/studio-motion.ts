@@ -20,13 +20,15 @@ export function pointerPosition(
 }
 
 export function studioPose(position: StudioPosition) {
-  const x = clampAxis(position.x),
-    y = clampAxis(position.y);
+  // Horizontal position counts half-turns; keep it continuous across 360°.
+  const yaw = (Number.isFinite(position.x) ? position.x : 0) * Math.PI;
+  const pitch = clampAxis(position.y) * 0.1;
+  const roll = -Math.sin(yaw) * 0.035;
   return {
-    yaw: x * 0.38,
-    pitch: y * 0.16,
-    roll: -x * 0.035,
-    css: `rotateX(${-y * 9.17}deg) rotateY(${x * 21.77}deg) rotateZ(${-x * 2}deg)`,
+    yaw,
+    pitch,
+    roll,
+    css: `rotateX(${-pitch}rad) rotateY(${yaw}rad) rotateZ(${roll}rad)`,
   };
 }
 
@@ -80,7 +82,7 @@ export function createStudioMotion(options: Options) {
   return {
     moveTo(next: StudioPosition) {
       target = {
-        x: clampAxis(next.x),
+        x: Number.isFinite(next.x) ? next.x : 0,
         y: clampAxis(next.y),
       };
       wake();
