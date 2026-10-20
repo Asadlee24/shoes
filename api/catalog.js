@@ -3,9 +3,11 @@ import {
   initialSettings,
   publicSettings,
 } from "../server/catalog.mjs";
+import { cloudHandler } from "../server/vercel.mjs";
 
 // Public catalog only until a persistent database is attached to Vercel.
 export default function catalog(req, res) {
+  if (process.env.DATABASE_URL) return cloudHandler(req, res);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "GET") {

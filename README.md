@@ -106,3 +106,34 @@ Typography: DM Sans and Manrope, loaded from Google Fonts with local system fall
 The `/admin/demo` route previews the admin interface using published catalog data only. Customer records and discount codes are excluded, and saves/uploads are disabled. It does not grant access to the protected admin API. Use `/admin` with the running Node backend for real store management.
 
 A private order notification recipient can be saved under Admin → Store settings → Order notifications. The address is excluded from the public catalog and admin demo, and can be replaced during client handover. Saving a recipient does not enable sending: the email provider and verified sender still need to be connected.
+
+### Vercel with Neon Postgres
+
+The live Vercel APIs use `DATABASE_URL` (Production, private) from the dedicated
+Neon database connected to this project. Keep Preview separate from the client's
+Production database. Add private `ADMIN_PASSWORD` (12–200 characters) or
+`ADMIN_PASSWORD_HASH` to Production, then redeploy. `ADMIN_USER` defaults to
+`admin`. Do not put any of these values in Git or browser-prefixed variables.
+
+The first API invocation creates the namespaced `qf_` tables and seeds the
+owner-approved catalog once. Subsequent deployments preserve product changes,
+stock, settings, requests and sessions. The schema does not import local test
+customers or local `.env` values. Existing local development continues to use
+SQLite via `npm run dev`.
+
+The protected API and its CSRF checks are shared between SQLite and Postgres.
+Cloud writes take a Postgres transaction lock before reading stock or idempotency
+keys; responses and cookies are released only after commit. Login limits are
+stored persistently, including failed attempts. Uploaded product images (up to
+3 MB, JPG/PNG/WebP with verified file signatures) are stored in Postgres and
+served at their original `/products/upload-*` paths with immutable cache headers.
+
+`GET /api/health` reports database connectivity and whether administrator login
+is configured; it never returns credentials. Catalog responses exclude discount
+codes and the private notification email. Set the test notification address in
+the real admin Store settings after signing in; email sending still requires a
+separate email provider and is not enabled by attaching a database.
+
+The backend uses `@neondatabase/serverless` WebSocket pools scoped to each request.
+`npm test` also exercises the adapter against embedded Postgres (PGlite), including
+persistence, transactions, protected admin actions, orders, media and rate limits.

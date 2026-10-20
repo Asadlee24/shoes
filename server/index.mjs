@@ -19,7 +19,6 @@ import {
   totalsFor,
   validateProduct,
 } from "./store.mjs";
-
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const hash = (v) => createHash("sha256").update(v).digest("hex");
 export function passwordHash(password, salt = randomBytes(16).toString("hex")) {
@@ -43,6 +42,18 @@ function json(res, status, data) {
   res.end(JSON.stringify(data));
 }
 async function body(req, limit = 200000) {
+  // Vercel may parse JSON before handing the request to the function.
+  if (req.body !== undefined) {
+    const raw =
+      typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+    if (Buffer.byteLength(raw) > limit)
+      throw new HttpError(413, "This request is too large.");
+    try {
+      return JSON.parse(raw);
+    } catch {
+      throw new HttpError(400, "Invalid JSON request.");
+    }
+  }
   let size = 0;
   const parts = [];
   for await (const part of req) {
@@ -57,21 +68,29 @@ async function body(req, limit = 200000) {
   }
 }
 export async function createApplication(options = {}) {
-  const store = openStore(
-    options.dbPath ||
-      process.env.DATABASE_PATH ||
-      join(root, "data", "store.db"),
-  );
+  const store =
+    options.store ||
+    openStore(
+      options.dbPath ||
+        process.env.DATABASE_PATH ||
+        join(root, "data", "store.db"),
+    );
   const adminUser = options.adminUser || process.env.ADMIN_USER || "admin";
   const adminHash = options.adminHash || process.env.ADMIN_PASSWORD_HASH || "";
   const attempts = new Map();
   const inquiries = new Map();
-  const cleanup = setInterval(() => {
-    store.db.prepare("DELETE FROM sessions WHERE expires<?").run(Date.now());
-    for (const m of [attempts, inquiries])
-      for (const [k, v] of m) if (v.until < Date.now()) m.delete(k);
-  }, 60000);
-  cleanup.unref();
+  const cleanup = options.apiOnly
+    ? null
+    : setInterval(() => {
+        Promise.resolve(
+          store.db
+            .prepare("DELETE FROM sessions WHERE expires<?")
+            .run(Date.now()),
+        ).catch(() => {});
+        for (const m of [attempts, inquiries])
+          for (const [k, v] of m) if (v.until < Date.now()) m.delete(k);
+      }, 60000);
+  cleanup?.unref();
   const production =
     options.production ?? process.argv.includes("--production");
   const vite =
@@ -84,19 +103,26 @@ export async function createApplication(options = {}) {
           server: { middlewareMode: true },
           appType: "spa",
         });
-  const sessionFor = (req) => {
+  const sessionFor = async (req) => {
     const token = req.headers.cookie
       ?.split(";")
       .map((x) => x.trim())
       .find((x) => x.startsWith("qf_session="))
       ?.slice(11);
     return token
-      ? store.db
+      ? await store.db
           .prepare("SELECT * FROM sessions WHERE token=? AND expires>?")
           .get(hash(token), Date.now())
       : null;
   };
-  const limited = (map, key, max, minutes) => {
+  const limited = async (map, key, max, minutes) => {
+    if (store.limit)
+      return store.limit(
+        map === attempts ? "login" : "requests",
+        key,
+        max,
+        minutes,
+      );
     const item = map.get(key) || {
       count: 0,
       until: Date.now() + minutes * 60000,
@@ -112,7 +138,15 @@ export async function createApplication(options = {}) {
   };
   async function api(req, res, path) {
     const method = req.method;
-    const ip = req.socket.remoteAddress || "local";
+    const ip = options.trustProxy
+      ? String(
+          req.headers["x-forwarded-for"] ||
+            req.socket?.remoteAddress ||
+            "local",
+        )
+          .split(",")[0]
+          .trim()
+      : req.socket.remoteAddress || "local";
     if (!["GET", "HEAD"].includes(method) && req.headers.origin) {
       try {
         if (new URL(req.headers.origin).host !== req.headers.host)
@@ -122,19 +156,20 @@ export async function createApplication(options = {}) {
       }
     }
     if (method === "GET" && path === "/api/catalog") {
-      const settings = publicSettings(store.settings());
+      const settings = publicSettings(await store.settings());
       return json(res, 200, {
-        products: store.products().filter((p) => p.published),
+        products: (await store.products()).filter((p) => p.published),
         settings,
       });
     }
     if (method === "POST" && path === "/api/admin/login") {
-      limited(attempts, ip, 8, 15);
+      await limited(attempts, ip, 8, 15);
       const input = await body(req);
       if (!adminHash)
         throw new HttpError(
           503,
-          "Run npm run admin:setup to configure the store administrator.",
+          options.adminMissingMessage ||
+            "Run npm run admin:setup to configure the store administrator.",
         );
       if (
         typeof input.password !== "string" ||
@@ -145,18 +180,19 @@ export async function createApplication(options = {}) {
         throw new HttpError(401, "The username or password is incorrect.");
       const token = randomBytes(32).toString("hex"),
         csrf = randomBytes(24).toString("hex");
-      store.db
+      await store.db
         .prepare("INSERT INTO sessions VALUES(?,?,?)")
         .run(hash(token), csrf, Date.now() + 8 * 3600000);
       attempts.delete(ip);
+      if (store.resetLimit) await store.resetLimit("login", ip);
       res.setHeader(
         "Set-Cookie",
-        `qf_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${process.env.SECURE_COOKIES === "true" ? "; Secure" : ""}`,
+        `qf_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${options.secureCookies || process.env.SECURE_COOKIES === "true" ? "; Secure" : ""}`,
       );
       return json(res, 200, { csrf, username: adminUser });
     }
     if (path.startsWith("/api/admin/")) {
-      const session = sessionFor(req);
+      const session = await sessionFor(req);
       if (!session)
         throw new HttpError(401, "Please sign in to manage the store.");
       if (method !== "GET" && req.headers["x-csrf-token"] !== session.csrf)
@@ -167,7 +203,7 @@ export async function createApplication(options = {}) {
       if (method === "GET" && path === "/api/admin/session")
         return json(res, 200, { csrf: session.csrf, username: adminUser });
       if (method === "POST" && path === "/api/admin/logout") {
-        store.db
+        await store.db
           .prepare("DELETE FROM sessions WHERE token=?")
           .run(session.token);
         res.setHeader(
@@ -178,14 +214,15 @@ export async function createApplication(options = {}) {
       }
       if (method === "GET" && path === "/api/admin/dashboard")
         return json(res, 200, {
-          products: store.products(),
-          settings: store.settings(),
-          requests: store.db
-            .prepare(
-              "SELECT id,kind,status,data,created FROM requests ORDER BY created DESC LIMIT 500",
-            )
-            .all()
-            .map((r) => ({ ...r, data: JSON.parse(r.data) })),
+          products: await store.products(),
+          settings: await store.settings(),
+          requests: (
+            await store.db
+              .prepare(
+                "SELECT id,kind,status,data,created FROM requests ORDER BY created DESC LIMIT 500",
+              )
+              .all()
+          ).map((r) => ({ ...r, data: JSON.parse(r.data) })),
         });
       if (
         (method === "PUT" || method === "POST") &&
@@ -196,19 +233,21 @@ export async function createApplication(options = {}) {
           method === "POST"
             ? `product-${randomUUID().slice(0, 8)}`
             : path.split("/").at(-1);
-        if (method === "PUT" && !store.product(id))
+        if (method === "PUT" && !(await store.product(id)))
           throw new HttpError(404, "Product not found.");
         const product = validateProduct(input, id);
         if (
-          store.products().some((p) => p.id !== id && p.slug === product.slug)
+          (await store.products()).some(
+            (p) => p.id !== id && p.slug === product.slug,
+          )
         )
           throw new HttpError(400, "This product link is already used.");
-        store.saveProduct(product);
+        await store.saveProduct(product);
         return json(res, 200, { product });
       }
       if (method === "PUT" && path === "/api/admin/settings") {
         const b = await body(req),
-          s = store.settings();
+          s = await store.settings();
         for (const key of [
           "website",
           "phone",
@@ -301,13 +340,13 @@ export async function createApplication(options = {}) {
             };
           });
         }
-        store.saveSettings(s);
+        await store.saveSettings(s);
         return json(res, 200, { settings: s });
       }
       if (method === "PATCH" && path.startsWith("/api/admin/requests/")) {
         const b = await body(req),
           id = path.split("/").at(-1);
-        const r = store.db
+        const r = await store.db
           .prepare("SELECT kind,status,data FROM requests WHERE id=?")
           .get(id);
         if (!r) throw new HttpError(404, "Request not found.");
@@ -333,7 +372,7 @@ export async function createApplication(options = {}) {
             400,
             "A cancelled order cannot be reopened. Create a new order.",
           );
-        store.db.exec("BEGIN IMMEDIATE");
+        await store.db.exec("BEGIN IMMEDIATE");
         try {
           if (
             r.kind === "order" &&
@@ -341,20 +380,20 @@ export async function createApplication(options = {}) {
             r.status !== "cancelled"
           ) {
             for (const item of JSON.parse(r.data).items) {
-              const p = store.product(item.id);
+              const p = await store.product(item.id);
               if (p && p.stockBySize?.[item.size] != null) {
                 p.stockBySize[item.size] += item.quantity;
                 if (p.stock !== null) p.stock += item.quantity;
-                store.saveProduct(p);
+                await store.saveProduct(p);
               }
             }
           }
-          store.db
+          await store.db
             .prepare("UPDATE requests SET status=? WHERE id=?")
             .run(b.status, id);
-          store.db.exec("COMMIT");
+          await store.db.exec("COMMIT");
         } catch (e) {
-          store.db.exec("ROLLBACK");
+          await store.db.exec("ROLLBACK");
           throw e;
         }
         return json(res, 200, { ok: true });
@@ -381,16 +420,19 @@ export async function createApplication(options = {}) {
         if (!valid)
           throw new HttpError(400, "The image format could not be verified.");
         const name = `upload-${randomUUID()}.${b.type === "image/jpeg" ? "jpg" : b.type === "image/png" ? "png" : "webp"}`;
-        await mkdir(join(root, "public/products"), { recursive: true });
-        await writeFile(join(root, "public/products", name), data);
+        if (store.saveMedia) await store.saveMedia(name, b.type, data);
+        else {
+          await mkdir(join(root, "public/products"), { recursive: true });
+          await writeFile(join(root, "public/products", name), data);
+        }
         return json(res, 201, { url: `/products/${name}` });
       }
       throw new HttpError(404, "Management action not found.");
     }
     if (method === "POST" && path === "/api/discount") {
-      limited(inquiries, `discount:${ip}`, 40, 15);
+      await limited(inquiries, `discount:${ip}`, 40, 15);
       const b = await body(req);
-      const items = validateItems(store, b.items);
+      const items = await validateItems(store, b.items);
       if (items.some((i) => i.price === null))
         throw new HttpError(
           400,
@@ -399,7 +441,11 @@ export async function createApplication(options = {}) {
       return json(
         res,
         200,
-        totalsFor(items, store.settings(), String(b.code || "").slice(0, 30)),
+        totalsFor(
+          items,
+          await store.settings(),
+          String(b.code || "").slice(0, 30),
+        ),
       );
     }
     if (method === "POST" && path === "/api/messages") {
@@ -419,7 +465,7 @@ export async function createApplication(options = {}) {
         );
       const message = requiredText(b.message, "Your message", 1500);
       const fingerprint = hash(JSON.stringify({ name, phone, message }));
-      const existing = store.db
+      const existing = await store.db
         .prepare("SELECT id,fingerprint FROM requests WHERE idempotency=?")
         .get(key);
       if (existing) {
@@ -430,9 +476,9 @@ export async function createApplication(options = {}) {
           );
         return json(res, 200, { reference: existing.id });
       }
-      limited(inquiries, ip, 12, 15);
+      await limited(inquiries, ip, 12, 15);
       const reference = `QF-M-${randomBytes(5).toString("hex").toUpperCase()}`;
-      store.db.prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)").run(
+      await store.db.prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)").run(
         reference,
         key,
         fingerprint,
@@ -461,7 +507,7 @@ export async function createApplication(options = {}) {
           "Please refresh and submit your request again.",
         );
       const customer = validateCustomer(b.customer || {});
-      const items = validateItems(store, b.items);
+      const items = await validateItems(store, b.items);
       const fingerprint = hash(
         JSON.stringify({
           customer,
@@ -472,7 +518,7 @@ export async function createApplication(options = {}) {
           })),
         }),
       );
-      const existing = store.db
+      const existing = await store.db
         .prepare("SELECT id,kind,fingerprint FROM requests WHERE idempotency=?")
         .get(key);
       if (existing) {
@@ -483,8 +529,8 @@ export async function createApplication(options = {}) {
           );
         return json(res, 200, { reference: existing.id, kind: existing.kind });
       }
-      limited(inquiries, ip, 12, 15);
-      const s = store.settings();
+      await limited(inquiries, ip, 12, 15);
+      const s = await store.settings();
       const totals = totalsFor(
         items,
         s,
@@ -497,11 +543,11 @@ export async function createApplication(options = {}) {
           ? "order"
           : "inquiry";
       const reference = `QF-${kind === "order" ? "O" : "I"}-${randomBytes(5).toString("hex").toUpperCase()}`;
-      store.db.exec("BEGIN IMMEDIATE");
+      await store.db.exec("BEGIN IMMEDIATE");
       try {
         if (kind === "order") {
           for (const item of items) {
-            const p = store.product(item.id);
+            const p = await store.product(item.id);
             if (p.stockBySize[item.size] < item.quantity)
               throw new HttpError(
                 409,
@@ -509,26 +555,28 @@ export async function createApplication(options = {}) {
               );
             p.stockBySize[item.size] -= item.quantity;
             if (p.stock !== null) p.stock -= item.quantity;
-            store.saveProduct(p);
+            await store.saveProduct(p);
           }
         }
-        store.db.prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)").run(
-          reference,
-          key,
-          fingerprint,
-          kind,
-          kind === "order" ? "pending" : "new",
-          JSON.stringify({
-            customer,
-            items: items.map(({ stock, ...item }) => item),
-            totals,
-            discountCode: b.discountCode || "",
-          }),
-          new Date().toISOString(),
-        );
-        store.db.exec("COMMIT");
+        await store.db
+          .prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)")
+          .run(
+            reference,
+            key,
+            fingerprint,
+            kind,
+            kind === "order" ? "pending" : "new",
+            JSON.stringify({
+              customer,
+              items: items.map(({ stock, ...item }) => item),
+              totals,
+              discountCode: b.discountCode || "",
+            }),
+            new Date().toISOString(),
+          );
+        await store.db.exec("COMMIT");
       } catch (e) {
-        store.db.exec("ROLLBACK");
+        await store.db.exec("ROLLBACK");
         throw e;
       }
       return json(res, 201, { reference, kind });
@@ -635,8 +683,9 @@ export async function createApplication(options = {}) {
   return {
     server,
     store,
+    handleApi: api,
     close: async () => {
-      clearInterval(cleanup);
+      if (cleanup) clearInterval(cleanup);
       await vite?.close();
       await new Promise((r) => server.close(r));
       store.db.close();

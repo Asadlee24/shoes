@@ -139,13 +139,13 @@ export function validateCustomer(input) {
     typeof input.notes === "string" ? input.notes.trim().slice(0, 1000) : "";
   return { name, phone, city, address, notes };
 }
-export function validateItems(store, input) {
+export async function validateItems(store, input) {
   if (!Array.isArray(input) || input.length === 0 || input.length > 20)
     throw new HttpError(400, "Choose between 1 and 20 product selections.");
   const items = [];
   const keys = new Set();
   for (const row of input) {
-    const p = store.product(row.id);
+    const p = await store.product(row.id);
     if (!p || !p.published)
       throw new HttpError(400, "One of the selected products is unavailable.");
     if (!p.sizes.includes(String(row.size)))
