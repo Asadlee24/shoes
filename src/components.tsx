@@ -22,19 +22,54 @@ import { useTheme } from "./theme";
 import { money } from "./api";
 import type { Product } from "./types";
 
-export function Brand({ dark = false }: { dark?: boolean }) {
+export function Brand({ signature = false }: { signature?: boolean }) {
   return (
     <Link
       to="/"
       aria-label="QADAM FLEX homepage"
-      className={`brand ${dark ? "on-dark" : ""}`}
+      className={`brand brand-lockup ${signature ? "brand-signature" : ""}`}
     >
-      <span className="brand-seal">
-        <img src="/brand/approved-logo.png" alt="" />
-      </span>
-      <span className="brand-name">
-        QADAM<span>F L E X</span>
-      </span>
+      {signature ? (
+        <svg
+          className="brand-complete"
+          viewBox="245 40 955 1073"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <image
+            href="/brand/logo-transparent.png"
+            width="1413"
+            height="1113"
+          />
+        </svg>
+      ) : (
+        <>
+          <svg
+            className="brand-emblem"
+            viewBox="275 40 845 670"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <image
+              href="/brand/logo-transparent.png"
+              width="1413"
+              height="1113"
+            />
+          </svg>
+          <svg
+            className="brand-wordmark"
+            viewBox="245 710 955 403"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <image
+              href="/brand/logo-transparent.png"
+              width="1413"
+              height="1113"
+            />
+          </svg>
+        </>
+      )}
     </Link>
   );
 }
@@ -60,7 +95,7 @@ export function Header() {
       </div>
       <header className={`header ${home ? "header-dark" : ""}`}>
         <div className="header-inner">
-          <Brand dark={home} />
+          <Brand />
           <nav aria-label="Main navigation" className="desktop-nav">
             <Link
               to="/shop"
@@ -611,6 +646,7 @@ export function Footer() {
     <footer className="footer">
       <div className="footer-top">
         <div>
+          <Brand signature />
           <p className="eyebrow">GOOD SHOES. CONSIDERED CHOICES.</p>
           <h2>
             Find your

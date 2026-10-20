@@ -21,6 +21,8 @@ try {
     "/products/hero-textured.png",
     "/products/hero-loafer.png",
     "/brand/approved-logo.png",
+    "/brand/logo-transparent.png",
+    "/src/brand.css",
   ]) {
     const response = await fetch(base + path);
     const payload = await response.arrayBuffer();

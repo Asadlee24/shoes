@@ -72,7 +72,7 @@ Online card payments, courier bookings, live email/SMS and a public deployment a
 - `src/Pages.tsx`: storefront routes and forms.
 - `src/Admin.tsx`: protected management UI.
 - `public/products`: owner-supplied photographs and the black/brown studio cutouts.
-- `public/brand/approved-logo.png`: approved logo.
+- `public/brand/approved-logo.png`: approved logo; `logo-transparent.png` is the transparent web adaptation. The header uses the original emblem and letterforms in a horizontal lockup; the footer shows the complete stacked logo.
 - `data/store.db`: runtime SQLite database (ignored by Git).
 - `.env`: private local configuration (ignored by Git).
 
