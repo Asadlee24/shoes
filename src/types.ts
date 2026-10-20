@@ -1,0 +1,67 @@
+export type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  subtitle: string;
+  category: string;
+  color: string;
+  swatch: string;
+  sku?: string;
+  price: number | null;
+  stock: number | null;
+  stockBySize?: Record<string, number | null>;
+  sizes: string[];
+  published: boolean;
+  featured: boolean;
+  image: string;
+  images: string[];
+  hero?: string;
+  imagePosition?: string;
+  description: string;
+  details: string[];
+};
+export type Discount = {
+  code: string;
+  type: "percent" | "fixed";
+  value: number;
+  minimum: number;
+  expires: string | null;
+  active: boolean;
+};
+export type Settings = {
+  brand: string;
+  currency: string;
+  email: string;
+  whatsapp: string;
+  instagram: string;
+  address: string;
+  announcement: string;
+  shippingFee: number | null;
+  codEnabled: boolean;
+  deliveryText: string;
+  returnsText: string;
+  discounts?: Discount[];
+};
+export type CartItem = { id: string; size: string; quantity: number };
+export type StoreRequest = {
+  id: string;
+  kind: "inquiry" | "order";
+  status: string;
+  created: string;
+  data: {
+    customer: {
+      name: string;
+      phone: string;
+      city: string;
+      address: string;
+      notes: string;
+    };
+    items: (CartItem & { name: string; price: number | null })[];
+    totals: {
+      total: number | null;
+      subtotal: number | null;
+      shipping: number | null;
+      discount: number;
+    };
+  };
+};

@@ -1,0 +1,35 @@
+{
+  "name": "qadam-flex",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env server/index.mjs",
+    "build": "tsc -b && vite build",
+    "start": "node --env-file-if-exists=.env server/index.mjs --production",
+    "test": "node --test tests/*.test.mjs",
+    "admin:setup": "node --env-file-if-exists=.env server/setup-admin.mjs",
+    "smoke": "node tests/smoke.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "gsap": "^3.13.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "prettier": "^3.9.10",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.10"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}
