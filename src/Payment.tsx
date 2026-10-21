@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Copy, Upload, CheckCircle2, Clock3, CircleAlert } from "lucide-react";
 import { api, money } from "./api";
 import { useStore } from "./store";
@@ -60,7 +61,24 @@ export function PaymentDestination({ payment }: { payment: Payment }) {
       </dl>
       {payment.status === "not_required" && (
         <p className="muted small">
-          Please wait for the store to confirm your order total before paying.
+          Pay using the bank or Easypaisa details above and share your receipt
+          with support. Once your payment is verified, we’ll begin processing
+          your order within a few minutes. Need help?{" "}
+          {settings?.whatsapp ? (
+            <a
+              href={`https://wa.me/${settings.whatsapp}`}
+              target="_blank"
+              rel="noreferrer"
+              className="payment-support-link"
+            >
+              Contact support
+            </a>
+          ) : (
+            <Link to="/contact" className="payment-support-link">
+              Contact support
+            </Link>
+          )}
+          .
         </p>
       )}
     </div>
@@ -209,8 +227,9 @@ export function OrderPayment({
         <>
           {payment && <PaymentDestination payment={payment} />}
           <p>
-            The store will confirm availability and delivery before requesting
-            payment. Check this page for updates.
+            {payment && ["bank", "easypaisa"].includes(payment.method)
+              ? "Include your order reference when sharing your receipt so our team can match your payment and update this page after review."
+              : "The store will confirm availability and delivery. Check this page for updates."}
           </p>
         </>
       ) : payment?.method === "cod" ? (

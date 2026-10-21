@@ -519,3 +519,10 @@
   padding-top: 14px;
   line-height: 1.65;
 }
+
+.payment-support-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}

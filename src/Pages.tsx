@@ -771,14 +771,14 @@ export function Checkout() {
                     ? paymentMethod === "cod"
                       ? "Cash on delivery"
                       : "Payment proof, kept private"
-                    : "Confirm first. Pay later."}
+                    : "Keep your payment receipt"}
                 </strong>
                 <p>
                   {canOrder
                     ? paymentMethod === "cod"
                       ? "Pay the confirmed total when your order arrives."
                       : "Place your order, then upload your transfer receipt on the payment step. The owner will review it."
-                    : "Send your selection. The store will confirm stock and delivery in your account before you pay."}
+                    : "Save your selection to get an order reference. Include it when sharing your payment receipt with support."}
                 </p>
               </div>
             </div>
