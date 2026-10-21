@@ -206,7 +206,6 @@ export default function Home() {
         <div className="product-grid">
           {products
             .filter((p) => p.featured)
-            .slice(0, 4)
             .map((p, i) => (
               <ProductCard key={p.id} product={p} index={i} />
             ))}

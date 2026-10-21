@@ -1,4 +1,5 @@
 import { archiveOwnerTestRequests } from "./test-order-cleanup.mjs";
+import { refreshCatalogCovers } from "./catalog-photo-refresh.mjs";
 import { commerceApi } from "./commerce.mjs";
 import http from "node:http";
 import { paymentAdminApi } from "./payments.mjs";
@@ -84,6 +85,7 @@ export async function createApplication(options = {}) {
     await store.db.exec("BEGIN IMMEDIATE");
     try {
       await archiveOwnerTestRequests(store);
+      await refreshCatalogCovers(store);
       await store.db.exec("COMMIT");
     } catch (error) {
       await store.db.exec("ROLLBACK");
