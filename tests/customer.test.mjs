@@ -360,7 +360,9 @@ test("receipts are private, validated and require owner review before fulfilment
   assert.equal(row.data.payment.status, "paid");
   assert.equal(row.status, "shipped");
 });
-test("unconfirmed stock prevents payment; owner confirmation reserves stock exactly once", async () => {
+test("unconfirmed stock and delivery prevent payment; free-delivery confirmation reserves stock exactly once", async () => {
+  const previousSettings = app.store.settings();
+  app.store.saveSettings({ ...previousSettings, shippingFee: null });
   const unknown = app.store.product("textured-bit");
   app.store.saveProduct({
     ...unknown,
@@ -409,6 +411,28 @@ test("unconfirmed stock prevents payment; owner confirmation reserves stock exac
         admin,
       )
     ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/admin/settings",
+        "PUT",
+        { ...previousSettings, shippingFee: 0 },
+        admin,
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request(
+        `/api/admin/requests/${id}/confirm`,
+        "POST",
+        { method: "easypaisa" },
+        admin,
+      )
+    ).status,
     200,
   );
   assert.equal(
@@ -427,6 +451,8 @@ test("unconfirmed stock prevents payment; owner confirmation reserves stock exac
     await request("/api/account/orders", "GET", null, alice)
   ).data.orders.find((o) => o.id === id);
   assert.equal(row.kind, "order");
+  assert.equal(row.data.totals.shipping, 0);
+  assert.equal(row.data.totals.total, row.data.totals.subtotal);
   assert.equal(row.data.payment.recipient.number, "03149537795");
   assert.equal(
     (
@@ -445,6 +471,7 @@ test("unconfirmed stock prevents payment; owner confirmation reserves stock exac
       .status,
     409,
   );
+  app.store.saveSettings(previousSettings);
 });
 test("recovery rotates its single-use code and invalidates existing sessions; password change signs other sessions out", async () => {
   const old = alice;

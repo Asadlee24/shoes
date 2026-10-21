@@ -6,6 +6,7 @@ import { openPostgresStore } from "../server/postgres.mjs";
 import { createCloudHandler, bufferedResponse } from "../server/vercel.mjs";
 import { passwordHash } from "../server/index.mjs";
 import { ownerStockRevision } from "../server/inventory.mjs";
+import { ownerFreeDeliveryRevision } from "../server/catalog.mjs";
 
 let database, limits, store, handler, cookie, csrf, order;
 let queue = Promise.resolve();
@@ -94,6 +95,7 @@ test("Postgres schema seeds owner catalog and returns no private settings", asyn
     ),
   );
   assert.equal("orderNotificationEmail" in result.data.settings, false);
+  assert.equal(result.data.settings.shippingFee, 0);
   const health = await request("/api/index?route=health");
   assert.deepEqual(health.data, {
     database: "connected",
@@ -496,4 +498,41 @@ test("cloud owner stock migration applies to an existing catalog exactly once an
   store = await openPostgresStore({ poolFactory });
   assert.equal((await store.product("suede-penny")).stock, 19);
   assert.equal((await store.product("suede-penny")).stockBySize["7"], 3);
+});
+
+test("cloud free delivery applies once while preserving inventory, order totals and later fee edits", async () => {
+  const settings = { ...(await store.settings()), shippingFee: null };
+  const products = await store.products();
+  const orders = await store.db
+    .prepare("SELECT id,data FROM requests ORDER BY id")
+    .all();
+  await store.withRequest(true, async () => {
+    await store.saveSettings(settings);
+    await store.db
+      .prepare("DELETE FROM migrations WHERE id=?")
+      .run(ownerFreeDeliveryRevision);
+  });
+  store = await openPostgresStore({ poolFactory });
+  assert.deepEqual(await store.settings(), { ...settings, shippingFee: 0 });
+  assert.deepEqual(await store.products(), products);
+  assert.deepEqual(
+    await store.db.prepare("SELECT id,data FROM requests ORDER BY id").all(),
+    orders,
+  );
+  await store.withRequest(true, async () => {
+    await store.saveSettings({
+      ...(await store.settings()),
+      shippingFee: 22500,
+    });
+  });
+  store = await openPostgresStore({ poolFactory });
+  assert.equal((await store.settings()).shippingFee, 22500);
+  assert.equal(
+    (
+      await store.db
+        .prepare("SELECT COUNT(*) AS count FROM migrations WHERE id=?")
+        .get(ownerFreeDeliveryRevision)
+    ).count,
+    1,
+  );
 });

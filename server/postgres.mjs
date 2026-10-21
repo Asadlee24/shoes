@@ -1,7 +1,11 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { ownerStock, ownerStockRevision } from "./inventory.mjs";
 import { createHash } from "node:crypto";
-import { initialProducts, initialSettings } from "./catalog.mjs";
+import {
+  initialProducts,
+  initialSettings,
+  ownerFreeDeliveryRevision,
+} from "./catalog.mjs";
 import { HttpError } from "./store.mjs";
 
 const context = new AsyncLocalStorage();
@@ -205,6 +209,12 @@ export async function openPostgresStore(options = {}) {
       for (const product of await store.products())
         await store.saveProduct(ownerStock(product));
     }
+    const deliveryUpdate = await query(
+      "INSERT INTO qf_migrations(id,applied) VALUES($1,$2) ON CONFLICT(id) DO NOTHING RETURNING id",
+      [ownerFreeDeliveryRevision, new Date().toISOString()],
+    );
+    if (deliveryUpdate.rows.length)
+      await store.saveSettings({ ...(await store.settings()), shippingFee: 0 });
     await query("DELETE FROM qf_sessions WHERE expires < $1", [Date.now()]);
     await query("DELETE FROM qf_limits WHERE until_ms < $1", [Date.now()]);
   });

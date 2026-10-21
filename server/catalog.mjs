@@ -147,6 +147,7 @@ export const officialDetails = {
   easypaisaHolder: "Ammar Alamgir",
   easypaisaNumber: "03149537795",
 };
+export const ownerFreeDeliveryRevision = "owner-free-delivery-2026-10-21";
 export const initialSettings = {
   brand: "QADAM FLEX",
   currency: "PKR",
@@ -155,7 +156,7 @@ export const initialSettings = {
   ...officialDetails,
   address: "",
   announcement: "A considered collection. A better step.",
-  shippingFee: null,
+  shippingFee: 0,
   codEnabled: false,
   deliveryText:
     "Share your city when you enquire. We will confirm availability, pricing and delivery details before you order.",

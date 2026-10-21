@@ -4,7 +4,11 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { initialProducts, initialSettings } from "../server/catalog.mjs";
+import {
+  initialProducts,
+  initialSettings,
+  ownerFreeDeliveryRevision,
+} from "../server/catalog.mjs";
 import { openStore } from "../server/store.mjs";
 import { ownerStockRevision } from "../server/inventory.mjs";
 
@@ -178,6 +182,62 @@ test("owner stock migration sets 20 per style once, preserves business data and 
       store.db
         .prepare("SELECT COUNT(*) AS count FROM migrations WHERE id=?")
         .get(ownerStockRevision).count,
+      1,
+    );
+  } finally {
+    store?.db.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("owner free delivery fills an existing unset fee once without changing orders or later admin edits", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "qadam-free-delivery-"));
+  const path = join(dir, "store.db");
+  let store;
+  try {
+    store = openStore(path);
+    const settings = {
+      ...store.settings(),
+      shippingFee: null,
+      orderNotificationEmail: "owner@example.test",
+    };
+    store.saveSettings(settings);
+    const products = store.products();
+    const originalOrder = JSON.stringify({
+      totals: { subtotal: 350000, shipping: 20000, total: 370000 },
+    });
+    store.db
+      .prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)")
+      .run(
+        "existing-order",
+        "existing-key",
+        "fingerprint",
+        "order",
+        "pending",
+        originalOrder,
+        new Date().toISOString(),
+      );
+    store.db
+      .prepare("DELETE FROM migrations WHERE id=?")
+      .run(ownerFreeDeliveryRevision);
+    store.db.close();
+    store = openStore(path);
+    assert.deepEqual(store.settings(), { ...settings, shippingFee: 0 });
+    assert.deepEqual(store.products(), products);
+    assert.equal(
+      store.db
+        .prepare("SELECT data FROM requests WHERE id=?")
+        .get("existing-order").data,
+      originalOrder,
+    );
+    store.saveSettings({ ...store.settings(), shippingFee: 22500 });
+    store.db.close();
+    store = openStore(path);
+    assert.equal(store.settings().shippingFee, 22500);
+    assert.equal(
+      store.db
+        .prepare("SELECT COUNT(*) AS count FROM migrations WHERE id=?")
+        .get(ownerFreeDeliveryRevision).count,
       1,
     );
   } finally {

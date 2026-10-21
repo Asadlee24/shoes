@@ -55,7 +55,7 @@ Passwords are hashed with scrypt. Sessions use hashed random tokens and HTTP-onl
 
 ## Real business data still needed
 
-The owner supplied these PKR prices: brown suede Rs 3,500; black textured Rs 2,200; black formal Rs 2,800; dark brown textured Rs 2,200. The dark brown textured style remains a draft until its full product photograph is supplied. The separate dark suede style remains unpriced because it does not appear in the supplied price list. Size-specific stock, the sizing system, shipping fees and final exchange/return terms are still needed.
+The owner supplied these PKR prices: brown suede Rs 3,500; black textured Rs 2,200; black formal Rs 2,800; dark brown textured Rs 2,200. The dark brown textured style remains a draft until its full product photograph is supplied. The separate dark suede style remains unpriced in the seed catalog because it does not appear in the supplied price list; existing administrator prices are preserved. Stock is configured below, and the owner confirmed free delivery on 21 October 2026. The sizing system and final exchange/return terms are still needed.
 
 Confirmed prices appear on cards, product pages and bag subtotals. Unpriced products show **Price on request**. Customers can submit an enquiry without payment or a false purchase confirmation. When a product has a price and known inventory for the selected size, shipping is configured, and COD is enabled, the same form can create a local cash-on-delivery order. Availability and totals are validated on the server. Stock is reserved transactionally and restored once if an order is cancelled.
 
@@ -187,8 +187,14 @@ The 21 October 2026 owner instruction sets **20 available pairs per style**, spl
 as 4 each across sizes 7–11. A named, transaction-protected migration applies this
 once to the existing catalog, including draft styles, preserving prices, images,
 publish status, business settings and orders. Later redeploys never refill sold
-stock or overwrite administrator inventory edits. Shipping remains unset until
-the owner supplies the actual delivery fee.
+stock or overwrite administrator inventory edits.
+
+The owner also confirmed **free delivery (PKR 0)** on 21 October 2026. A separate,
+transaction-protected migration sets the existing store's delivery fee to zero
+once. New stores also start with zero delivery charges. Existing order totals,
+prices, stock and other settings stay intact, and later admin delivery-fee edits
+survive redeploys. Existing enquiries can now be confirmed when their prices,
+selected-size stock and payment method are configured.
 
 To hide a test record: Admin → Orders & enquiries → open its reference →
 **Archive request**. For an actual order, first set its status to **cancelled**;

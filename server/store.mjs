@@ -7,6 +7,7 @@ import {
   initialSettings,
   confirmedPrices,
   officialDetails,
+  ownerFreeDeliveryRevision,
 } from "./catalog.mjs";
 
 export function openStore(path) {
@@ -84,6 +85,21 @@ export function openStore(path) {
       currentSettings.orderNotificationEmail = "";
       db.prepare("UPDATE settings SET data=? WHERE id=1").run(
         JSON.stringify(currentSettings),
+      );
+    }
+    if (
+      !db
+        .prepare("SELECT id FROM migrations WHERE id=?")
+        .get(ownerFreeDeliveryRevision)
+    ) {
+      // Owner confirmed free delivery. Apply once; keep later admin fee edits.
+      currentSettings.shippingFee = 0;
+      db.prepare("UPDATE settings SET data=? WHERE id=1").run(
+        JSON.stringify(currentSettings),
+      );
+      db.prepare("INSERT INTO migrations VALUES(?,?)").run(
+        ownerFreeDeliveryRevision,
+        new Date().toISOString(),
       );
     }
     if (
