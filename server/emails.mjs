@@ -12,6 +12,8 @@ import {
   Section,
   Row,
   Column,
+  Img,
+  Link,
   render,
   toPlainText,
 } from "react-email";
@@ -54,8 +56,10 @@ export const emailEvents = {
     "Your store's email sending connection is working. New orders, confirmations, payment updates and website support messages will be sent to this notification address.",
   ],
 };
-const ink = "#171717",
-  muted = "#666666";
+const ink = "#17212b",
+  muted = "#5e6975",
+  blue = "#006ba6";
+const website = "https://www.qadamflex.bond";
 const money = (value) =>
   value == null
     ? "To be confirmed"
@@ -65,18 +69,31 @@ const money = (value) =>
         maximumFractionDigits: 0,
       }).format(value / 100);
 const label = (value) => String(value || "").replaceAll("_", " ");
-const line = (name, value, key = name) =>
+const textStyle = {
+  margin: "0",
+  fontSize: "14px",
+  lineHeight: "22px",
+  color: ink,
+};
+const divider = () =>
+  h(Hr, {
+    style: { border: "0", borderTop: "1px solid #e5e9ed", margin: "24px 0" },
+  });
+const line = (name, value, key = name, total = false) =>
   h(
     Row,
-    { key, style: { margin: "10px 0" } },
+    { key },
     h(
       Column,
       {
         style: {
-          width: "42%",
-          color: muted,
-          fontSize: "14px",
+          width: "45%",
+          padding: total ? "16px 0 0" : "6px 0",
           verticalAlign: "top",
+          color: total ? ink : muted,
+          fontSize: total ? "16px" : "13px",
+          lineHeight: "22px",
+          fontWeight: total ? "700" : "400",
         },
       },
       name,
@@ -85,8 +102,11 @@ const line = (name, value, key = name) =>
       Column,
       {
         style: {
-          color: ink,
-          fontSize: "14px",
+          padding: total ? "16px 0 0" : "6px 0",
+          verticalAlign: "top",
+          color: total ? blue : ink,
+          fontSize: total ? "20px" : "13px",
+          lineHeight: "24px",
           fontWeight: "600",
           textAlign: "right",
           overflowWrap: "anywhere",
@@ -95,6 +115,17 @@ const line = (name, value, key = name) =>
       value,
     ),
   );
+const badges = {
+  new_order: "NEW ORDER",
+  new_enquiry: "CUSTOMER ENQUIRY",
+  support_message: "CUSTOMER SUPPORT",
+  order_confirmed: "ORDER CONFIRMED",
+  status_changed: "ORDER UPDATE",
+  payment_submitted: "REVIEW REQUIRED",
+  payment_approved: "PAYMENT VERIFIED",
+  payment_rejected: "PAYMENT UPDATE",
+  test: "EMAIL CONNECTED",
+};
 
 export async function renderOwnerEmail(payload) {
   const [title, description] = emailEvents[payload.event];
@@ -108,7 +139,7 @@ export async function renderOwnerEmail(payload) {
         Body,
         {
           style: {
-            backgroundColor: "#f4f4f1",
+            backgroundColor: "#eef1f4",
             margin: "0",
             padding: "24px 12px",
             fontFamily: "Arial, Helvetica, sans-serif",
@@ -121,133 +152,378 @@ export async function renderOwnerEmail(payload) {
           {
             style: {
               backgroundColor: "#ffffff",
-              maxWidth: "560px",
-              border: "1px solid #e5e5e1",
-              padding: "32px 24px",
+              maxWidth: "600px",
+              border: "1px solid #dfe5eb",
+              borderRadius: "16px",
+              overflow: "hidden",
             },
           },
           h(
-            Text,
+            Section,
             {
               style: {
-                margin: "0 0 28px",
-                fontWeight: "700",
-                fontSize: "18px",
-                letterSpacing: "2px",
+                backgroundColor: "#0b1017",
+                backgroundImage: "linear-gradient(#0b1017,#0b1017)",
+                borderTop: "4px solid #008acb",
+                padding: "22px 20px 20px",
+                textAlign: "center",
               },
             },
-            "QADAM FLEX",
-          ),
-          h(
-            Heading,
-            {
-              as: "h1",
-              style: {
-                fontSize: "25px",
-                lineHeight: "32px",
-                margin: "0 0 16px",
-              },
-            },
-            title,
-          ),
-          h(
-            Text,
-            { style: { fontSize: "15px", lineHeight: "24px", color: muted } },
-            description,
-          ),
-          payload.reference &&
             h(
-              Section,
-              null,
-              line("Reference", payload.reference),
-              line("Status", label(payload.status)),
-              payload.customer?.name && line("Customer", payload.customer.name),
-              payload.customer?.city && line("City", payload.customer.city),
-              payload.payment?.method &&
-                line("Payment method", label(payload.payment.method)),
-              payload.payment?.status &&
-                line("Payment status", label(payload.payment.status)),
-            ),
-          payload.items?.length > 0 &&
-            h(
-              Section,
-              null,
-              h(Hr, {
+              Link,
+              { href: website, style: { textDecoration: "none" } },
+              h(Img, {
+                src: `${website}/brand/logo-transparent.png`,
+                alt: "Qadam Flex shoe store",
+                width: "194",
+                height: "151",
                 style: {
+                  display: "block",
+                  margin: "0 auto",
+                  maxWidth: "100%",
+                  height: "auto",
                   border: "0",
-                  borderTop: "1px solid #e5e5e1",
-                  margin: "24px 0",
                 },
               }),
-              ...payload.items.map((item, index) =>
-                line(
-                  `${item.name} · Size ${item.size} · Qty ${item.quantity}`,
-                  money(item.price == null ? null : item.price * item.quantity),
-                  `item-${index}`,
-                ),
-              ),
-              line("Subtotal", money(payload.totals?.subtotal)),
-              line(
-                "Delivery",
-                payload.totals?.shipping === 0
-                  ? "Free delivery"
-                  : money(payload.totals?.shipping),
-              ),
-              payload.totals?.discount > 0 &&
-                line("Discount", `−${money(payload.totals.discount)}`),
-              line("Total", money(payload.totals?.total)),
             ),
-          payload.message &&
             h(
-              Section,
-              null,
-              h(
-                Heading,
-                { as: "h2", style: { fontSize: "17px", marginTop: "24px" } },
-                "Customer message",
-              ),
-              h(
-                Text,
-                {
-                  style: {
-                    whiteSpace: "pre-wrap",
-                    fontSize: "14px",
-                    lineHeight: "23px",
-                    overflowWrap: "anywhere",
-                  },
+              Text,
+              {
+                style: {
+                  margin: "12px 0 0",
+                  color: "#c4d3e0",
+                  fontSize: "10px",
+                  lineHeight: "18px",
+                  letterSpacing: "3px",
+                  fontWeight: "600",
                 },
-                payload.message,
-              ),
-            ),
-          h(
-            Button,
-            {
-              href: "https://www.qadamflex.bond/admin",
-              style: {
-                display: "block",
-                boxSizing: "border-box",
-                backgroundColor: ink,
-                color: "#ffffff",
-                padding: "15px 20px",
-                textAlign: "center",
-                textDecoration: "none",
-                fontSize: "14px",
-                marginTop: "28px",
               },
-            },
-            "Open store dashboard",
+              "STORE NOTIFICATIONS",
+            ),
           ),
           h(
-            Text,
+            Section,
+            { style: { padding: "28px 24px 30px" } },
+            h(
+              Text,
+              {
+                style: {
+                  margin: "0 0 14px",
+                  color: blue,
+                  fontSize: "10px",
+                  lineHeight: "18px",
+                  letterSpacing: "1.5px",
+                  fontWeight: "700",
+                },
+              },
+              badges[payload.event],
+            ),
+            h(
+              Heading,
+              {
+                as: "h1",
+                style: {
+                  fontSize: "28px",
+                  lineHeight: "35px",
+                  fontWeight: "700",
+                  letterSpacing: "-0.7px",
+                  margin: "0 0 14px",
+                  color: ink,
+                },
+              },
+              title,
+            ),
+            h(
+              Text,
+              { style: { ...textStyle, color: muted, marginBottom: "24px" } },
+              description,
+            ),
+            payload.reference &&
+              h(
+                Section,
+                {
+                  style: {
+                    backgroundColor: "#f4f7fa",
+                    border: "1px solid #e5eaf0",
+                    borderRadius: "8px",
+                    padding: "16px",
+                  },
+                },
+                h(
+                  Text,
+                  {
+                    style: {
+                      margin: "0 0 4px",
+                      color: muted,
+                      fontSize: "10px",
+                      lineHeight: "18px",
+                      letterSpacing: "1px",
+                    },
+                  },
+                  "REFERENCE",
+                ),
+                h(
+                  Text,
+                  {
+                    style: {
+                      margin: "0 0 12px",
+                      fontWeight: "700",
+                      color: ink,
+                      fontSize: "15px",
+                      lineHeight: "23px",
+                      overflowWrap: "anywhere",
+                    },
+                  },
+                  payload.reference,
+                ),
+                line("Status", label(payload.status)),
+                payload.customer?.name &&
+                  line("Customer", payload.customer.name),
+                payload.customer?.city && line("City", payload.customer.city),
+                payload.payment?.method &&
+                  line("Payment method", label(payload.payment.method)),
+                payload.payment?.status &&
+                  line("Payment status", label(payload.payment.status)),
+              ),
+            payload.items?.length > 0 &&
+              h(
+                Section,
+                null,
+                divider(),
+                h(
+                  Heading,
+                  {
+                    as: "h2",
+                    style: {
+                      margin: "0 0 12px",
+                      color: ink,
+                      fontSize: "17px",
+                      lineHeight: "25px",
+                    },
+                  },
+                  "Order summary",
+                ),
+                ...payload.items.map((item, index) =>
+                  h(
+                    Row,
+                    { key: `item-${index}` },
+                    h(
+                      Column,
+                      {
+                        style: {
+                          padding: "12px 10px 12px 0",
+                          borderBottom: "1px solid #edf0f3",
+                          width: "66%",
+                          verticalAlign: "top",
+                        },
+                      },
+                      h(
+                        Text,
+                        { style: { ...textStyle, fontWeight: "600" } },
+                        item.name,
+                      ),
+                      h(
+                        Text,
+                        {
+                          style: {
+                            margin: "3px 0 0",
+                            color: muted,
+                            fontSize: "12px",
+                            lineHeight: "19px",
+                          },
+                        },
+                        `Size ${item.size} · Qty ${item.quantity}`,
+                      ),
+                    ),
+                    h(
+                      Column,
+                      {
+                        style: {
+                          padding: "12px 0",
+                          borderBottom: "1px solid #edf0f3",
+                          textAlign: "right",
+                          verticalAlign: "top",
+                        },
+                      },
+                      h(
+                        Text,
+                        { style: { ...textStyle, fontWeight: "600" } },
+                        money(
+                          item.price == null
+                            ? null
+                            : item.price * item.quantity,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                h(
+                  Section,
+                  { style: { paddingTop: "12px" } },
+                  line("Subtotal", money(payload.totals?.subtotal)),
+                  line(
+                    "Delivery",
+                    payload.totals?.shipping === 0
+                      ? "Free delivery"
+                      : money(payload.totals?.shipping),
+                  ),
+                  payload.totals?.discount > 0 &&
+                    line("Discount", `−${money(payload.totals.discount)}`),
+                  line(
+                    "Order total",
+                    money(payload.totals?.total),
+                    "total",
+                    true,
+                  ),
+                ),
+              ),
+            payload.message &&
+              h(
+                Section,
+                null,
+                divider(),
+                h(
+                  Heading,
+                  {
+                    as: "h2",
+                    style: {
+                      fontSize: "17px",
+                      lineHeight: "25px",
+                      margin: "0 0 12px",
+                    },
+                  },
+                  "Customer message",
+                ),
+                h(
+                  Section,
+                  {
+                    style: {
+                      borderLeft: "3px solid #008acb",
+                      padding: "12px 16px",
+                      backgroundColor: "#f4f7fa",
+                    },
+                  },
+                  h(
+                    Text,
+                    {
+                      style: {
+                        ...textStyle,
+                        whiteSpace: "pre-wrap",
+                        overflowWrap: "anywhere",
+                      },
+                    },
+                    payload.message,
+                  ),
+                ),
+              ),
+            h(
+              Button,
+              {
+                href: `${website}/admin`,
+                style: {
+                  display: "block",
+                  boxSizing: "border-box",
+                  backgroundColor: blue,
+                  border: `1px solid ${blue}`,
+                  borderRadius: "6px",
+                  color: "#ffffff",
+                  padding: "16px 18px",
+                  textAlign: "center",
+                  textDecoration: "none",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  marginTop: "28px",
+                },
+              },
+              "Open store dashboard",
+            ),
+            h(
+              Text,
+              {
+                style: {
+                  margin: "14px 0 0",
+                  color: muted,
+                  fontSize: "11px",
+                  lineHeight: "18px",
+                  textAlign: "center",
+                },
+              },
+              "Sign in to manage this update and view private details.",
+            ),
+          ),
+          h(
+            Section,
             {
               style: {
-                color: muted,
-                fontSize: "12px",
-                lineHeight: "20px",
-                margin: "24px 0 0",
+                borderTop: "1px solid #e5e9ed",
+                padding: "20px 24px",
+                textAlign: "center",
+                backgroundColor: "#f8fafb",
               },
             },
-            "Store notification · Sign in to view full delivery details and private receipts. Manage the receiving email in Store settings.",
+            h(
+              Text,
+              {
+                style: {
+                  margin: "0 0 10px",
+                  color: ink,
+                  fontSize: "12px",
+                  lineHeight: "20px",
+                  fontWeight: "700",
+                  letterSpacing: "1px",
+                },
+              },
+              "QADAM FLEX",
+            ),
+            h(
+              Text,
+              {
+                style: {
+                  margin: "0 0 12px",
+                  fontSize: "12px",
+                  lineHeight: "22px",
+                  color: muted,
+                },
+              },
+              h(
+                Link,
+                {
+                  href: website,
+                  style: { color: blue, textDecoration: "underline" },
+                },
+                "Visit store",
+              ),
+              " · ",
+              h(
+                Link,
+                {
+                  href: "https://www.instagram.com/qadamflex",
+                  style: { color: blue, textDecoration: "underline" },
+                },
+                "Instagram",
+              ),
+              " · ",
+              h(
+                Link,
+                {
+                  href: "https://www.tiktok.com/@qadamflexoffical",
+                  style: { color: blue, textDecoration: "underline" },
+                },
+                "TikTok",
+              ),
+            ),
+            h(
+              Text,
+              {
+                style: {
+                  margin: "0",
+                  color: muted,
+                  fontSize: "11px",
+                  lineHeight: "18px",
+                },
+              },
+              "You're receiving this store alert at the notification address saved in Store settings.",
+            ),
           ),
         ),
       ),
