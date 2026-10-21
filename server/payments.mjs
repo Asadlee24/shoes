@@ -1,6 +1,6 @@
 import { HttpError, validateItems, totalsFor } from "./store.mjs";
 import { paymentDetails } from "./customer.mjs";
-export function paymentAdminApi({ store, body, json }) {
+export function paymentAdminApi({ store, body, json, notifications }) {
   return async function (req, res, path) {
     const image = path.match(/^\/api\/admin\/proofs\/([\da-f-]+)$/);
     if (image && ["GET", "HEAD"].includes(req.method)) {
@@ -68,6 +68,11 @@ export function paymentAdminApi({ store, body, json }) {
         await store.db
           .prepare("UPDATE requests SET data=? WHERE id=?")
           .run(JSON.stringify(data), order.id);
+        await notifications.enqueue(
+          input.status === "approved" ? "payment_approved" : "payment_rejected",
+          order.id,
+          review[1],
+        );
         await store.db.exec("COMMIT");
       } catch (error) {
         await store.db.exec("ROLLBACK");
@@ -141,6 +146,7 @@ export function paymentAdminApi({ store, body, json }) {
         await store.db
           .prepare("UPDATE requests SET kind=?,status=?,data=? WHERE id=?")
           .run("order", "pending", JSON.stringify(data), order.id);
+        await notifications.enqueue("order_confirmed", order.id);
         await store.db.exec("COMMIT");
       } catch (error) {
         await store.db.exec("ROLLBACK");

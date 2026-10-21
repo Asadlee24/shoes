@@ -2,6 +2,7 @@ import http from "node:http";
 import { paymentAdminApi } from "./payments.mjs";
 import { customerApi, paymentDetails } from "./customer.mjs";
 import { publicSettings } from "./catalog.mjs";
+import { createNotifications } from "./notifications.mjs";
 import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { resolve, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -78,6 +79,19 @@ export async function createApplication(options = {}) {
         join(root, "data", "store.db"),
     );
   const adminUser = options.adminUser || process.env.ADMIN_USER || "admin";
+  const notifications = createNotifications(store, {
+    apiKey: options.emailApiKey,
+    from: options.emailFrom,
+    send: options.emailSend,
+  });
+  if (options.setupEmailTest && notifications.configured)
+    await notifications
+      .test("owner-setup-2026-10-21")
+      .catch(() =>
+        console.error(
+          "Email setup test could not be queued. Check notification settings in admin.",
+        ),
+      );
   const adminHash = options.adminHash || process.env.ADMIN_PASSWORD_HASH || "";
   const attempts = new Map();
   const inquiries = new Map();
@@ -138,11 +152,12 @@ export async function createApplication(options = {}) {
     if (item.count > max)
       throw new HttpError(429, "Please wait a little before trying again.");
   };
-  const paymentAdmin = paymentAdminApi({ store, body, json });
+  const paymentAdmin = paymentAdminApi({ store, body, json, notifications });
   const customers = customerApi({
     store,
     body,
     json,
+    notifications,
     secureCookies:
       options.secureCookies || process.env.SECURE_COOKIES === "true",
     limited: (key, max, minutes) => limited(attempts, key, max, minutes),
@@ -214,6 +229,18 @@ export async function createApplication(options = {}) {
           "Your session has changed. Please sign in again.",
         );
       if (await paymentAdmin(req, res, path)) return;
+      if (method === "GET" && path === "/api/admin/notifications")
+        return json(res, 200, await notifications.status());
+      if (method === "POST" && path === "/api/admin/notifications/test") {
+        await limited(inquiries, `email-test:${ip}`, 3, 15);
+        const id = await notifications.test();
+        return json(res, 202, { id, status: "pending" });
+      }
+      if (method === "POST" && path === "/api/admin/notifications/retry") {
+        await limited(inquiries, `email-retry:${ip}`, 3, 15);
+        await notifications.retry();
+        return json(res, 202, { ok: true });
+      }
       if (method === "GET" && path === "/api/admin/session")
         return json(res, 200, { csrf: session.csrf, username: adminUser });
       if (method === "POST" && path === "/api/admin/logout") {
@@ -237,6 +264,7 @@ export async function createApplication(options = {}) {
               )
               .all()
           ).map((r) => ({ ...r, data: JSON.parse(r.data) })),
+          notifications: await notifications.status(),
         });
       if (
         (method === "PUT" || method === "POST") &&
@@ -452,6 +480,8 @@ export async function createApplication(options = {}) {
           await store.db
             .prepare("UPDATE requests SET status=? WHERE id=?")
             .run(b.status, id);
+          if (b.status !== r.status)
+            await notifications.enqueue("status_changed", id, randomUUID());
           await store.db.exec("COMMIT");
         } catch (e) {
           await store.db.exec("ROLLBACK");
@@ -539,24 +569,34 @@ export async function createApplication(options = {}) {
       }
       await limited(inquiries, ip, 12, 15);
       const reference = `QF-M-${randomBytes(5).toString("hex").toUpperCase()}`;
-      await store.db.prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)").run(
-        reference,
-        key,
-        fingerprint,
-        "inquiry",
-        "new",
-        JSON.stringify({
-          customer: { name, phone, city: "", address: "", notes: message },
-          items: [],
-          totals: {
-            subtotal: null,
-            total: null,
-            shipping: null,
-            discount: 0,
-          },
-        }),
-        new Date().toISOString(),
-      );
+      await store.db.exec("BEGIN IMMEDIATE");
+      try {
+        await store.db
+          .prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)")
+          .run(
+            reference,
+            key,
+            fingerprint,
+            "inquiry",
+            "new",
+            JSON.stringify({
+              customer: { name, phone, city: "", address: "", notes: message },
+              items: [],
+              totals: {
+                subtotal: null,
+                total: null,
+                shipping: null,
+                discount: 0,
+              },
+            }),
+            new Date().toISOString(),
+          );
+        await notifications.enqueue("support_message", reference);
+        await store.db.exec("COMMIT");
+      } catch (error) {
+        await store.db.exec("ROLLBACK");
+        throw error;
+      }
       return json(res, 201, { reference });
     }
     if (method === "POST" && path === "/api/requests") {
@@ -671,6 +711,10 @@ export async function createApplication(options = {}) {
               "INSERT INTO customer_orders(request_id,user_id) VALUES(?,?)",
             )
             .run(reference, account.user.id);
+        await notifications.enqueue(
+          kind === "order" ? "new_order" : "new_enquiry",
+          reference,
+        );
         await store.db.exec("COMMIT");
       } catch (e) {
         await store.db.exec("ROLLBACK");
@@ -693,6 +737,9 @@ export async function createApplication(options = {}) {
     if (path.startsWith("/api/")) {
       try {
         await api(req, res, path);
+        await notifications
+          .flush()
+          .catch(() => console.error("Email queue processing failed."));
       } catch (e) {
         if (!(e instanceof HttpError)) console.error("API error:", e.message);
         json(res, e.status || 500, {
@@ -780,6 +827,7 @@ export async function createApplication(options = {}) {
   return {
     server,
     store,
+    notifications,
     handleApi: api,
     close: async () => {
       if (cleanup) clearInterval(cleanup);

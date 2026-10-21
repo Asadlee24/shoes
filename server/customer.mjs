@@ -73,7 +73,14 @@ export function validateReceipt(input) {
     throw new HttpError(400, "The receipt image format could not be verified.");
   return data;
 }
-export function customerApi({ store, body, json, limited, secureCookies }) {
+export function customerApi({
+  store,
+  body,
+  json,
+  limited,
+  secureCookies,
+  notifications,
+}) {
   const db = store.db;
   const cookie = (res, token, age = 604800) =>
     res.setHeader(
@@ -383,6 +390,7 @@ export function customerApi({ store, body, json, limited, secureCookies }) {
         await db
           .prepare("UPDATE requests SET data=? WHERE id=?")
           .run(JSON.stringify(data), order.id);
+        await notifications.enqueue("payment_submitted", order.id, id);
         await db.exec("COMMIT");
       } catch (error) {
         await db.exec("ROLLBACK");

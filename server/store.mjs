@@ -19,6 +19,8 @@ export function openStore(path) {
  CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS requests(id TEXT PRIMARY KEY, idempotency TEXT UNIQUE NOT NULL, fingerprint TEXT NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL, data TEXT NOT NULL, created TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires INTEGER NOT NULL);
+ CREATE TABLE IF NOT EXISTS email_outbox(id TEXT PRIMARY KEY,event TEXT NOT NULL,request_id TEXT NOT NULL,recipient TEXT NOT NULL,payload TEXT NOT NULL,status TEXT NOT NULL,attempts INTEGER NOT NULL,next_attempt BIGINT NOT NULL,first_attempt BIGINT NOT NULL,created TEXT NOT NULL,provider_id TEXT NOT NULL,last_error TEXT NOT NULL);
+ CREATE INDEX IF NOT EXISTS email_outbox_ready ON email_outbox(status,next_attempt);
 
  CREATE TABLE IF NOT EXISTS customers(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,name TEXT NOT NULL,phone TEXT NOT NULL,city TEXT NOT NULL,address TEXT NOT NULL,password_hash TEXT NOT NULL,recovery_hash TEXT NOT NULL,created TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS customer_sessions(token TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES customers(id),csrf TEXT NOT NULL,expires BIGINT NOT NULL);

@@ -26,6 +26,21 @@ type Dashboard = {
   products: Product[];
   settings: Settings;
   requests: StoreRequest[];
+  notifications?: NotificationSummary;
+};
+type NotificationSummary = {
+  configured: boolean;
+  from: string;
+  recipient: string;
+  counts: Record<string, number>;
+  recent: {
+    id: string;
+    event: string;
+    request_id: string;
+    recipient: string;
+    status: string;
+    last_error: string;
+  }[];
 };
 export default function Admin({ preview = false }: { preview?: boolean }) {
   const { reload } = useStore();
@@ -136,6 +151,42 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
       setNotice("Store settings saved.");
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function emailAction(action: "test" | "retry" | "refresh") {
+    if (preview) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const result =
+        action === "refresh"
+          ? {}
+          : await api<{ id?: string }>(`/api/admin/notifications/${action}`, {
+              method: "POST",
+              headers,
+            });
+      const summary = await api<NotificationSummary>(
+        "/api/admin/notifications",
+      );
+      setData((current) =>
+        current ? { ...current, notifications: summary } : current,
+      );
+      if (action === "refresh") return;
+      const test = summary.recent.find((entry) => entry.id === result.id);
+      if (test?.status === "failed") setError(test.last_error);
+      else
+        setNotice(
+          action === "retry"
+            ? "Eligible alerts are queued to retry. Refresh to check their status."
+            : test?.status === "sent"
+              ? `Test accepted by the email provider for ${summary.recipient}. Check your inbox and spam folder.`
+              : "Test queued. Refresh to check its sending status.",
+        );
+    } catch (error) {
+      setError((error as Error).message);
     } finally {
       setBusy(false);
     }
@@ -684,8 +735,99 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                       <p className="muted">
                         {preview
                           ? "This address is only visible after signing in."
-                          : "Private receiving address for order alerts. Automatic email delivery is not connected yet."}
+                          : "New orders, enquiries, confirmations, payment updates and website support messages are sent here. Replace this with the client's email when handing over the store."}
                       </p>
+                      {!preview && data.notifications && (
+                        <div className="notification-status" aria-live="polite">
+                          <p>
+                            <strong>
+                              {data.notifications.configured
+                                ? "Email sending configured"
+                                : "Email sending needs setup"}
+                            </strong>
+                          </p>
+                          <p className="muted small">
+                            {data.notifications.configured
+                              ? `Sender: ${data.notifications.from}`
+                              : "Add RESEND_API_KEY privately in Vercel Production, then redeploy."}
+                          </p>
+                          <div className="notification-actions">
+                            <button
+                              type="button"
+                              className="button button-outline"
+                              disabled={
+                                busy ||
+                                !data.notifications.configured ||
+                                !data.settings.orderNotificationEmail ||
+                                settings.orderNotificationEmail !==
+                                  data.settings.orderNotificationEmail
+                              }
+                              onClick={() => void emailAction("test")}
+                            >
+                              Send test email
+                            </button>
+                            <button
+                              type="button"
+                              className="button button-outline"
+                              disabled={busy}
+                              onClick={() => void emailAction("refresh")}
+                            >
+                              Refresh status
+                            </button>
+                            {data.notifications.counts.failed > 0 && (
+                              <button
+                                type="button"
+                                className="button button-outline"
+                                disabled={
+                                  busy || !data.notifications.configured
+                                }
+                                onClick={() => void emailAction("retry")}
+                              >
+                                Retry failed alerts
+                              </button>
+                            )}
+                          </div>
+                          {settings.orderNotificationEmail !==
+                            data.settings.orderNotificationEmail && (
+                            <p className="muted small">
+                              Save your new receiving address before sending a
+                              test.
+                            </p>
+                          )}
+                          <p className="muted small">
+                            {data.notifications.counts.sent} accepted ·{" "}
+                            {data.notifications.counts.pending +
+                              data.notifications.counts.sending}{" "}
+                            queued ·{" "}
+                            {data.notifications.counts.failed +
+                              data.notifications.counts.unknown}{" "}
+                            need attention. Accepted means the provider received
+                            the email; final delivery can be checked in Resend.
+                          </p>
+                          <ul className="notification-history">
+                            {data.notifications.recent.map((entry) => (
+                              <li key={entry.id}>
+                                <span>
+                                  {entry.event.replaceAll("_", " ")}
+                                  {entry.request_id
+                                    ? ` · ${entry.request_id}`
+                                    : ""}
+                                </span>
+                                <strong>
+                                  {entry.status === "sent"
+                                    ? "Accepted"
+                                    : entry.status}
+                                </strong>
+                                {entry.last_error && (
+                                  <p className="form-error">
+                                    {entry.last_error}
+                                  </p>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </section>
                     <section>
                       <h2>Official details & manual payments</h2>

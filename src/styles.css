@@ -2374,6 +2374,37 @@ select:focus {
   font-size: 21px;
   margin-bottom: 5px;
 }
+.notification-status {
+  display: grid;
+  gap: 14px;
+  overflow-wrap: anywhere;
+}
+.notification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.notification-actions .button {
+  min-height: 44px;
+  padding: 12px 16px;
+}
+.notification-history {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.notification-history li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 14px 0;
+  border-top: 1px solid #d8d8d4;
+  font-size: 12px;
+}
+.notification-history li p {
+  flex-basis: 100%;
+}
 .checkbox-label {
   flex-direction: row !important;
   align-items: center;

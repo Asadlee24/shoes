@@ -455,6 +455,14 @@ test("unconfirmed stock and delivery prevent payment; free-delivery confirmation
   assert.equal(row.data.totals.total, row.data.totals.subtotal);
   assert.equal(row.data.payment.recipient.number, "03149537795");
   assert.equal(
+    app.store.db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM email_outbox WHERE event='order_confirmed' AND request_id=?",
+      )
+      .get(id).n,
+    1,
+  );
+  assert.equal(
     (
       await request(
         `/api/admin/requests/${id}`,
@@ -472,6 +480,21 @@ test("unconfirmed stock and delivery prevent payment; free-delivery confirmation
     409,
   );
   app.store.saveSettings(previousSettings);
+});
+test("checkout, receipt uploads and reviews record one owner alert per real event", () => {
+  const alerts = app.store.db
+    .prepare(
+      "SELECT event,COUNT(*) AS n FROM email_outbox WHERE request_id=? GROUP BY event",
+    )
+    .all(order);
+  const counts = Object.fromEntries(
+    alerts.map((entry) => [entry.event, entry.n]),
+  );
+  assert.equal(counts.new_order, 1);
+  assert.equal(counts.payment_submitted, 2);
+  assert.equal(counts.payment_rejected, 1);
+  assert.equal(counts.payment_approved, 1);
+  assert.equal(counts.status_changed, 1);
 });
 test("recovery rotates its single-use code and invalidates existing sessions; password change signs other sessions out", async () => {
   const old = alice;

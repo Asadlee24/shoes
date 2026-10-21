@@ -6,6 +6,7 @@ import { openPostgresStore } from "../server/postgres.mjs";
 import { createCloudHandler, bufferedResponse } from "../server/vercel.mjs";
 import { passwordHash } from "../server/index.mjs";
 import { ownerStockRevision } from "../server/inventory.mjs";
+import { createNotifications } from "../server/notifications.mjs";
 import {
   ownerFreeDeliveryRevision,
   ownerNotificationRevision,
@@ -580,4 +581,124 @@ test("cloud notification recipient is corrected once, stays private and can be r
     (await store.settings()).orderNotificationEmail,
     "client@example.test",
   );
+});
+
+test("cloud email setup sends once across cold starts and releases alerts only after commit", async () => {
+  const messages = [];
+  const emailSend = async (message, key) => {
+    // Sending must use a committed, independently readable outbox row.
+    const row = await store.db
+      .prepare("SELECT status FROM email_outbox WHERE id=?")
+      .get(key.slice("qadam-".length));
+    assert.equal(row.status, "sending");
+    messages.push({ message, key });
+    return { data: { id: `provider-${key}` } };
+  };
+  const notifications = createNotifications(store, {
+    apiKey: "",
+    send: emailSend,
+  });
+  await notifications.flush(100);
+  messages.length = 0;
+  for (let i = 0; i < 2; i++) {
+    handler = createCloudHandler({
+      store,
+      adminHash: passwordHash(password),
+      emailApiKey: "",
+      emailSend,
+      setupEmailTest: true,
+    });
+    assert.equal((await request("/api/health")).status, 200);
+  }
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].message.subject, "Qadam Flex email test");
+  assert.deepEqual(messages[0].message.to, ["client@example.test"]);
+  assert.equal(messages[0].message.from, "Qadam Flex <orders@qadamflex.bond>");
+  const previous = messages.length;
+  const reference = "ROLLBACK-CLOUD-EMAIL";
+  await assert.rejects(
+    store.withRequest(true, async () => {
+      await notifications.enqueue("test", "", reference);
+      throw new Error("Simulated failed transaction");
+    }),
+  );
+  await notifications.flush();
+  assert.equal(messages.length, previous);
+  const originalWithRequest = store.withRequest.bind(store);
+  const failingStore = {
+    ...store,
+    withRequest: (write, action) =>
+      originalWithRequest(write, async () => {
+        const result = await action();
+        if (write) throw new Error("Abort before commit");
+        return result;
+      }),
+  };
+  handler = createCloudHandler({
+    store: failingStore,
+    adminHash: passwordHash(password),
+    emailApiKey: "",
+    emailSend,
+    setupEmailTest: false,
+  });
+  const headers = {
+    "idempotency-key": randomUUID(),
+    "x-forwarded-for": "rollback-support-test",
+  };
+  const failed = await request(
+    "/api/messages",
+    "POST",
+    {
+      name: "Rollback Support",
+      phone: "03001234567",
+      message: "This support request must roll back.",
+    },
+    headers,
+  );
+  assert.equal(failed.status, 503);
+  assert.equal(
+    await store.db
+      .prepare("SELECT id FROM requests WHERE idempotency=?")
+      .get(headers["idempotency-key"]),
+    undefined,
+  );
+  assert.equal(messages.length, previous);
+  handler = createCloudHandler({
+    store,
+    adminHash: passwordHash(password),
+    emailApiKey: "",
+    emailSend,
+    setupEmailTest: false,
+  });
+  const saved = await request(
+    "/api/messages",
+    "POST",
+    {
+      name: "Saved Support",
+      phone: "03001234567",
+      message: "Please confirm size availability.",
+    },
+    {
+      "idempotency-key": randomUUID(),
+      "x-forwarded-for": "committed-support-test",
+    },
+  );
+  assert.equal(saved.status, 201);
+  assert.equal(messages.length, previous + 1);
+  assert.match(messages.at(-1).message.subject, /New support message/);
+});
+
+test("Postgres outbox workers claim alerts once across independent notifier instances", async () => {
+  const keys = [];
+  const send = async (_message, key) => {
+    keys.push(key);
+    return { data: { id: key } };
+  };
+  const a = createNotifications(store, { apiKey: "", send });
+  const b = createNotifications(store, { apiKey: "", send });
+  await a.test("parallel-cloud-a");
+  await b.test("parallel-cloud-b");
+  await Promise.all([a.flush(), b.flush()]);
+  assert.equal(keys.length, 2);
+  assert.equal(new Set(keys).size, 2);
 });

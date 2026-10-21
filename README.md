@@ -61,7 +61,7 @@ Confirmed prices appear on cards, product pages and bag subtotals. Unpriced prod
 
 The supplied labels are **7–11**; do not describe them as UK/US/EU or add conversion tables without confirmation. Product material descriptions reflect appearance, not certifications. Confirm the dark suede loafer's final black/navy color name. Manufacturer markings in the photographs are preserved.
 
-Online card payments, courier bookings, live email/SMS and a public deployment are not connected. A recorded enquiry is visible in the administrator area; it is not automatically sent to a phone or email address. Official phone and social links are configured. The Bank & Easypaisa page has copyable account details; customers confirm their order before transferring, and receipts are checked manually. Bank details do not create or verify a payment.
+Online card payments, courier bookings and SMS are not connected. The store is deployed at https://www.qadamflex.bond/; owner email notifications use the verified Resend sending domain and the private production API key. Official phone and social links are configured. The Bank & Easypaisa page has copyable account details; customers confirm their order before transferring, and receipts are checked manually. Bank details do not create or verify a payment.
 
 ## Files and data
 
@@ -105,18 +105,44 @@ Typography: DM Sans and Manrope, loaded from Google Fonts with local system fall
 
 The `/admin/demo` route previews the admin interface using published catalog data only. Customer records and discount codes are excluded, and saves/uploads are disabled. It does not grant access to the protected admin API. Use `/admin` with the running Node backend for real store management.
 
-A private order notification recipient can be saved under Admin → Store settings → Order notifications. The address is excluded from the public catalog and admin demo, and can be replaced during client handover. Saving a recipient does not enable sending: the email provider and verified sender still need to be connected.
+### Owner email notifications
 
-The owner's current testing recipient is `asadaly416@gmail.com`. A one-time
-21 October 2026 migration corrects the existing private recipient, including the
-earlier misspelled address, without changing customer records. Subsequent admin
-changes survive redeploys; replace it with the client's email during handover.
-**Automatic emails are still inactive**: install Resend for the `qadam-flex`
-project at <https://vercel.com/marketplace/resend>, complete sender-domain
-verification, then implement and test the notification events against that real
-integration. Required events are new orders/enquiries, support messages, enquiry
-confirmation, order status changes and payment receipt/review updates. No test
-email or automatic notification has been sent by this version.
+Admin → Store settings → Order notifications holds the **private receiving email**.
+The testing recipient is `asadaly416@gmail.com`. Replace it with the client's
+email and save during handover, then use **Send test email**. The recipient is
+excluded from the public catalog and admin demo. Changing it affects future
+alerts; already queued alerts retain the address saved when the event occurred.
+The one-time 21 October 2026 migration fixes the previous misspelling without
+overwriting later admin changes.
+
+Set `RESEND_API_KEY` privately in **Vercel Production**, then redeploy. Never add
+it to Git, screenshots, chat or `VITE_` variables. The default verified sender is
+`Qadam Flex <orders@qadamflex.bond>`; `RESEND_FROM` can override it with another
+verified address. The provider's domain verification must be complete. Receiving
+these alerts at Gmail does not require buying a mailbox for the sending address.
+The first configured Production startup queues one connection test, deduplicated
+across cold starts; further tests require authenticated admin access and CSRF.
+
+The store sends owner alerts for new orders/enquiries, website support messages,
+enquiry-to-order confirmations, status changes, receipt uploads and receipt
+approval/rejection. These are owner notifications, not customer marketing or
+email verification. Support means messages submitted through this website;
+Instagram/WhatsApp conversations are not imported. Receipt verification remains
+manual. Customer addresses, bank details, credentials and private receipt images
+are excluded from emails; the button opens the protected dashboard.
+
+An email outbox commits in the same database transaction as the event. Sending
+happens **after commit**, so a provider outage cannot undo a saved order. Stable
+idempotency keys prevent duplicate sends after interrupted attempts. Network,
+429 and 5xx failures retry with backoff on subsequent API activity, up to five
+attempts; this is not a separately scheduled worker. Configuration failures need
+a fix and **Retry failed alerts** in admin. After 23 hours without confirmation,
+check Resend before resending to avoid a duplicate beyond its deduplication
+window. Old store records are not backfilled with notification emails.
+
+Admin shows queued, failed and **accepted** alerts. Accepted means Resend has
+received the message, not that the recipient's mail server delivered it. Final
+provider delivery/bounce status is available in Resend; check inbox and spam.
 
 ### Vercel with Neon Postgres
 
@@ -142,8 +168,8 @@ served at their original `/products/upload-*` paths with immutable cache headers
 `GET /api/health` reports database connectivity and whether administrator login
 is configured; it never returns credentials. Catalog responses exclude discount
 codes and the private notification email. Set the test notification address in
-the real admin Store settings after signing in; email sending still requires a
-separate email provider and is not enabled by attaching a database.
+the real admin Store settings after signing in; email sending uses the private
+Resend configuration described above and is not enabled by attaching a database alone.
 
 The backend uses `@neondatabase/serverless` WebSocket pools scoped to each request.
 `npm test` also exercises the adapter against embedded Postgres (PGlite), including
@@ -190,7 +216,7 @@ New `qf_customers`, `qf_customer_sessions`, `qf_customer_orders` and
 existing inventory, orders and administrator settings are preserved. No new
 third-party account, API secret, card gateway or paid service is required for
 these manual transfers. Order and receipt notifications are visible in admin;
-automatic email sending still needs a verified sender and mail provider.
+owner email sending uses the verified Resend sender and private API key described above.
 
 ### Owner stock update and test-record cleanup
 

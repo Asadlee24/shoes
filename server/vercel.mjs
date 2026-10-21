@@ -38,6 +38,11 @@ export function createCloudHandler(options = {}) {
       trustProxy: true,
       secureCookies: true,
       adminHash,
+      emailApiKey: options.emailApiKey,
+      emailFrom: options.emailFrom,
+      emailSend: options.emailSend,
+      setupEmailTest:
+        options.setupEmailTest ?? process.env.VERCEL_ENV === "production",
       adminMissingMessage:
         "Set a private ADMIN_PASSWORD (12–200 characters) in Vercel Production environment variables, then redeploy to enable administrator login.",
     });
@@ -94,6 +99,9 @@ export function createCloudHandler(options = {}) {
         },
       );
       // Do not send success or a session cookie until the transaction commits.
+      await app.notifications
+        .flush()
+        .catch(() => console.error("Email queue processing failed."));
       res.writeHead(buffered.statusCode, buffered.headers);
       res.end(buffered.payload);
     } catch (error) {

@@ -12,7 +12,7 @@ import { HttpError } from "./store.mjs";
 const context = new AsyncLocalStorage();
 const writeLock = 814202610;
 const tables =
-  /\b(products|settings|requests|sessions|migrations|customers|customer_sessions|customer_orders|payment_proofs)\b/g;
+  /\b(products|settings|requests|sessions|migrations|customers|customer_sessions|customer_orders|payment_proofs|email_outbox)\b/g;
 
 // Only internally defined SQL passes through this adapter; values stay bound.
 export function postgresSql(sql) {
@@ -174,6 +174,8 @@ export async function openPostgresStore(options = {}) {
       CREATE TABLE IF NOT EXISTS qf_media(name TEXT PRIMARY KEY,type TEXT NOT NULL,data BYTEA NOT NULL);
       CREATE TABLE IF NOT EXISTS qf_migrations(id TEXT PRIMARY KEY,applied TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS qf_limits(id TEXT PRIMARY KEY,count INTEGER NOT NULL,until_ms BIGINT NOT NULL);
+      CREATE TABLE IF NOT EXISTS qf_email_outbox(id TEXT PRIMARY KEY,event TEXT NOT NULL,request_id TEXT NOT NULL,recipient TEXT NOT NULL,payload TEXT NOT NULL,status TEXT NOT NULL,attempts INTEGER NOT NULL,next_attempt BIGINT NOT NULL,first_attempt BIGINT NOT NULL,created TEXT NOT NULL,provider_id TEXT NOT NULL,last_error TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS qf_email_outbox_ready ON qf_email_outbox(status,next_attempt);
 
  CREATE TABLE IF NOT EXISTS qf_customers(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,name TEXT NOT NULL,phone TEXT NOT NULL,city TEXT NOT NULL,address TEXT NOT NULL,password_hash TEXT NOT NULL,recovery_hash TEXT NOT NULL,created TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS qf_customer_sessions(token TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES qf_customers(id),csrf TEXT NOT NULL,expires BIGINT NOT NULL);
