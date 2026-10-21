@@ -148,11 +148,13 @@ export const officialDetails = {
   easypaisaNumber: "03149537795",
 };
 export const ownerFreeDeliveryRevision = "owner-free-delivery-2026-10-21";
+export const ownerNotificationRevision =
+  "owner-notification-recipient-2026-10-21";
 export const initialSettings = {
   brand: "QADAM FLEX",
   currency: "PKR",
   email: "",
-  orderNotificationEmail: "",
+  orderNotificationEmail: "asadaly416@gmail.com",
   ...officialDetails,
   address: "",
   announcement: "A considered collection. A better step.",

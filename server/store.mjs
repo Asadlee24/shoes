@@ -8,6 +8,7 @@ import {
   confirmedPrices,
   officialDetails,
   ownerFreeDeliveryRevision,
+  ownerNotificationRevision,
 } from "./catalog.mjs";
 
 export function openStore(path) {
@@ -99,6 +100,21 @@ export function openStore(path) {
       );
       db.prepare("INSERT INTO migrations VALUES(?,?)").run(
         ownerFreeDeliveryRevision,
+        new Date().toISOString(),
+      );
+    }
+    if (
+      !db
+        .prepare("SELECT id FROM migrations WHERE id=?")
+        .get(ownerNotificationRevision)
+    ) {
+      currentSettings.orderNotificationEmail =
+        initialSettings.orderNotificationEmail;
+      db.prepare("UPDATE settings SET data=? WHERE id=1").run(
+        JSON.stringify(currentSettings),
+      );
+      db.prepare("INSERT INTO migrations VALUES(?,?)").run(
+        ownerNotificationRevision,
         new Date().toISOString(),
       );
     }

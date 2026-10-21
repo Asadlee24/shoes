@@ -335,9 +335,11 @@ export function ProductPage() {
           </button>
           <p className="purchase-note">
             <Check size={14} />
-            {p.price === null
-              ? "Price and availability confirmed when you enquire."
-              : "Final delivery details are confirmed at checkout."}
+            {settings?.shippingFee === 0
+              ? "Free delivery on all orders."
+              : p.price === null
+                ? "Price and availability confirmed when you enquire."
+                : "Final delivery details are confirmed at checkout."}
           </p>
           {settings?.whatsapp && (
             <a
@@ -461,9 +463,15 @@ function SelectionSummary({ discount = 0 }: { discount?: number }) {
       <div className="total-line muted">
         <span>Delivery</span>
         <span>
-          {settings?.shippingFee != null
-            ? money(settings.shippingFee)
-            : "To be confirmed"}
+          {settings?.shippingFee != null ? (
+            settings.shippingFee === 0 ? (
+              <strong className="free-delivery-label">Free delivery</strong>
+            ) : (
+              money(settings.shippingFee)
+            )
+          ) : (
+            "To be confirmed"
+          )}
         </span>
       </div>
       {discount > 0 && (

@@ -8,6 +8,7 @@ import {
   initialProducts,
   initialSettings,
   ownerFreeDeliveryRevision,
+  ownerNotificationRevision,
 } from "../server/catalog.mjs";
 import { openStore } from "../server/store.mjs";
 import { ownerStockRevision } from "../server/inventory.mjs";
@@ -72,7 +73,7 @@ test("existing stores receive confirmed prices once without overwriting admin ed
   }
 });
 
-test("official details migrate into existing stores once and preserve later administrator edits", async () => {
+test("official details and the corrected private notification recipient migrate once and preserve later administrator edits", async () => {
   const dir = await mkdtemp(join(tmpdir(), "qadam-details-"));
   const path = join(dir, "legacy.db");
   let store;
@@ -88,16 +89,25 @@ test("official details migrate into existing stores once and preserve later admi
       bankIban: "",
       bankAccountNumber: "",
       easypaisaNumber: "",
+      orderNotificationEmail: "asadalay416@gmail.com",
     };
     delete settings.tiktok;
-    delete settings.orderNotificationEmail;
     legacy
       .prepare("INSERT INTO settings VALUES(1,?)")
       .run(JSON.stringify(settings));
     legacy.close();
     store = openStore(path);
     assert.equal(store.settings().phone, "03237205097");
-    assert.equal(store.settings().orderNotificationEmail, "");
+    assert.equal(
+      store.settings().orderNotificationEmail,
+      "asadaly416@gmail.com",
+    );
+    assert.equal(
+      store.db
+        .prepare("SELECT COUNT(*) AS count FROM migrations WHERE id=?")
+        .get(ownerNotificationRevision).count,
+      1,
+    );
     assert.equal(store.settings().instagram, "owner_custom");
     assert.equal(store.settings().tiktok, "qadamflexoffical");
     assert.equal(store.settings().bankAccountNumber, "0011935002260015");

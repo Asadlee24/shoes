@@ -9,7 +9,11 @@ import {
 } from "lucide-react";
 import { useStore } from "./store";
 import { TikTokIcon, WhatsAppIcon } from "./Social";
-export function BusinessLinks() {
+export function BusinessLinks({
+  showWebsite = true,
+}: {
+  showWebsite?: boolean;
+}) {
   const { settings: s } = useStore();
   if (!s) return null;
   const links = [
@@ -33,11 +37,12 @@ export function BusinessLinks() {
       text: "TikTok",
       icon: TikTokIcon,
     },
-    s.website && {
-      href: s.website,
-      text: new URL(s.website).hostname,
-      icon: Globe,
-    },
+    showWebsite &&
+      s.website && {
+        href: s.website,
+        text: new URL(s.website).hostname,
+        icon: Globe,
+      },
   ].filter(Boolean) as { href: string; text: string; icon: typeof Phone }[];
   return (
     <nav

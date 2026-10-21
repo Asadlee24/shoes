@@ -21,6 +21,136 @@
 .footer .business-links a {
   font-size: 12px;
 }
+.announcement.has-free-delivery > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 600;
+}
+.free-delivery-label {
+  color: var(--ink);
+  font-weight: 600;
+}
+.footer .footer-delivery {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 22px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid #ffffff26;
+  color: #eeeeeb;
+  font-size: 13px;
+}
+.footer-delivery > span:last-child {
+  margin-left: auto;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: #a7a7a2;
+}
+.footer .footer-top {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.85fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 64px;
+}
+.footer-brand {
+  min-width: 0;
+  max-width: 260px;
+}
+.footer .footer-action {
+  width: 100%;
+  margin-top: 0;
+}
+.footer .footer-links {
+  width: 100%;
+  gap: 28px;
+}
+.footer .footer-links > div {
+  min-width: 0;
+}
+.footer .footer-bottom {
+  align-items: center;
+  gap: 20px;
+  margin-top: 36px;
+  padding-top: 22px;
+  padding-bottom: 22px;
+}
+@media (max-width: 1000px) {
+  .footer .footer-top {
+    grid-template-columns: minmax(140px, 0.7fr) minmax(0, 2fr);
+    gap: 32px;
+  }
+}
+@media (max-width: 800px) {
+  .footer {
+    padding: 28px 22px 0;
+  }
+  .footer .footer-top {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .footer .footer-brand {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    max-width: none;
+  }
+  .footer .brand-signature {
+    width: 100px;
+    min-height: 0;
+    margin: 0;
+  }
+  .footer .brand-complete {
+    width: 100px;
+    height: 113px;
+  }
+  .footer .footer-action {
+    width: min(160px, 45%);
+    padding: 14px 0;
+    font-size: 12px;
+  }
+  .footer .footer-links {
+    gap: 26px 20px;
+    padding: 0;
+  }
+  .footer .footer-links > div {
+    gap: 11px;
+    font-size: 12px;
+  }
+  .footer .footer-links p {
+    margin-bottom: 4px;
+    font-size: 9px;
+  }
+  .footer .business-links {
+    gap: 9px 20px;
+    width: 100%;
+  }
+  .footer .business-links a {
+    min-height: 36px;
+    gap: 10px;
+    font-size: 13px;
+    overflow-wrap: normal;
+  }
+  .footer .footer-bottom {
+    margin-top: 26px;
+    font-size: 9px;
+    gap: 12px;
+  }
+  .footer .footer-bottom > div {
+    gap: 20px;
+  }
+  .footer .footer-delivery {
+    gap: 9px;
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    font-size: 12px;
+  }
+  .footer-delivery > span:last-child {
+    display: none;
+  }
+}
 .payments-page {
   min-height: 70vh;
   padding-top: 65px;

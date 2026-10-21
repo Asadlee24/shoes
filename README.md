@@ -107,6 +107,17 @@ The `/admin/demo` route previews the admin interface using published catalog dat
 
 A private order notification recipient can be saved under Admin → Store settings → Order notifications. The address is excluded from the public catalog and admin demo, and can be replaced during client handover. Saving a recipient does not enable sending: the email provider and verified sender still need to be connected.
 
+The owner's current testing recipient is `asadaly416@gmail.com`. A one-time
+21 October 2026 migration corrects the existing private recipient, including the
+earlier misspelled address, without changing customer records. Subsequent admin
+changes survive redeploys; replace it with the client's email during handover.
+**Automatic emails are still inactive**: install Resend for the `qadam-flex`
+project at <https://vercel.com/marketplace/resend>, complete sender-domain
+verification, then implement and test the notification events against that real
+integration. Required events are new orders/enquiries, support messages, enquiry
+confirmation, order status changes and payment receipt/review updates. No test
+email or automatic notification has been sent by this version.
+
 ### Vercel with Neon Postgres
 
 The live Vercel APIs use `DATABASE_URL` (Production, private) from the dedicated

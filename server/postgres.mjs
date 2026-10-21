@@ -5,6 +5,7 @@ import {
   initialProducts,
   initialSettings,
   ownerFreeDeliveryRevision,
+  ownerNotificationRevision,
 } from "./catalog.mjs";
 import { HttpError } from "./store.mjs";
 
@@ -215,6 +216,15 @@ export async function openPostgresStore(options = {}) {
     );
     if (deliveryUpdate.rows.length)
       await store.saveSettings({ ...(await store.settings()), shippingFee: 0 });
+    const notificationUpdate = await query(
+      "INSERT INTO qf_migrations(id,applied) VALUES($1,$2) ON CONFLICT(id) DO NOTHING RETURNING id",
+      [ownerNotificationRevision, new Date().toISOString()],
+    );
+    if (notificationUpdate.rows.length)
+      await store.saveSettings({
+        ...(await store.settings()),
+        orderNotificationEmail: initialSettings.orderNotificationEmail,
+      });
     await query("DELETE FROM qf_sessions WHERE expires < $1", [Date.now()]);
     await query("DELETE FROM qf_limits WHERE until_ms < $1", [Date.now()]);
   });

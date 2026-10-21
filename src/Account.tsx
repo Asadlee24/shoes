@@ -475,7 +475,9 @@ export default function Account() {
                         <dd>
                           {order.data.totals.shipping === null
                             ? "To be confirmed"
-                            : money(order.data.totals.shipping)}
+                            : order.data.totals.shipping === 0
+                              ? "Free delivery"
+                              : money(order.data.totals.shipping)}
                         </dd>
                       </div>
                       <div>

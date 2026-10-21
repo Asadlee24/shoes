@@ -6,7 +6,10 @@ import { openPostgresStore } from "../server/postgres.mjs";
 import { createCloudHandler, bufferedResponse } from "../server/vercel.mjs";
 import { passwordHash } from "../server/index.mjs";
 import { ownerStockRevision } from "../server/inventory.mjs";
-import { ownerFreeDeliveryRevision } from "../server/catalog.mjs";
+import {
+  ownerFreeDeliveryRevision,
+  ownerNotificationRevision,
+} from "../server/catalog.mjs";
 
 let database, limits, store, handler, cookie, csrf, order;
 let queue = Promise.resolve();
@@ -534,5 +537,47 @@ test("cloud free delivery applies once while preserving inventory, order totals 
         .get(ownerFreeDeliveryRevision)
     ).count,
     1,
+  );
+});
+
+test("cloud notification recipient is corrected once, stays private and can be replaced for handover", async () => {
+  const settings = {
+    ...(await store.settings()),
+    orderNotificationEmail: "asadalay416@gmail.com",
+  };
+  const products = await store.products();
+  const orders = await store.db
+    .prepare("SELECT id,data FROM requests ORDER BY id")
+    .all();
+  await store.withRequest(true, async () => {
+    await store.saveSettings(settings);
+    await store.db
+      .prepare("DELETE FROM migrations WHERE id=?")
+      .run(ownerNotificationRevision);
+  });
+  store = await openPostgresStore({ poolFactory });
+  assert.deepEqual(await store.settings(), {
+    ...settings,
+    orderNotificationEmail: "asadaly416@gmail.com",
+  });
+  assert.deepEqual(await store.products(), products);
+  assert.deepEqual(
+    await store.db.prepare("SELECT id,data FROM requests ORDER BY id").all(),
+    orders,
+  );
+  assert.equal(
+    "orderNotificationEmail" in (await request("/api/catalog")).data.settings,
+    false,
+  );
+  await store.withRequest(true, async () => {
+    await store.saveSettings({
+      ...(await store.settings()),
+      orderNotificationEmail: "client@example.test",
+    });
+  });
+  store = await openPostgresStore({ poolFactory });
+  assert.equal(
+    (await store.settings()).orderNotificationEmail,
+    "client@example.test",
   );
 });

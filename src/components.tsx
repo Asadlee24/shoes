@@ -17,6 +17,7 @@ import {
   LoaderCircle,
   Sun,
   Moon,
+  Truck,
 } from "lucide-react";
 import { useStore } from "./store";
 import { useTheme } from "./theme";
@@ -90,12 +91,21 @@ export function Header() {
   }, [location.pathname, location.search]);
   return (
     <>
-      <div className={`announcement ${home ? "dark" : ""}`}>
+      <div
+        className={`announcement ${home ? "dark" : ""} ${settings?.shippingFee === 0 ? "has-free-delivery" : ""}`}
+      >
         <span>
-          {settings?.announcement &&
-          settings.announcement !== "A considered collection. A better step."
-            ? settings.announcement
-            : "Loafers & formal shoes · Sizes 7–11"}
+          {settings?.shippingFee === 0 ? (
+            <>
+              <Truck size={13} aria-hidden="true" /> FREE DELIVERY ON ALL ORDERS
+            </>
+          ) : settings?.announcement &&
+            settings.announcement !==
+              "A considered collection. A better step." ? (
+            settings.announcement
+          ) : (
+            "Loafers & formal shoes · Sizes 7–11"
+          )}
         </span>
         <span className="announcement-right">PAKISTAN · PKR</span>
       </div>
@@ -659,10 +669,18 @@ export function BagDrawer() {
   );
 }
 export function Footer() {
+  const { settings } = useStore();
   return (
     <footer className="footer">
+      {settings?.shippingFee === 0 && (
+        <div className="footer-delivery">
+          <Truck size={19} aria-hidden="true" />
+          <span>Free delivery on all orders</span>
+          <span>PAKISTAN · PKR</span>
+        </div>
+      )}
       <div className="footer-top">
-        <div>
+        <div className="footer-brand">
           <Brand signature />
           <Link to="/shop" className="footer-action">
             Shop all <ArrowUpRight />
@@ -687,7 +705,7 @@ export function Footer() {
           </div>
           <div>
             <p>CONTACT</p>
-            <BusinessLinks />
+            <BusinessLinks showWebsite={false} />
           </div>
         </div>
       </div>
@@ -695,7 +713,6 @@ export function Footer() {
         <span>© {new Date().getFullYear()} QADAM FLEX</span>
         <span>PAKISTAN · PKR</span>
         <div>
-          <SocialLinks />
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
         </div>
