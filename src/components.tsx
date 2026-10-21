@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -27,6 +27,7 @@ import { money } from "./api";
 import type { Product } from "./types";
 
 export function Brand({ signature = false }: { signature?: boolean }) {
+  const wordmarkClip = useId();
   return (
     <Link
       to="/"
@@ -66,10 +67,18 @@ export function Brand({ signature = false }: { signature?: boolean }) {
             aria-hidden="true"
             focusable="false"
           >
+            <defs>
+              <clipPath id={wordmarkClip} clipPathUnits="userSpaceOnUse">
+                {/* Exclude the shoe's remaining sole pixels above the letters,
+                    while retaining the taller curved top of the Q. */}
+                <path d="M245 710H415V714H1200V1113H245Z" />
+              </clipPath>
+            </defs>
             <image
               href="/brand/logo-transparent.png"
               width="1413"
               height="1113"
+              clipPath={`url(#${wordmarkClip})`}
             />
           </svg>
         </>
