@@ -19,6 +19,19 @@ import {
 } from "react-email";
 
 export const emailEvents = {
+  low_stock: ["Low stock alert", "A shoe size needs your attention."],
+  tracking_updated: [
+    "Your delivery tracking",
+    "Your courier details are ready in your account.",
+  ],
+  password_reset: [
+    "Reset your password",
+    "Use the button below to choose a new password. This link expires in 15 minutes. If you did not request this, you can ignore this email.",
+  ],
+  verify_email: [
+    "Verify your email",
+    "Confirm this email address to receive your order confirmations and delivery updates. This link expires in 24 hours.",
+  ],
   new_order: [
     "New order",
     "A customer has placed an order. Open the store dashboard to review it.",
@@ -128,7 +141,36 @@ const badges = {
 };
 
 export async function renderOwnerEmail(payload) {
-  const [title, description] = emailEvents[payload.event];
+  let [title, description] = emailEvents[payload.event];
+  if (payload.audience === "customer") {
+    const copy = {
+      new_order: [
+        "We've received your order",
+        "Thank you for choosing Qadam Flex. View your order and payment instructions in your account.",
+      ],
+      new_enquiry: [
+        "We've received your enquiry",
+        "Your selection has reached our store. We will confirm availability in your account.",
+      ],
+      order_confirmed: [
+        "Your order is confirmed",
+        "Your order is ready for payment. View the payment details in your account.",
+      ],
+      status_changed: [
+        "Your order has an update",
+        `Your order status is now ${label(payload.status)}. Open your account for details.`,
+      ],
+      payment_approved: [
+        "Your payment is verified",
+        "Thank you. We have verified your payment and will process your order.",
+      ],
+      payment_rejected: [
+        "Please check your payment receipt",
+        "Your receipt needs attention. View the store's note in your account.",
+      ],
+    };
+    [title, description] = copy[payload.event] || [title, description];
+  }
   const subject = payload.reference ? `${title} · ${payload.reference}` : title;
   const html = await render(
     h(
@@ -216,7 +258,7 @@ export async function renderOwnerEmail(payload) {
                   fontWeight: "700",
                 },
               },
-              badges[payload.event],
+              badges[payload.event] || "QADAM FLEX",
             ),
             h(
               Heading,
@@ -392,7 +434,11 @@ export async function renderOwnerEmail(payload) {
                       margin: "0 0 12px",
                     },
                   },
-                  "Customer message",
+                  payload.audience === "customer"
+                    ? "Your update"
+                    : payload.event === "low_stock"
+                      ? "Stock alert"
+                      : "Customer message",
                 ),
                 h(
                   Section,
@@ -419,7 +465,9 @@ export async function renderOwnerEmail(payload) {
             h(
               Button,
               {
-                href: `${website}/admin`,
+                href:
+                  payload.actionUrl ||
+                  `${website}/${payload.audience === "customer" ? "account" : "admin"}`,
                 style: {
                   display: "block",
                   boxSizing: "border-box",
@@ -435,7 +483,13 @@ export async function renderOwnerEmail(payload) {
                   marginTop: "28px",
                 },
               },
-              "Open store dashboard",
+              payload.event === "password_reset"
+                ? "Reset password"
+                : payload.event === "verify_email"
+                  ? "Verify email"
+                  : payload.audience === "customer"
+                    ? "View your order"
+                    : "Open store dashboard",
             ),
             h(
               Text,
@@ -448,7 +502,9 @@ export async function renderOwnerEmail(payload) {
                   textAlign: "center",
                 },
               },
-              "Sign in to manage this update and view private details.",
+              payload.actionUrl
+                ? "This private link works once. Never share it with anyone."
+                : "Sign in to view this update and your private details.",
             ),
           ),
           h(
@@ -522,7 +578,9 @@ export async function renderOwnerEmail(payload) {
                   lineHeight: "18px",
                 },
               },
-              "You're receiving this store alert at the notification address saved in Store settings.",
+              payload.audience === "customer"
+                ? "An account update from Qadam Flex. Need help? Visit the support page on our website."
+                : "You're receiving this store alert at the notification address saved in Store settings.",
             ),
           ),
         ),

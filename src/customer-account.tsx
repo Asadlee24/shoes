@@ -11,6 +11,7 @@ export type Customer = {
   id: string;
   name: string;
   email: string;
+  emailVerified?: boolean;
   phone: string;
   city: string;
   address: string;

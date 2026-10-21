@@ -135,6 +135,7 @@ export function paymentAdminApi({ store, body, json, notifications }) {
           product.stockBySize[item.size] -= item.quantity;
           if (product.stock !== null) product.stock -= item.quantity;
           await store.saveProduct(product);
+          await notifications.checkStock(product);
         }
         data.items = items.map(({ stock, ...item }) => item);
         data.totals = totals;

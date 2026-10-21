@@ -1,3 +1,4 @@
+import { ProductReviews } from "./Commerce";
 import { useEffect, useRef, useState } from "react";
 import {
   Link,
@@ -375,6 +376,7 @@ export function ProductPage() {
           </div>
         </div>
       </div>
+      <ProductReviews productId={p.id} />
       <section className="related-products">
         <div className="section-heading">
           <div>

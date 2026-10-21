@@ -1,3 +1,4 @@
+import { commerceSchema } from "./commerce-schema.mjs";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { ownerStock, ownerStockRevision } from "./inventory.mjs";
 import { createHash } from "node:crypto";
@@ -12,7 +13,7 @@ import { HttpError } from "./store.mjs";
 const context = new AsyncLocalStorage();
 const writeLock = 814202610;
 const tables =
-  /\b(products|settings|requests|sessions|migrations|customers|customer_sessions|customer_orders|payment_proofs|email_outbox)\b/g;
+  /\b(products|settings|requests|sessions|migrations|customers|customer_sessions|customer_orders|payment_proofs|email_outbox|customer_email_verifications|customer_email_tokens|reviews|review_photos|stock_alert_state)\b/g;
 
 // Only internally defined SQL passes through this adapter; values stay bound.
 export function postgresSql(sql) {
@@ -167,6 +168,7 @@ export async function openPostgresStore(options = {}) {
   };
 
   await store.withRequest(true, async () => {
+    await query(commerceSchema("qf_", "BYTEA"));
     await query(`CREATE TABLE IF NOT EXISTS qf_products(id TEXT PRIMARY KEY,data TEXT NOT NULL,sort_order BIGSERIAL);
       CREATE TABLE IF NOT EXISTS qf_settings(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS qf_requests(id TEXT PRIMARY KEY,idempotency TEXT UNIQUE NOT NULL,fingerprint TEXT NOT NULL,kind TEXT NOT NULL,status TEXT NOT NULL,data TEXT NOT NULL,created TEXT NOT NULL);

@@ -1,3 +1,4 @@
+import { commerceApi } from "./commerce.mjs";
 import http from "node:http";
 import { paymentAdminApi } from "./payments.mjs";
 import { customerApi, paymentDetails } from "./customer.mjs";
@@ -162,6 +163,14 @@ export async function createApplication(options = {}) {
       options.secureCookies || process.env.SECURE_COOKIES === "true",
     limited: (key, max, minutes) => limited(attempts, key, max, minutes),
   });
+  const commerce = commerceApi({
+    store,
+    body,
+    json,
+    customers,
+    notifications,
+    limited: (key, max, minutes) => limited(attempts, key, max, minutes),
+  });
   async function api(req, res, path) {
     const method = req.method;
     const ip = options.trustProxy
@@ -181,6 +190,8 @@ export async function createApplication(options = {}) {
         throw new HttpError(403, "This request must come from the store.");
       }
     }
+    if (await commerce.publicRoute(req, res, path)) return;
+    if (await commerce.account(req, res, path)) return;
     if (path.startsWith("/api/account/"))
       return customers.handle(req, res, path, ip);
     if (method === "GET" && path === "/api/catalog") {
@@ -228,6 +239,7 @@ export async function createApplication(options = {}) {
           403,
           "Your session has changed. Please sign in again.",
         );
+      if (await commerce.admin(req, res, path)) return;
       if (await paymentAdmin(req, res, path)) return;
       if (method === "GET" && path === "/api/admin/notifications")
         return json(res, 200, await notifications.status());
@@ -284,7 +296,15 @@ export async function createApplication(options = {}) {
           )
         )
           throw new HttpError(400, "This product link is already used.");
-        await store.saveProduct(product);
+        await store.db.exec("BEGIN IMMEDIATE");
+        try {
+          await store.saveProduct(product);
+          await notifications.checkStock(product);
+          await store.db.exec("COMMIT");
+        } catch (error) {
+          await store.db.exec("ROLLBACK");
+          throw error;
+        }
         return json(res, 200, { product });
       }
       if (method === "PUT" && path === "/api/admin/settings") {
@@ -474,6 +494,7 @@ export async function createApplication(options = {}) {
                 p.stockBySize[item.size] += item.quantity;
                 if (p.stock !== null) p.stock += item.quantity;
                 await store.saveProduct(p);
+                await notifications.checkStock(p);
               }
             }
           }
@@ -677,6 +698,7 @@ export async function createApplication(options = {}) {
             p.stockBySize[item.size] -= item.quantity;
             if (p.stock !== null) p.stock -= item.quantity;
             await store.saveProduct(p);
+            await notifications.checkStock(p);
           }
         }
         await store.db

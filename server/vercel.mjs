@@ -1,3 +1,4 @@
+import { waitUntil } from "@vercel/functions";
 import { createApplication, passwordHash } from "./index.mjs";
 import { openPostgresStore } from "./postgres.mjs";
 
@@ -99,9 +100,14 @@ export function createCloudHandler(options = {}) {
         },
       );
       // Do not send success or a session cookie until the transaction commits.
-      await app.notifications
-        .flush()
+      const delivery = app.notifications
+        .flush(12)
         .catch(() => console.error("Email queue processing failed."));
+      // Reset requests return the same response without waiting on the mail
+      // provider. Vercel keeps durable outbox work alive after the response.
+      if (process.env.VERCEL || options.background)
+        (options.background || waitUntil)(delivery);
+      else await delivery;
       res.writeHead(buffered.statusCode, buffered.headers);
       res.end(buffered.payload);
     } catch (error) {

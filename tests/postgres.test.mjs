@@ -702,3 +702,180 @@ test("Postgres outbox workers claim alerts once across independent notifier inst
   assert.equal(keys.length, 2);
   assert.equal(new Set(keys).size, 2);
 });
+
+test("cloud customer email links, reviews/photos, tracking and sales persist in Postgres", async () => {
+  const messages = [];
+  handler = createCloudHandler({
+    store,
+    adminHash: passwordHash(password),
+    emailApiKey: "",
+    emailSend: async (message) => {
+      messages.push(message);
+      return { data: { id: randomUUID() } };
+    },
+    setupEmailTest: false,
+  });
+  const email = "cloud-features@example.test";
+  const registered = await request(
+    "/api/account/register",
+    "POST",
+    { email, name: "Cloud Buyer", password },
+    { "x-forwarded-for": "feature-register" },
+  );
+  assert.equal(registered.status, 200);
+  const customerHeaders = {
+    cookie: registered.headers["Set-Cookie"].split(";")[0],
+    "x-customer-csrf": registered.data.csrf,
+  };
+  const verifyToken = messages
+    .find((m) => m.to[0] === email)
+    .html.match(/#verify=([a-f0-9]{64})/)[1];
+  assert.equal(
+    (
+      await request(
+        "/api/account/verify-email",
+        "POST",
+        { token: verifyToken },
+        { "x-forwarded-for": "feature-verify" },
+      )
+    ).status,
+    200,
+  );
+  const login = await request(
+    "/api/admin/login",
+    "POST",
+    { username: "admin", password },
+    { "x-forwarded-for": "feature-admin" },
+  );
+  const admin = {
+    cookie: login.headers["Set-Cookie"].split(";")[0],
+    "x-csrf-token": login.data.csrf,
+  };
+  const id = `QF-O-${randomUUID()}`;
+  await store.withRequest(true, async () => {
+    await store.db.prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)").run(
+      id,
+      randomUUID(),
+      "fixture",
+      "order",
+      "delivered",
+      JSON.stringify({
+        customer,
+        items: [
+          {
+            id: "suede-penny",
+            name: "Suede Penny",
+            size: "7",
+            quantity: 1,
+            price: 350000,
+          },
+        ],
+        totals: { subtotal: 350000, shipping: 0, total: 350000, discount: 0 },
+        payment: { method: "bank", status: "paid" },
+      }),
+      new Date().toISOString(),
+    );
+    await store.db
+      .prepare("INSERT INTO customer_orders VALUES(?,?)")
+      .run(id, registered.data.user.id);
+  });
+  const data = {
+    type: "image/png",
+    data: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=",
+      "base64",
+    ).toString("base64"),
+  };
+  const review = await request(
+    `/api/account/orders/${id}/reviews`,
+    "POST",
+    {
+      productId: "suede-penny",
+      rating: 5,
+      body: "Purchased pair fits well.",
+      displayName: "Cloud Buyer",
+      consent: true,
+      photos: [data],
+    },
+    customerHeaders,
+  );
+  assert.equal(review.status, 201);
+  const reviews = await request("/api/admin/reviews", "GET", undefined, admin),
+    r = reviews.data.reviews.find((r) => r.request_id === id);
+  assert.ok(r);
+  assert.equal(
+    (
+      await request(
+        `/api/admin/reviews/${r.id}`,
+        "PATCH",
+        { status: "approved" },
+        admin,
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/products/suede-penny/reviews")).data.count,
+    1,
+  );
+  const p = await request(`/api/review-photos/${r.photos[0]}`);
+  assert.equal(p.status, 200);
+  const tracking = await request(
+    `/api/admin/requests/${id}/tracking`,
+    "PUT",
+    { courier: "TCS", number: "CLOUD-123", url: "https://www.tcsexpress.com/" },
+    admin,
+  );
+  assert.equal(tracking.status, 200);
+  assert.equal(
+    (
+      await request("/api/account/orders", "GET", undefined, customerHeaders)
+    ).data.orders.find((o) => o.id === id).data.tracking.number,
+    "CLOUD-123",
+  );
+  const sales = await request("/api/admin/sales", "GET", undefined, admin);
+  assert.equal(sales.status, 200);
+  assert.ok(sales.data.revenue >= 350000);
+  const reset = await request(
+    "/api/account/forgot-password",
+    "POST",
+    { email },
+    { "x-forwarded-for": "feature-reset" },
+  );
+  assert.equal(reset.status, 200);
+  const resetToken = messages
+    .findLast((m) => m.to[0] === email && m.html.includes("#reset="))
+    .html.match(/#reset=([a-f0-9]{64})/)[1];
+  assert.equal(
+    (
+      await request(
+        "/api/account/reset-password",
+        "POST",
+        { token: resetToken, password: "new-cloud-feature-password" },
+        { "x-forwarded-for": "feature-consume" },
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/account/session", "GET", undefined, customerHeaders))
+      .status,
+    401,
+  );
+  const reopened = await openPostgresStore({ poolFactory });
+  assert.equal(
+    (
+      await reopened.db
+        .prepare("SELECT status FROM reviews WHERE id=?")
+        .get(r.id)
+    ).status,
+    "approved",
+  );
+  assert.ok(
+    await reopened.db
+      .prepare(
+        "SELECT user_id FROM customer_email_verifications WHERE user_id=?",
+      )
+      .get(registered.data.user.id),
+  );
+});

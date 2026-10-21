@@ -59,6 +59,12 @@ export type StoreRequest = {
   created: string;
   data: {
     archivedAt?: string;
+    tracking?: {
+      courier: string;
+      number: string;
+      url: string;
+      updated: string;
+    };
     payment?: Payment;
     customer: {
       name: string;

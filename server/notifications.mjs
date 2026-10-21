@@ -33,6 +33,7 @@ export function createNotifications(store, options = {}) {
     if (!emailEvents[event]) throw new Error("Unknown email event.");
     const settings = await store.settings();
     const recipient = settings.orderNotificationEmail?.trim();
+    await customerOrder(event, reference, eventKey);
     if (!validEmail(recipient)) return null;
     const row = reference
       ? await store.db
@@ -83,6 +84,116 @@ export function createNotifications(store, options = {}) {
       );
     return id;
   }
+  async function queueMail(recipient, payload, key) {
+    if (!validEmail(recipient)) return null;
+    const id = createHash("sha256").update(key).digest("hex");
+    await store.db
+      .prepare(
+        "INSERT INTO email_outbox(id,event,request_id,recipient,payload,status,attempts,next_attempt,first_attempt,created,provider_id,last_error) VALUES(?,?,?,?,?,'pending',0,?,0,?,'','') ON CONFLICT(id) DO NOTHING",
+      )
+      .run(
+        id,
+        payload.event,
+        payload.reference || "",
+        recipient,
+        JSON.stringify(payload),
+        now(),
+        new Date(now()).toISOString(),
+      );
+    return id;
+  }
+  async function accountMail(user, kind, token, expires) {
+    return queueMail(
+      user.email,
+      {
+        event: kind,
+        audience: "customer",
+        customer: { name: user.name },
+        actionUrl: `https://www.qadamflex.bond/account#${kind === "password_reset" ? "reset" : "verify"}=${token}`,
+        expires,
+      },
+      `${kind}:${token}`,
+    );
+  }
+  async function customerOrder(event, reference, eventKey = reference) {
+    if (
+      ![
+        "new_order",
+        "new_enquiry",
+        "order_confirmed",
+        "status_changed",
+        "payment_approved",
+        "payment_rejected",
+        "tracking_updated",
+      ].includes(event) ||
+      !reference
+    )
+      return;
+    const row = await store.db
+      .prepare(
+        "SELECT c.email,c.name,r.data,r.status FROM customer_orders o JOIN customers c ON c.id=o.user_id JOIN customer_email_verifications v ON v.user_id=c.id JOIN requests r ON r.id=o.request_id WHERE o.request_id=?",
+      )
+      .get(reference);
+    if (!row) return;
+    const data = JSON.parse(row.data);
+    if (data.archivedAt) return;
+    return queueMail(
+      row.email,
+      {
+        event,
+        audience: "customer",
+        reference,
+        status: row.status,
+        customer: { name: row.name },
+        items: data.items?.map(({ name, size, quantity, price }) => ({
+          name,
+          size,
+          quantity,
+          price,
+        })),
+        totals: data.totals,
+        payment: data.payment
+          ? { method: data.payment.method, status: data.payment.status }
+          : null,
+        message:
+          event === "tracking_updated"
+            ? `${data.tracking.courier} · ${data.tracking.number}. Open your account to track delivery.`
+            : "",
+      },
+      `customer:${event}:${eventKey}`,
+    );
+  }
+  async function checkStock(product) {
+    if (!product.published) return;
+    for (const size of product.sizes || []) {
+      const count = product.stockBySize?.[size];
+      if (!Number.isInteger(count)) continue;
+      const id = `${product.id}:${size}`,
+        low = count <= 2 ? 1 : 0;
+      const previous = await store.db
+        .prepare("SELECT low,revision FROM stock_alert_state WHERE id=?")
+        .get(id);
+      const revision =
+        Number(previous?.revision || 0) + (low && !previous?.low ? 1 : 0);
+      await store.db
+        .prepare(
+          "INSERT INTO stock_alert_state(id,low,revision) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET low=excluded.low,revision=excluded.revision",
+        )
+        .run(id, low, revision);
+      if (low && !previous?.low) {
+        const settings = await store.settings();
+        await queueMail(
+          settings.orderNotificationEmail,
+          {
+            event: "low_stock",
+            message: `${product.name} · Size ${size} · ${count} remaining. Restock this size in Collection.`,
+            customer: {},
+          },
+          `stock:${id}:${revision}`,
+        );
+      }
+    }
+  }
   async function status() {
     const settings = await store.settings();
     const counts = { pending: 0, sending: 0, sent: 0, failed: 0, unknown: 0 };
@@ -131,7 +242,16 @@ export function createNotifications(store, options = {}) {
       }
       let result;
       try {
-        const rendered = await renderOwnerEmail(JSON.parse(row.payload));
+        const payload = JSON.parse(row.payload);
+        if (payload.expires && payload.expires <= time) {
+          await store.db
+            .prepare(
+              "UPDATE email_outbox SET status='failed',payload='{}',last_error='This account link expired. Request a new link.' WHERE id=?",
+            )
+            .run(row.id);
+          continue;
+        }
+        const rendered = await renderOwnerEmail(payload);
         result = await send(
           { from, to: [row.recipient], ...rendered },
           `qadam-${row.id}`,
@@ -142,9 +262,13 @@ export function createNotifications(store, options = {}) {
       if (result?.data?.id && !result.error) {
         await store.db
           .prepare(
-            "UPDATE email_outbox SET status='sent',provider_id=?,last_error='' WHERE id=?",
+            "UPDATE email_outbox SET status='sent',provider_id=?,last_error='',payload=? WHERE id=?",
           )
-          .run(result.data.id, row.id);
+          .run(
+            result.data.id,
+            JSON.parse(row.payload).actionUrl ? "{}" : row.payload,
+            row.id,
+          );
       } else {
         const code = Number(result?.error?.statusCode || 0);
         const retryable = !code || code === 429 || code >= 500;
@@ -200,5 +324,15 @@ export function createNotifications(store, options = {}) {
       );
     return id;
   }
-  return { enqueue, status, flush, retry, test, configured };
+  return {
+    enqueue,
+    status,
+    flush,
+    retry,
+    test,
+    configured,
+    accountMail,
+    customerOrder,
+    checkStock,
+  };
 }

@@ -1,3 +1,5 @@
+import { EmailAccess, OrderReviews, Tracking, VerifyBanner } from "./Commerce";
+import { useLocation } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -17,6 +19,16 @@ import { useStore } from "./store";
 import { OrderPayment } from "./Payment";
 import type { StoreRequest } from "./types";
 export default function Account() {
+  const location = useLocation();
+  if (
+    location.hash.startsWith("#reset=") ||
+    location.hash.startsWith("#verify=") ||
+    new URLSearchParams(location.search).get("mode") === "forgot"
+  )
+    return <EmailAccess key={location.key} />;
+  return <AccountMain />;
+}
+function AccountMain() {
   const account = useAccount(),
     { toast, settings } = useStore();
   const [params, setParams] = useSearchParams(),
@@ -332,7 +344,7 @@ export default function Account() {
               {mode !== "recover" && (
                 <button
                   className="text-link"
-                  onClick={() => setParams({ mode: "recover", next })}
+                  onClick={() => setParams({ mode: "forgot", next })}
                 >
                   Forgot password?
                 </button>
@@ -373,6 +385,7 @@ export default function Account() {
           Sign out
         </button>
       </div>
+      <VerifyBanner />
       <nav className="account-tabs" aria-label="Account sections">
         {[
           ["orders", "Orders & payments"],
@@ -509,7 +522,11 @@ export default function Account() {
                       </a>
                     )}
                   </div>
+                  <Tracking order={order} />
                   <OrderPayment order={order} onSaved={loadOrders} />
+                  {order.status === "delivered" && (
+                    <OrderReviews order={order} />
+                  )}
                 </div>
               </details>
             ))}

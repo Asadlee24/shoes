@@ -1,3 +1,4 @@
+import { commerceSchema } from "./commerce-schema.mjs";
 import { DatabaseSync } from "node:sqlite";
 import { ownerStock, ownerStockRevision } from "./inventory.mjs";
 import { mkdirSync } from "node:fs";
@@ -30,6 +31,7 @@ export function openStore(path) {
  CREATE INDEX IF NOT EXISTS customer_sessions_expires ON customer_sessions(expires);
  CREATE INDEX IF NOT EXISTS payment_proofs_request ON payment_proofs(request_id);
  CREATE TABLE IF NOT EXISTS migrations(id TEXT PRIMARY KEY,applied TEXT NOT NULL);`);
+  db.exec(commerceSchema());
   if (!db.prepare("SELECT id FROM settings WHERE id=1").get()) {
     db.prepare("INSERT INTO settings VALUES(1,?)").run(
       JSON.stringify(initialSettings),

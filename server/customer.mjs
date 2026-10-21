@@ -82,6 +82,44 @@ export function customerApi({
   notifications,
 }) {
   const db = store.db;
+  async function customerProfile(user) {
+    const verified = await db
+      .prepare(
+        "SELECT user_id FROM customer_email_verifications WHERE user_id=?",
+      )
+      .get(user.id);
+    return { ...profile(user), emailVerified: Boolean(verified) };
+  }
+  async function emailLink(user, kind) {
+    if (!notifications.configured) return;
+    const previous = await db
+      .prepare(
+        "SELECT created FROM customer_email_tokens WHERE user_id=? AND kind=? ORDER BY created DESC LIMIT 1",
+      )
+      .get(user.id, kind);
+    if (previous && Date.now() - Date.parse(previous.created) < 60000) return;
+    const token = randomBytes(32).toString("hex"),
+      expires = Date.now() + (kind === "password_reset" ? 900000 : 86400000);
+    const latest = await db
+      .prepare("SELECT password_hash FROM customers WHERE id=?")
+      .get(user.id);
+    await db
+      .prepare("DELETE FROM customer_email_tokens WHERE user_id=? AND kind=?")
+      .run(user.id, kind);
+    await db
+      .prepare(
+        "INSERT INTO customer_email_tokens(token,user_id,kind,credential_hash,expires,created) VALUES(?,?,?,?,?,?)",
+      )
+      .run(
+        hash(token),
+        user.id,
+        kind,
+        hash(latest.password_hash),
+        expires,
+        new Date().toISOString(),
+      );
+    await notifications.accountMail(user, kind, token, expires);
+  }
   const cookie = (res, token, age = 604800) =>
     res.setHeader(
       "Set-Cookie",
@@ -125,11 +163,114 @@ export function customerApi({
       )
       .run(hash(token), user.id, csrf, Date.now() + 604800000);
     cookie(res, token);
-    return json(res, 200, { user: profile(user), csrf, ...extra });
+    return json(res, 200, {
+      user: await customerProfile(user),
+      csrf,
+      ...extra,
+    });
   }
   async function handle(req, res, path, ip) {
     const method = req.method;
     if (!path.startsWith("/api/account/")) return false;
+    if (method === "POST" && path === "/api/account/forgot-password") {
+      await limited(`reset-ip:${ip}`, 3, 60);
+      const input = await body(req),
+        email = emailInput(input.email);
+      await limited(`reset-email:${email}`, 3, 60);
+      const user = await db
+        .prepare("SELECT * FROM customers WHERE email=?")
+        .get(email);
+      if (user) {
+        await db.exec("BEGIN IMMEDIATE");
+        try {
+          await emailLink(user, "password_reset");
+          await db.exec("COMMIT");
+        } catch (error) {
+          await db.exec("ROLLBACK");
+          throw error;
+        }
+      }
+      return json(res, 200, {
+        message:
+          "If an account exists for this email, a password reset link will arrive shortly. Check your spam folder too.",
+      });
+    }
+    if (
+      method === "POST" &&
+      ["/api/account/reset-password", "/api/account/verify-email"].includes(
+        path,
+      )
+    ) {
+      await limited(`email-token:${ip}`, 12, 15);
+      const input = await body(req);
+      if (
+        typeof input.token !== "string" ||
+        !/^[a-f0-9]{64}$/.test(input.token)
+      )
+        throw new HttpError(
+          400,
+          "This link is invalid or expired. Request a new link.",
+        );
+      const reset = path.endsWith("/reset-password"),
+        kind = reset ? "password_reset" : "verify_email";
+      const digest = reset
+        ? await passwordDigest(passwordInput(input.password))
+        : null;
+      const recoveryCode = reset ? randomBytes(20).toString("hex") : null;
+      await db.exec("BEGIN IMMEDIATE");
+      try {
+        const token = await db
+          .prepare(
+            "DELETE FROM customer_email_tokens WHERE token=? AND kind=? AND expires>? RETURNING *",
+          )
+          .get(hash(input.token), kind, Date.now());
+        const user = token
+          ? await db
+              .prepare("SELECT * FROM customers WHERE id=?")
+              .get(token.user_id)
+          : null;
+        if (!user || token.credential_hash !== hash(user.password_hash))
+          throw new HttpError(
+            400,
+            "This link is invalid or expired. Request a new link.",
+          );
+        if (reset) {
+          await db
+            .prepare(
+              "UPDATE customers SET password_hash=?,recovery_hash=? WHERE id=?",
+            )
+            .run(digest, hash(recoveryCode), user.id);
+          await db
+            .prepare("DELETE FROM customer_sessions WHERE user_id=?")
+            .run(user.id);
+          await db
+            .prepare("DELETE FROM customer_email_tokens WHERE user_id=?")
+            .run(user.id);
+        } else {
+          await db
+            .prepare(
+              "INSERT INTO customer_email_verifications(user_id,verified) VALUES(?,?) ON CONFLICT(user_id) DO NOTHING",
+            )
+            .run(user.id, new Date().toISOString());
+          const orders = await db
+            .prepare(
+              "SELECT r.id,r.kind FROM requests r JOIN customer_orders o ON o.request_id=r.id WHERE o.user_id=? AND r.kind='order' AND r.status<>'cancelled' ORDER BY r.created DESC LIMIT 1",
+            )
+            .all(user.id);
+          for (const order of orders)
+            await notifications.customerOrder(
+              order.kind === "order" ? "new_order" : "new_enquiry",
+              order.id,
+            );
+        }
+        await db.exec("COMMIT");
+      } catch (error) {
+        await db.exec("ROLLBACK");
+        throw error;
+      }
+      if (reset) cookie(res, "", 0);
+      return json(res, 200, { ok: true, ...(reset ? { recoveryCode } : {}) });
+    }
     if (
       method === "POST" &&
       [
@@ -176,6 +317,14 @@ export function customerApi({
             hash(recoveryCode),
             new Date().toISOString(),
           );
+        await db.exec("BEGIN IMMEDIATE");
+        try {
+          await emailLink(user, "verify_email");
+          await db.exec("COMMIT");
+        } catch (error) {
+          await db.exec("ROLLBACK");
+          throw error;
+        }
         return issue(res, user, { recoveryCode });
       }
       const user = await db
@@ -242,9 +391,30 @@ export function customerApi({
       req,
       !["GET", "HEAD"].includes(method),
     );
+    if (method === "POST" && path === "/api/account/send-verification") {
+      await limited(`verify:${session.user.id}`, 3, 60);
+      if (!notifications.configured)
+        throw new HttpError(
+          503,
+          "Email is temporarily unavailable. Please contact support.",
+        );
+      if (!(await customerProfile(session.user)).emailVerified) {
+        await db.exec("BEGIN IMMEDIATE");
+        try {
+          await emailLink(session.user, "verify_email");
+          await db.exec("COMMIT");
+        } catch (error) {
+          await db.exec("ROLLBACK");
+          throw error;
+        }
+      }
+      return json(res, 200, {
+        message: "Check your email for a verification link.",
+      });
+    }
     if (method === "GET" && path === "/api/account/session")
       return json(res, 200, {
-        user: profile(session.user),
+        user: await customerProfile(session.user),
         csrf: session.csrf,
       });
     if (method === "POST" && path === "/api/account/logout") {
@@ -275,7 +445,13 @@ export function customerApi({
         )
         .run(name, phone, city, address, session.user.id);
       return json(res, 200, {
-        user: profile({ ...session.user, name, phone, city, address }),
+        user: await customerProfile({
+          ...session.user,
+          name,
+          phone,
+          city,
+          address,
+        }),
       });
     }
     if (method === "POST" && path === "/api/account/password") {

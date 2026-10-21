@@ -1,3 +1,4 @@
+import { AdminReviews, SalesSummary, TrackingEditor } from "./Commerce";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -6,6 +7,7 @@ import {
   ChevronDown,
   ImagePlus,
   LayoutGrid,
+  MessageSquare,
   LoaderCircle,
   LogOut,
   Package,
@@ -364,6 +366,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
             ["overview", "Overview", LayoutGrid],
             ["products", "Collection", Package],
             ["requests", "Orders & enquiries", ShoppingBag],
+            ["reviews", "Customer reviews", MessageSquare],
             ["settings", "Store settings", Settings2],
           ].map(([id, label, Icon]) => (
             <button
@@ -453,6 +456,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                       Add a product <Plus size={16} />
                     </button>
                   </div>
+                  {!preview && <SalesSummary />}
                   <div className="admin-stat-grid">
                     {[
                       [
@@ -616,6 +620,9 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                     onSelect={setRequest}
                   />
                 </>
+              )}
+              {tab === "reviews" && (
+                <AdminReviews headers={headers} preview={preview} />
               )}
               {tab === "settings" && settings && (
                 <>
@@ -1410,6 +1417,16 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 }}
               />
             )}
+            <TrackingEditor
+              key={`tracking-${request.id}`}
+              order={request}
+              headers={headers}
+              preview={preview}
+              onUpdated={(updated) => {
+                setRequest(updated);
+                void refresh();
+              }}
+            />
             {request.data.items.map((i) => (
               <div className="request-item" key={`${i.id}:${i.size}`}>
                 <div>
