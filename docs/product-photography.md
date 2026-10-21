@@ -1,5 +1,14 @@
 # Product gallery photo enhancement
 
+## Additional interactive hero shoes
+
+The original black and taupe hero assets are unchanged. Two additional single-shoe cutouts use the same photo-plane flip interaction, equal visible width, and measured platform clearance. These are interactive product photographs, not full volumetric shoe models.
+
+- `public/products/hero-olive-v1.webp`: olive-khaki suede penny loafer, source `olive-loafer-gallery-1-v2.webp`.
+- `public/products/hero-chocolate-v1.webp`: front chocolate-brown penny loafer, source `brown-loafer-gallery-1-v2.webp`.
+
+Built-in ImageGen edit prompt: Extract one complete source-product shoe onto a genuinely transparent background. Use `hero-textured.png` only as a low three-quarter outside-view composition reference. Heel left, toe right, a little top visible, sole level, full shoe inside transparent margins. Preserve the source product's color, silhouette, construction, stitching, materials and sole. No floor, plinth, cast shadow, glow, additional shoe, text or watermark. Do not transfer the reference shoe's black texture, hardware or chunky sole.
+
 Built-in ImageGen edit mode was used on the original uploaded product photos. The approved cover images remain unchanged. AI enhancement reconstructs fine texture from small inputs; the original uploaded files remain in media storage for comparison and recovery.
 
 Final web assets are stored in `public/products/` as the following versioned WebP files. Each original angle is retained; duplicate black gallery photos share one result.

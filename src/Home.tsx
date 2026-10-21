@@ -34,6 +34,24 @@ const focusPairs = [
     swatch: "#887365",
     index: "02",
   },
+  {
+    id: "product-1b0c8d9f",
+    image: "/products/hero-olive-v1.webp",
+    slug: "olive-suede-penny-loafer",
+    name: "Olive Suede Penny Loafer",
+    color: "Olive-Khaki",
+    swatch: "#77694b",
+    index: "03",
+  },
+  {
+    id: "product-869254ac",
+    image: "/products/hero-chocolate-v1.webp",
+    slug: "brown-suede-penny-loafer",
+    name: "Brown Suede Penny Loafer",
+    color: "Chocolate brown",
+    swatch: "#684536",
+    index: "04",
+  },
 ];
 export default function Home() {
   const { products } = useStore();

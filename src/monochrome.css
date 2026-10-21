@@ -429,6 +429,13 @@ a:focus-visible {
 .stage-pair-picker {
   display: flex;
   gap: 12px;
+  flex-shrink: 0;
+}
+.stage-product > div:first-child {
+  min-width: 0;
+}
+.stage-product a > svg {
+  flex-shrink: 0;
 }
 .stage-pair-picker > button {
   display: flex;

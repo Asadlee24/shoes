@@ -7,12 +7,15 @@ import {
   studioZoom,
 } from "../src/studio-photo.ts";
 import { studioPose } from "../src/studio-motion.ts";
+const approvedPhotos = [
+  "/products/hero-textured.png",
+  "/products/hero-loafer.png",
+  "/products/hero-olive-v1.webp",
+  "/products/hero-chocolate-v1.webp",
+];
 
 test("approved photo crops have equal visible width and clear the platform at every full-turn angle", () => {
-  for (const image of [
-    "/products/hero-textured.png",
-    "/products/hero-loafer.png",
-  ]) {
+  for (const image of approvedPhotos) {
     const photo = studioPhoto(image);
     assert.ok(Math.abs(photo.cropWidth * photo.unit - 4.8) < 1e-9);
     for (let x = -4; x <= 4; x += 0.125)
@@ -63,7 +66,7 @@ test("shoe and platform fit inside desktop and mobile frames without clipping", 
         `${width}x${height}: ${p.toArray()}`,
       );
     };
-    for (const image of ["textured", "suede"]) {
+    for (const image of approvedPhotos) {
       const photo = studioPhoto(image);
       for (let x = -4; x <= 4; x += 0.125)
         for (const y of [-1, 0, 1]) {

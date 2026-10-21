@@ -12,9 +12,27 @@ const photos = {
     angle: -22,
     bounds: [-641.533, -295.87, 730.053, 337.664],
   },
+  olive: {
+    width: 1536,
+    height: 1024,
+    angle: -18,
+    bounds: [-725.57, -280.872, 814.672, 347.278],
+  },
+  chocolate: {
+    width: 1536,
+    height: 1024,
+    angle: -12,
+    bounds: [-724.862, -262.667, 784.671, 339.109],
+  },
 };
 export function studioPhoto(image: string) {
-  const photo = image.includes("textured") ? photos.black : photos.brown;
+  const photo = image.includes("hero-olive")
+    ? photos.olive
+    : image.includes("hero-chocolate")
+      ? photos.chocolate
+      : image.includes("textured")
+        ? photos.black
+        : photos.brown;
   const [left, top, right, bottom] = photo.bounds;
   const cropWidth = right - left,
     cropHeight = bottom - top;
