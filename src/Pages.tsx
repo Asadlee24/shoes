@@ -754,22 +754,11 @@ export function Checkout() {
                   </span>
                 </label>
               ))}
-              {canOrder && paymentMethod !== "cod" && (
+              {paymentMethod !== "cod" && (
                 <PaymentDestination
                   payment={{
                     method: paymentMethod,
-                    status: "awaiting_payment",
-                    recipient:
-                      paymentMethod === "bank"
-                        ? {
-                            holder: settings?.bankAccountHolder || "",
-                            iban: settings?.bankIban,
-                            account: settings?.bankAccountNumber,
-                          }
-                        : {
-                            holder: settings?.easypaisaHolder || "",
-                            number: settings?.easypaisaNumber,
-                          },
+                    status: canOrder ? "awaiting_payment" : "not_required",
                   }}
                 />
               )}

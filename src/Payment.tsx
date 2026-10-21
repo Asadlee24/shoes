@@ -5,8 +5,20 @@ import { useStore } from "./store";
 import { useAccount } from "./customer-account";
 import type { StoreRequest, Payment } from "./types";
 export function PaymentDestination({ payment }: { payment: Payment }) {
-  const { toast } = useStore();
-  const recipient = payment.recipient;
+  const { settings, toast } = useStore();
+  // Enquiries have no frozen recipient yet; show the owner's published details.
+  // Confirmed orders continue using the account snapshot saved with the order.
+  const recipient =
+    payment.recipient ||
+    (payment.method === "bank" && settings?.bankIban
+      ? {
+          holder: settings.bankAccountHolder,
+          iban: settings.bankIban,
+          account: settings.bankAccountNumber,
+        }
+      : payment.method === "easypaisa" && settings?.easypaisaNumber
+        ? { holder: settings.easypaisaHolder, number: settings.easypaisaNumber }
+        : null);
   if (!recipient || !["bank", "easypaisa"].includes(payment.method))
     return null;
   async function copy(value: string) {
@@ -46,6 +58,11 @@ export function PaymentDestination({ payment }: { payment: Payment }) {
           ) : null,
         )}
       </dl>
+      {payment.status === "not_required" && (
+        <p className="muted small">
+          Please wait for the store to confirm your order total before paying.
+        </p>
+      )}
     </div>
   );
 }
@@ -189,10 +206,13 @@ export function OrderPayment({
           with your reference to arrange a refund.
         </p>
       ) : order.kind === "inquiry" ? (
-        <p>
-          The store will confirm availability and delivery before requesting
-          payment. Check this page for updates.
-        </p>
+        <>
+          {payment && <PaymentDestination payment={payment} />}
+          <p>
+            The store will confirm availability and delivery before requesting
+            payment. Check this page for updates.
+          </p>
+        </>
       ) : payment?.method === "cod" ? (
         <p>Pay {money(order.data.totals.total)} when your order arrives.</p>
       ) : (

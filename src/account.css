@@ -149,7 +149,7 @@
   border-top: 1px solid var(--line);
   align-items: start;
 }
-.account-order-items > div {
+.account-order-items > div:not(.account-delivery) {
   display: flex;
   justify-content: space-between;
   gap: 20px;
@@ -511,4 +511,11 @@
   .checkout-page .customer-form textarea {
     font-size: 16px;
   }
+}
+
+.transfer-destination > p:not(.eyebrow) {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 14px;
+  line-height: 1.65;
 }
