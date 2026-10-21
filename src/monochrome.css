@@ -560,6 +560,18 @@ a:focus-visible {
 .product-media img[src$="-studio-v1.webp"] {
   mix-blend-mode: normal;
 }
+.gallery-main > img[src*="-loafer-"][src$=".webp"] {
+  object-fit: contain;
+  mix-blend-mode: normal;
+  background: #e5e1dc;
+}
+.gallery-thumbnails {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.gallery-thumbnails > button {
+  flex: 0 0 70px;
+}
 .product-media.cutout-card {
   background: #e9e9e7;
 }
