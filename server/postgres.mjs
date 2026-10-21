@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { ownerStock, ownerStockRevision } from "./inventory.mjs";
 import { createHash } from "node:crypto";
 import { initialProducts, initialSettings } from "./catalog.mjs";
 import { HttpError } from "./store.mjs";
@@ -166,6 +167,7 @@ export async function openPostgresStore(options = {}) {
       CREATE TABLE IF NOT EXISTS qf_requests(id TEXT PRIMARY KEY,idempotency TEXT UNIQUE NOT NULL,fingerprint TEXT NOT NULL,kind TEXT NOT NULL,status TEXT NOT NULL,data TEXT NOT NULL,created TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS qf_sessions(token TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires BIGINT NOT NULL);
       CREATE TABLE IF NOT EXISTS qf_media(name TEXT PRIMARY KEY,type TEXT NOT NULL,data BYTEA NOT NULL);
+      CREATE TABLE IF NOT EXISTS qf_migrations(id TEXT PRIMARY KEY,applied TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS qf_limits(id TEXT PRIMARY KEY,count INTEGER NOT NULL,until_ms BIGINT NOT NULL);
 
  CREATE TABLE IF NOT EXISTS qf_customers(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,name TEXT NOT NULL,phone TEXT NOT NULL,city TEXT NOT NULL,address TEXT NOT NULL,password_hash TEXT NOT NULL,recovery_hash TEXT NOT NULL,created TEXT NOT NULL);
@@ -194,6 +196,14 @@ export async function openPostgresStore(options = {}) {
             product.sizes.map((size) => [size, null]),
           ),
         });
+    }
+    const stockUpdate = await query(
+      "INSERT INTO qf_migrations(id,applied) VALUES($1,$2) ON CONFLICT(id) DO NOTHING RETURNING id",
+      [ownerStockRevision, new Date().toISOString()],
+    );
+    if (stockUpdate.rows.length) {
+      for (const product of await store.products())
+        await store.saveProduct(ownerStock(product));
     }
     await query("DELETE FROM qf_sessions WHERE expires < $1", [Date.now()]);
     await query("DELETE FROM qf_limits WHERE until_ms < $1", [Date.now()]);

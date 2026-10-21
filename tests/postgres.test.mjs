@@ -5,6 +5,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { openPostgresStore } from "../server/postgres.mjs";
 import { createCloudHandler, bufferedResponse } from "../server/vercel.mjs";
 import { passwordHash } from "../server/index.mjs";
+import { ownerStockRevision } from "../server/inventory.mjs";
 
 let database, limits, store, handler, cookie, csrf, order;
 let queue = Promise.resolve();
@@ -85,6 +86,13 @@ test("Postgres schema seeds owner catalog and returns no private settings", asyn
   const result = await request("/api/catalog");
   assert.equal(result.status, 200);
   assert.equal(result.data.products.length, 4);
+  assert.ok(
+    result.data.products.every(
+      (product) =>
+        product.stock === 20 &&
+        Object.values(product.stockBySize).every((count) => count === 4),
+    ),
+  );
   assert.equal("orderNotificationEmail" in result.data.settings, false);
   const health = await request("/api/index?route=health");
   assert.deepEqual(health.data, {
@@ -380,4 +388,112 @@ test("cloud customer rate limits survive rolled-back login failures and fresh ha
     (await request("/api/account/login", "POST", input, headers)).status,
     429,
   );
+});
+
+test("cloud test orders can be archived and restored across adapter restarts without changing stock twice", async () => {
+  const login = await request("/api/account/login", "POST", {
+    email: "cloud@example.test",
+    password: "cloud-customer-password-only",
+  });
+  const own = {
+    cookie: login.headers["Set-Cookie"].split(";")[0],
+    "x-customer-csrf": login.data.csrf,
+  };
+  const adminLogin = await request("/api/admin/login", "POST", {
+    username: "admin",
+    password,
+  });
+  const owner = {
+    cookie: adminLogin.headers["Set-Cookie"].split(";")[0],
+    "x-csrf-token": adminLogin.data.csrf,
+  };
+  const order = (await request("/api/account/orders", "GET", undefined, own))
+    .data.orders[0];
+  assert.equal(
+    (
+      await request(
+        `/api/admin/requests/${order.id}`,
+        "PATCH",
+        { status: "cancelled" },
+        owner,
+      )
+    ).status,
+    200,
+  );
+  const stock = (await store.product("suede-penny")).stockBySize["7"];
+  assert.equal(
+    (
+      await request(
+        `/api/admin/requests/${order.id}/archive`,
+        "PATCH",
+        { archived: true },
+        owner,
+      )
+    ).status,
+    200,
+  );
+  store = await openPostgresStore({ poolFactory });
+  handler = createCloudHandler({ store, adminHash: passwordHash(password) });
+  assert.equal(
+    (await request("/api/account/orders", "GET", undefined, own)).data.orders
+      .length,
+    0,
+  );
+  assert.equal((await store.product("suede-penny")).stockBySize["7"], stock);
+  assert.equal(
+    (
+      await request(
+        `/api/admin/requests/${order.id}/archive`,
+        "PATCH",
+        { archived: false },
+        owner,
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/account/orders", "GET", undefined, own)).data.orders
+      .length,
+    1,
+  );
+  assert.equal((await store.product("suede-penny")).stockBySize["7"], stock);
+});
+
+test("cloud owner stock migration applies to an existing catalog exactly once and preserves other business data", async () => {
+  const countBefore = (
+    await store.db.prepare("SELECT COUNT(*) AS count FROM requests").get()
+  ).count;
+  const settings = await store.settings();
+  await store.withRequest(true, async () => {
+    const p = await store.product("suede-penny");
+    await store.saveProduct({
+      ...p,
+      price: 399900,
+      stock: 1,
+      stockBySize: { 7: 1, 8: 0, 9: 0, 10: 0, 11: 0 },
+    });
+    await store.db
+      .prepare("DELETE FROM migrations WHERE id=?")
+      .run(ownerStockRevision);
+  });
+  store = await openPostgresStore({ poolFactory });
+  assert.equal((await store.product("suede-penny")).stock, 20);
+  assert.equal((await store.product("suede-penny")).price, 399900);
+  assert.deepEqual(await store.settings(), settings);
+  assert.equal(
+    (await store.db.prepare("SELECT COUNT(*) AS count FROM requests").get())
+      .count,
+    countBefore,
+  );
+  await store.withRequest(true, async () => {
+    const p = await store.product("suede-penny");
+    await store.saveProduct({
+      ...p,
+      stock: 19,
+      stockBySize: { ...p.stockBySize, 7: 3 },
+    });
+  });
+  store = await openPostgresStore({ poolFactory });
+  assert.equal((await store.product("suede-penny")).stock, 19);
+  assert.equal((await store.product("suede-penny")).stockBySize["7"], 3);
 });

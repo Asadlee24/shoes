@@ -307,7 +307,9 @@ export function customerApi({ store, body, json, limited, secureCookies }) {
         )
         .all(session.user.id);
       return json(res, 200, {
-        orders: orders.map((row) => ({ ...row, data: JSON.parse(row.data) })),
+        orders: orders
+          .map((row) => ({ ...row, data: JSON.parse(row.data) }))
+          .filter((order) => !order.data.archivedAt),
       });
     }
     const receiptMatch = path.match(/^\/api\/account\/orders\/([^/]+)\/proof$/);
@@ -322,6 +324,7 @@ export function customerApi({ store, body, json, limited, secureCookies }) {
       if (!order) throw new HttpError(404, "Order not found.");
       const data = JSON.parse(order.data);
       if (
+        data.archivedAt ||
         order.kind !== "order" ||
         order.status === "cancelled" ||
         !["bank", "easypaisa"].includes(data.payment?.method)

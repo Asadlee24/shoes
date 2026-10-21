@@ -526,3 +526,13 @@
   text-underline-offset: 3px;
   font-weight: 600;
 }
+
+.request-archive-actions {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+  margin-top: 26px;
+}
+.request-archive-actions p {
+  margin-top: 14px;
+  line-height: 1.7;
+}

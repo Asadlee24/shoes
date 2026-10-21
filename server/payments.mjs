@@ -30,6 +30,11 @@ export function paymentAdminApi({ store, body, json }) {
         .prepare("SELECT * FROM requests WHERE id=?")
         .get(proof.request_id);
       const data = JSON.parse(order.data);
+      if (data.archivedAt)
+        throw new HttpError(
+          409,
+          "Restore this request before reviewing payments.",
+        );
       if (order.status === "cancelled")
         throw new HttpError(
           409,
@@ -90,6 +95,8 @@ export function paymentAdminApi({ store, body, json }) {
         );
       const data = JSON.parse(order.data),
         settings = await store.settings();
+      if (data.archivedAt)
+        throw new HttpError(409, "Restore this request before confirming it.");
       const method = input.method || data.payment?.method;
       if (!["bank", "easypaisa", "cod"].includes(method))
         throw new HttpError(400, "Choose a payment method.");

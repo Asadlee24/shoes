@@ -357,6 +357,37 @@ export async function createApplication(options = {}) {
         await store.saveSettings(s);
         return json(res, 200, { settings: s });
       }
+      const archive = path.match(/^\/api\/admin\/requests\/([^/]+)\/archive$/);
+      if (method === "PATCH" && archive) {
+        const input = await body(req);
+        if (typeof input.archived !== "boolean")
+          throw new HttpError(
+            400,
+            "Choose whether to archive or restore the request.",
+          );
+        const request = await store.db
+          .prepare(
+            "SELECT id,kind,status,data,created FROM requests WHERE id=?",
+          )
+          .get(archive[1]);
+        if (!request) throw new HttpError(404, "Request not found.");
+        const data = JSON.parse(request.data);
+        if (
+          input.archived &&
+          request.kind === "order" &&
+          !["cancelled", "delivered"].includes(request.status)
+        )
+          throw new HttpError(
+            409,
+            "Cancel a test order before archiving it so reserved stock is returned.",
+          );
+        if (input.archived) data.archivedAt ||= new Date().toISOString();
+        else delete data.archivedAt;
+        await store.db
+          .prepare("UPDATE requests SET data=? WHERE id=?")
+          .run(JSON.stringify(data), request.id);
+        return json(res, 200, { request: { ...request, data } });
+      }
       if (method === "PATCH" && path.startsWith("/api/admin/requests/")) {
         const b = await body(req),
           id = path.split("/").at(-1);
@@ -376,6 +407,11 @@ export async function createApplication(options = {}) {
                 "cancelled",
               ];
         const requestData = JSON.parse(r.data);
+        if (requestData.archivedAt)
+          throw new HttpError(
+            409,
+            "Restore this archived request before changing its status.",
+          );
         if (
           r.kind === "order" &&
           ["bank", "easypaisa"].includes(requestData.payment?.method) &&

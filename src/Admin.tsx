@@ -159,6 +159,30 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
       setBusy(false);
     }
   }
+  async function archiveRequest(r: StoreRequest) {
+    if (preview) return;
+    setBusy(true);
+    setError("");
+    const archived = !r.data.archivedAt;
+    try {
+      await api(`/api/admin/requests/${r.id}/archive`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ archived }),
+      });
+      await refresh();
+      setRequest(null);
+      setNotice(
+        archived
+          ? "Request archived. You can restore it from Archived requests."
+          : "Request restored.",
+      );
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function upload(files: FileList | null) {
     if (!files || !edit || preview) return;
     setBusy(true);
@@ -394,17 +418,23 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                       [
                         "New enquiries",
                         data.requests.filter(
-                          (r) => r.kind === "inquiry" && r.status === "new",
+                          (r) =>
+                            !r.data.archivedAt &&
+                            r.kind === "inquiry" &&
+                            r.status === "new",
                         ).length,
                       ],
                       [
                         "Orders",
-                        data.requests.filter((r) => r.kind === "order").length,
+                        data.requests.filter(
+                          (r) => !r.data.archivedAt && r.kind === "order",
+                        ).length,
                       ],
                       [
                         "Receipts to review",
                         data.requests.filter(
                           (r) =>
+                            !r.data.archivedAt &&
                             r.data.payment?.status === "under_review" &&
                             r.status !== "cancelled",
                         ).length,
@@ -444,7 +474,9 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                     </button>
                   </div>
                   <RequestTable
-                    requests={data.requests.slice(0, 6)}
+                    requests={data.requests
+                      .filter((r) => !r.data.archivedAt)
+                      .slice(0, 6)}
                     onSelect={setRequest}
                   />
                 </>
@@ -521,16 +553,21 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                       <option value="order">Orders</option>
                       <option value="new">New enquiries</option>
                       <option value="receipts">Receipts to review</option>
+                      <option value="archived">Archived requests</option>
                     </select>
                   </div>
                   <RequestTable
                     requests={data.requests.filter((r) =>
-                      requestFilter === "receipts"
-                        ? r.data.payment?.status === "under_review" &&
-                          r.status !== "cancelled"
-                        : requestFilter === "all" || requestFilter === "new"
-                          ? requestFilter === "all" || r.status === "new"
-                          : r.kind === requestFilter,
+                      requestFilter === "archived"
+                        ? Boolean(r.data.archivedAt)
+                        : r.data.archivedAt
+                          ? false
+                          : requestFilter === "receipts"
+                            ? r.data.payment?.status === "under_review" &&
+                              r.status !== "cancelled"
+                            : requestFilter === "all" || requestFilter === "new"
+                              ? requestFilter === "all" || r.status === "new"
+                              : r.kind === requestFilter,
                     )}
                     onSelect={setRequest}
                   />
@@ -1192,7 +1229,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
               <span className="eyebrow">STATUS</span>
               <select
                 aria-label="Request status"
-                disabled={busy || preview}
+                disabled={busy || preview || Boolean(request.data.archivedAt)}
                 value={request.status}
                 onChange={(e) => void changeStatus(request, e.target.value)}
               >
@@ -1225,17 +1262,19 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 </div>
               )}
             </div>
-            <AdminPayment
-              key={request.id}
-              order={request}
-              headers={headers}
-              preview={preview}
-              onUpdated={(updated) => {
-                setRequest(updated);
-                void refresh();
-                setNotice("Order payment updated.");
-              }}
-            />
+            {!request.data.archivedAt && (
+              <AdminPayment
+                key={request.id}
+                order={request}
+                headers={headers}
+                preview={preview}
+                onUpdated={(updated) => {
+                  setRequest(updated);
+                  void refresh();
+                  setNotice("Order payment updated.");
+                }}
+              />
+            )}
             {request.data.items.map((i) => (
               <div className="request-item" key={`${i.id}:${i.size}`}>
                 <div>
@@ -1253,6 +1292,32 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 <strong>{money(request.data.totals.total)}</strong>
               </div>
             )}
+            <div className="request-archive-actions">
+              <button
+                type="button"
+                className="text-link"
+                disabled={
+                  busy ||
+                  preview ||
+                  (!request.data.archivedAt &&
+                    request.kind === "order" &&
+                    !["cancelled", "delivered"].includes(request.status))
+                }
+                onClick={() => void archiveRequest(request)}
+              >
+                {request.data.archivedAt
+                  ? "Restore request"
+                  : "Archive request"}
+              </button>
+              <p className="muted small">
+                {request.data.archivedAt
+                  ? "This request is hidden from the active list and customer account. Restore it to show it again."
+                  : request.kind === "order" &&
+                      !["cancelled", "delivered"].includes(request.status)
+                    ? "Cancel a test order first to return its reserved stock, then archive it."
+                    : "Hide test records from the active list and customer account. Archived records can be restored."}
+              </p>
+            </div>
             {error && (
               <p className="field-error" role="alert">
                 {error}

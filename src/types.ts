@@ -58,6 +58,7 @@ export type StoreRequest = {
   status: string;
   created: string;
   data: {
+    archivedAt?: string;
     payment?: Payment;
     customer: {
       name: string;

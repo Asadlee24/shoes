@@ -361,6 +361,12 @@ test("receipts are private, validated and require owner review before fulfilment
   assert.equal(row.status, "shipped");
 });
 test("unconfirmed stock prevents payment; owner confirmation reserves stock exactly once", async () => {
+  const unknown = app.store.product("textured-bit");
+  app.store.saveProduct({
+    ...unknown,
+    stock: null,
+    stockBySize: { ...unknown.stockBySize, 8: null },
+  });
   const input = {
     customer,
     items: [{ id: "textured-bit", size: "8", quantity: 1 }],
@@ -537,4 +543,131 @@ test("customer authentication is rate limited even for unknown accounts", async 
     ).status,
     429,
   );
+});
+
+test("admin archive hides test enquiries from the customer and restores them without deleting records", async () => {
+  const r = await request(
+    "/api/requests",
+    "POST",
+    {
+      customer,
+      items: [{ id: "midnight-penny", size: "7", quantity: 1 }],
+      paymentMethod: "bank",
+    },
+    { ...bob, "idempotency-key": randomUUID() },
+  );
+  assert.equal(r.status, 201);
+  assert.equal(r.data.kind, "inquiry");
+  const id = r.data.reference;
+  const path = `/api/admin/requests/${id}/archive`;
+  assert.equal((await request(path, "PATCH", { archived: true })).status, 401);
+  assert.equal(
+    (await request(path, "PATCH", { archived: true }, bob)).status,
+    401,
+  );
+  assert.equal(
+    (await request(path, "PATCH", { archived: true }, { cookie: admin.cookie }))
+      .status,
+    403,
+  );
+  assert.equal(
+    (await request(path, "PATCH", { archived: "yes" }, admin)).status,
+    400,
+  );
+  assert.equal(
+    (await request(path, "PATCH", { archived: true }, admin)).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/account/orders", "GET", null, bob)).data.orders.some(
+      (row) => row.id === id,
+    ),
+    false,
+  );
+  assert.ok(app.store.db.prepare("SELECT id FROM requests WHERE id=?").get(id));
+  assert.ok(
+    (
+      await request("/api/admin/dashboard", "GET", null, admin)
+    ).data.requests.find((row) => row.id === id).data.archivedAt,
+  );
+  assert.equal(
+    (
+      await request(
+        `/api/admin/requests/${id}`,
+        "PATCH",
+        { status: "contacted" },
+        admin,
+      )
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await request(
+        `/api/admin/requests/${id}/confirm`,
+        "POST",
+        { method: "bank" },
+        admin,
+      )
+    ).status,
+    409,
+  );
+  assert.equal(
+    (await request(path, "PATCH", { archived: false }, admin)).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/account/orders", "GET", null, bob)).data.orders.some(
+      (row) => row.id === id,
+    ),
+    true,
+  );
+});
+
+test("a live order must be cancelled before archiving; archive and restore never replenish stock", async () => {
+  const before = app.store.product("suede-penny").stockBySize["7"];
+  const placed = await request(
+    "/api/requests",
+    "POST",
+    {
+      customer,
+      items: [{ id: "suede-penny", size: "7", quantity: 1 }],
+      paymentMethod: "bank",
+    },
+    { ...bob, "idempotency-key": randomUUID() },
+  );
+  assert.equal(placed.data.kind, "order");
+  const id = placed.data.reference,
+    path = `/api/admin/requests/${id}/archive`;
+  assert.equal(app.store.product("suede-penny").stockBySize["7"], before - 1);
+  assert.equal(
+    (await request(path, "PATCH", { archived: true }, admin)).status,
+    409,
+  );
+  assert.equal(
+    (
+      await request(
+        `/api/admin/requests/${id}`,
+        "PATCH",
+        { status: "cancelled" },
+        admin,
+      )
+    ).status,
+    200,
+  );
+  for (let i = 0; i < 2; i++)
+    assert.equal(
+      (await request(path, "PATCH", { archived: true }, admin)).status,
+      200,
+    );
+  assert.equal(app.store.product("suede-penny").stockBySize["7"], before);
+  assert.equal(
+    (await request(path, "PATCH", { archived: false }, admin)).status,
+    200,
+  );
+  assert.equal(app.store.product("suede-penny").stockBySize["7"], before);
+  const restored = (
+    await request("/api/account/orders", "GET", null, bob)
+  ).data.orders.find((row) => row.id === id);
+  assert.equal(restored.status, "cancelled");
 });

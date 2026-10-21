@@ -1,4 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
+import { ownerStock, ownerStockRevision } from "./inventory.mjs";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import {
@@ -83,6 +84,23 @@ export function openStore(path) {
       currentSettings.orderNotificationEmail = "";
       db.prepare("UPDATE settings SET data=? WHERE id=1").run(
         JSON.stringify(currentSettings),
+      );
+    }
+    if (
+      !db
+        .prepare("SELECT id FROM migrations WHERE id=?")
+        .get(ownerStockRevision)
+    ) {
+      for (const row of db.prepare("SELECT data FROM products").all()) {
+        const product = ownerStock(JSON.parse(row.data));
+        db.prepare("UPDATE products SET data=? WHERE id=?").run(
+          JSON.stringify(product),
+          product.id,
+        );
+      }
+      db.prepare("INSERT INTO migrations VALUES(?,?)").run(
+        ownerStockRevision,
+        new Date().toISOString(),
       );
     }
     db.exec("COMMIT");

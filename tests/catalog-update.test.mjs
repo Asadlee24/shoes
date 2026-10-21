@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { initialProducts, initialSettings } from "../server/catalog.mjs";
 import { openStore } from "../server/store.mjs";
+import { ownerStockRevision } from "../server/inventory.mjs";
 
 test("existing stores receive confirmed prices once without overwriting admin edits or inventory", async () => {
   const dir = await mkdtemp(join(tmpdir(), "qadam-prices-"));
@@ -31,6 +32,13 @@ test("existing stores receive confirmed prices once without overwriting admin ed
         }),
       );
     }
+    // Isolate the price migration from the newer, explicitly requested stock reset.
+    legacy.exec(
+      "CREATE TABLE migrations(id TEXT PRIMARY KEY,applied TEXT NOT NULL)",
+    );
+    legacy
+      .prepare("INSERT INTO migrations VALUES(?,?)")
+      .run(ownerStockRevision, new Date().toISOString());
     legacy.close();
     current = openStore(path);
     assert.equal(current.product("suede-penny").price, 350000);
@@ -102,6 +110,75 @@ test("official details migrate into existing stores once and preserve later admi
     assert.equal(
       store.settings().orderNotificationEmail,
       "new-owner@example.test",
+    );
+  } finally {
+    store?.db.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("owner stock migration sets 20 per style once, preserves business data and later sales", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "qadam-stock-"));
+  const path = join(dir, "store.db");
+  let store;
+  try {
+    store = openStore(path);
+    const before = store.product("suede-penny");
+    store.saveProduct({
+      ...before,
+      price: 399900,
+      stock: 7,
+      stockBySize: { 7: 1, 8: 2, 9: 2, 10: 1, 11: 1 },
+    });
+    store.saveSettings({
+      ...store.settings(),
+      shippingFee: 22500,
+      orderNotificationEmail: "owner@example.test",
+    });
+    store.db
+      .prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)")
+      .run(
+        "stock-test-reference",
+        "stock-test-key",
+        "fingerprint",
+        "inquiry",
+        "new",
+        JSON.stringify({ customer: { name: "Retained test" }, items: [] }),
+        new Date().toISOString(),
+      );
+    store.db
+      .prepare("DELETE FROM migrations WHERE id=?")
+      .run(ownerStockRevision);
+    store.db.close();
+    store = openStore(path);
+    for (const product of store.products()) {
+      assert.equal(product.stock, 20);
+      assert.deepEqual(product.stockBySize, { 7: 4, 8: 4, 9: 4, 10: 4, 11: 4 });
+    }
+    assert.equal(store.product(before.id).price, 399900);
+    assert.equal(store.product("brown-textured").published, false);
+    assert.equal(store.settings().shippingFee, 22500);
+    assert.equal(store.settings().orderNotificationEmail, "owner@example.test");
+    assert.ok(
+      store.db
+        .prepare("SELECT id FROM requests WHERE id=?")
+        .get("stock-test-reference"),
+    );
+    const product = store.product(before.id);
+    store.saveProduct({
+      ...product,
+      stock: 19,
+      stockBySize: { ...product.stockBySize, 7: 3 },
+    });
+    store.db.close();
+    store = openStore(path);
+    assert.equal(store.product(before.id).stock, 19);
+    assert.equal(store.product(before.id).stockBySize["7"], 3);
+    assert.equal(
+      store.db
+        .prepare("SELECT COUNT(*) AS count FROM migrations WHERE id=?")
+        .get(ownerStockRevision).count,
+      1,
     );
   } finally {
     store?.db.close();

@@ -180,3 +180,20 @@ existing inventory, orders and administrator settings are preserved. No new
 third-party account, API secret, card gateway or paid service is required for
 these manual transfers. Order and receipt notifications are visible in admin;
 automatic email sending still needs a verified sender and mail provider.
+
+### Owner stock update and test-record cleanup
+
+The 21 October 2026 owner instruction sets **20 available pairs per style**, split
+as 4 each across sizes 7–11. A named, transaction-protected migration applies this
+once to the existing catalog, including draft styles, preserving prices, images,
+publish status, business settings and orders. Later redeploys never refill sold
+stock or overwrite administrator inventory edits. Shipping remains unset until
+the owner supplies the actual delivery fee.
+
+To hide a test record: Admin → Orders & enquiries → open its reference →
+**Archive request**. For an actual order, first set its status to **cancelled**;
+this returns reserved stock once. Then archive it. Archived records are excluded
+from the active admin lists, overview counts and customer order history, while
+remaining stored privately. Choose **Archived requests** in the admin filter and
+open a record to **Restore request**. Restoring does not reopen a cancelled order
+or change inventory. No test or customer records are automatically deleted.
