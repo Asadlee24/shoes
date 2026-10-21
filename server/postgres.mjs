@@ -1,3 +1,4 @@
+import { archiveOwnerTestRequests } from "./test-order-cleanup.mjs";
 import { commerceSchema } from "./commerce-schema.mjs";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { ownerStock, ownerStockRevision } from "./inventory.mjs";
@@ -229,6 +230,7 @@ export async function openPostgresStore(options = {}) {
         ...(await store.settings()),
         orderNotificationEmail: initialSettings.orderNotificationEmail,
       });
+    await archiveOwnerTestRequests(store);
     await query("DELETE FROM qf_sessions WHERE expires < $1", [Date.now()]);
     await query("DELETE FROM qf_limits WHERE until_ms < $1", [Date.now()]);
   });

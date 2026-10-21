@@ -879,3 +879,64 @@ test("cloud customer email links, reviews/photos, tracking and sales persist in 
       .get(registered.data.user.id),
   );
 });
+
+test("owner test cleanup commits once in Postgres and preserves later customer orders", async () => {
+  const { testCleanupRevision } =
+    await import("../server/test-order-cleanup.mjs");
+  const baseline = await store.product("suede-penny"),
+    settings = await store.settings(),
+    id = `QF-TEST-CLEAN-${randomUUID()}`,
+    future = `QF-FUTURE-${randomUUID()}`;
+  const data = JSON.stringify({
+    customer,
+    items: [{ id: baseline.id, size: "7", quantity: 1 }],
+    totals: { total: 350000 },
+    payment: { method: "bank", status: "paid" },
+  });
+  await store.withRequest(true, async () => {
+    await store.db
+      .prepare("DELETE FROM migrations WHERE id=?")
+      .run(testCleanupRevision);
+    await store.db
+      .prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)")
+      .run(
+        id,
+        randomUUID(),
+        "cleanup-fixture",
+        "order",
+        "processing",
+        data,
+        "2026-10-21T09:00:00.000Z",
+      );
+    await store.db
+      .prepare("INSERT INTO requests VALUES(?,?,?,?,?,?,?)")
+      .run(
+        future,
+        randomUUID(),
+        "future-fixture",
+        "order",
+        "pending",
+        data,
+        "2026-10-22T09:00:00.000Z",
+      );
+  });
+  const reopened = await openPostgresStore({ poolFactory });
+  const archived = await reopened.db
+    .prepare("SELECT status,data FROM requests WHERE id=?")
+    .get(id);
+  assert.equal(archived.status, "cancelled");
+  assert.ok(JSON.parse(archived.data).archivedAt);
+  const fresh = await reopened.db
+    .prepare("SELECT status,data FROM requests WHERE id=?")
+    .get(future);
+  assert.equal(fresh.status, "pending");
+  assert.equal(JSON.parse(fresh.data).archivedAt, undefined);
+  assert.equal((await reopened.product(baseline.id)).stock, baseline.stock + 1);
+  assert.equal(
+    (await reopened.product(baseline.id)).stockBySize["7"],
+    baseline.stockBySize["7"] + 1,
+  );
+  assert.deepEqual(await reopened.settings(), settings);
+  const again = await openPostgresStore({ poolFactory });
+  assert.equal((await again.product(baseline.id)).stock, baseline.stock + 1);
+});

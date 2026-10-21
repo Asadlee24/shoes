@@ -1,3 +1,4 @@
+import { archiveOwnerTestRequests } from "./test-order-cleanup.mjs";
 import { commerceApi } from "./commerce.mjs";
 import http from "node:http";
 import { paymentAdminApi } from "./payments.mjs";
@@ -79,6 +80,16 @@ export async function createApplication(options = {}) {
         process.env.DATABASE_PATH ||
         join(root, "data", "store.db"),
     );
+  if (!store.withRequest) {
+    await store.db.exec("BEGIN IMMEDIATE");
+    try {
+      await archiveOwnerTestRequests(store);
+      await store.db.exec("COMMIT");
+    } catch (error) {
+      await store.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
   const adminUser = options.adminUser || process.env.ADMIN_USER || "admin";
   const notifications = createNotifications(store, {
     apiKey: options.emailApiKey,
