@@ -342,13 +342,6 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
               <ArrowUpRight size={17} />
             </button>
           </form>
-          <Link className="text-link admin-demo-link" to="/admin/demo">
-            Preview the admin panel <ArrowUpRight size={15} />
-          </Link>
-          <p className="admin-setup-note">
-            First time? Run <code>npm run admin:setup</code> in the project
-            terminal, then restart the server.
-          </p>
         </div>
         <Link className="text-link" to="/">
           Back to the store <ArrowUpRight size={14} />
