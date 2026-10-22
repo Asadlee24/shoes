@@ -1153,6 +1153,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 >
                   <option>Loafers</option>
                   <option>Formal shoes</option>
+                  <option>Sneakers</option>
                 </select>
               </label>
               <label>
