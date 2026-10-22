@@ -3839,27 +3839,133 @@ select:focus {
 }
 
 
-/* Developer attribution: unobtrusive, accessible and consistent with the store footer. */
+/* Carefully balanced footer credits — shared by desktop and mobile. */
+.footer-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 28px 0 32px;
+  border-top: 1px solid #343431;
+  color: #9f9f99;
+  font-size: 11px;
+  letter-spacing: .025em;
+}
+.footer-bottom .footer-bottom-meta {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  font-size: 10px;
+  letter-spacing: .1em;
+}
+.footer-bottom .footer-copyright { color: #d1d1ca; white-space: nowrap; }
+.footer-bottom .footer-location {
+  border-left: 1px solid #44443e;
+  padding-left: 13px;
+  font-size: 9px;
+  color: #898982;
+  white-space: nowrap;
+}
 .footer-bottom .footer-developer {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  color: inherit;
-  font-size: 10px;
-  letter-spacing: .015em;
+  gap: 12px;
+  min-height: 50px;
+  padding: 8px 16px 8px 9px;
+  border: 1px solid #3b3b36;
+  border-radius: 100px;
+  background: linear-gradient(130deg, #22221f, #171715);
+  color: #e8e8e2;
   text-decoration: none;
-  transition: color .2s ease;
+  transition: transform .2s ease, border-color .2s ease, background .2s ease;
+  letter-spacing: 0;
+}
+.footer-bottom .footer-developer:hover {
+  transform: translateY(-2px);
+  border-color: #85857d;
+  background: #292925;
+}
+.footer-bottom .footer-developer:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+.footer-bottom .footer-developer-mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  background: #e6e5de;
+  color: #171715;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: -.04em;
+}
+.footer-bottom .footer-developer-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+}
+.footer-bottom .footer-developer-caption {
+  color: #999991;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: .17em;
 }
 .footer-bottom .footer-developer strong {
-  color: var(--paper, #f4f4f1);
+  color: #fafaf6;
+  font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
-.footer-bottom .footer-developer svg { width: 13px; height: 13px; }
-.footer-bottom .footer-developer:hover,
-.footer-bottom .footer-developer:focus-visible { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
-.footer-bottom .footer-developer:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
-@media(max-width: 640px) {
-  .footer-bottom .footer-developer { width: 100%; justify-content: flex-start; font-size: 10px; order: 2; }
-  .footer-bottom > div { order: 3; }
+.footer-bottom .footer-developer > svg {
+  width: 15px;
+  height: 15px;
+  color: #aaa9a2;
+  transition: transform .2s ease;
+}
+.footer-bottom .footer-developer:hover > svg { transform: translate(2px, -2px); }
+.footer-bottom .footer-legal {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: .015em;
+}
+.footer-bottom .footer-legal a { color: #aaa9a2; text-decoration: none; }
+.footer-bottom .footer-legal a:hover { color: #fff; }
+.footer-bottom .footer-legal-dot { color: #62625e; }
+@media (max-width: 980px) {
+  .footer-bottom { grid-template-columns: minmax(0, 1fr) auto; gap: 20px; }
+  .footer-bottom .footer-bottom-meta { grid-column: 1; grid-row: 1; }
+  .footer-bottom .footer-developer { grid-column: 2; grid-row: 1 / span 2; }
+  .footer-bottom .footer-legal { grid-column: 1; grid-row: 2; justify-self: start; }
+}
+@media (max-width: 560px) {
+  .footer-bottom { grid-template-columns: 1fr; gap: 18px; padding: 23px 0 28px; }
+  .footer-bottom .footer-bottom-meta {
+    grid-column: 1; grid-row: 1;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .footer-bottom .footer-location { font-size: 8px; }
+  .footer-bottom .footer-developer {
+    grid-column: 1; grid-row: 2; justify-self: start;
+    min-height: 48px;
+    padding-right: 18px;
+  }
+  .footer-bottom .footer-legal {
+    grid-column: 1; grid-row: 3;
+    justify-self: start;
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-bottom .footer-developer,
+  .footer-bottom .footer-developer > svg { transition: none; }
 }
