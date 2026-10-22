@@ -3839,114 +3839,80 @@ select:focus {
 }
 
 
-/* QADAM FLEX — refined, unified footer.
-   This replaces earlier footer-bottom layout rules at every breakpoint. */
+/* Compact two-sided footer — same alignment on phones and desktop. */
 .footer .footer-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-  gap: 28px;
-  margin-top: 40px;
-  padding: 26px 0 30px;
-  border-top: 1px solid rgba(255,255,255,.17);
-  color: #a3a39e;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  margin-top: 32px;
+  padding: 20px 0 24px;
+  border-top: 1px solid rgba(255,255,255,.18);
   font-size: 11px;
+  color: #aaa9a2;
   letter-spacing: 0;
 }
-.footer .footer-bottom-identity {
+.footer .footer-bottom-left,
+.footer .footer-bottom-right {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 11px;
+  gap: 10px;
   min-width: 0;
 }
+.footer .footer-bottom-left { align-items: flex-start; text-align: left; }
+.footer .footer-bottom-right { align-items: flex-end; text-align: right; }
 .footer .footer-copyright {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  color: #999992;
   font-size: 10px;
-  font-weight: 500;
-  letter-spacing: .12em;
-  line-height: 1.5;
+  letter-spacing: .07em;
+  color: #c6c6bf;
+  white-space: nowrap;
 }
-.footer .footer-copyright-divider { color: #5c5c56; }
 .footer .footer-developer {
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 5px;
-  color: #a8a8a1;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  font-size: 12px;
-  line-height: 1.6;
-  letter-spacing: 0;
-  text-decoration: none;
-  transition: color .2s ease;
-}
-.footer .footer-developer strong {
-  color: #f0f0ea;
-  font-size: inherit;
-  font-weight: 650;
-  letter-spacing: .01em;
-  border-bottom: 1px solid rgba(241,241,235,.37);
-  transition: border-color .2s ease;
-}
-.footer .footer-developer > svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  color: #d4d4ce;
-  transition: transform .2s ease;
-}
-.footer .footer-developer:hover,
-.footer .footer-developer:focus-visible { color: #fff; }
-.footer .footer-developer:hover strong { border-color: #fff; }
-.footer .footer-developer:hover > svg { transform: translate(2px,-2px); }
-.footer .footer-developer:focus-visible { outline: 2px solid #eee; outline-offset: 5px; }
-.footer .footer-legal {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 15px;
-  align-self: flex-end;
-  padding-bottom: 2px;
+  column-gap: 4px;
+  row-gap: 1px;
+  max-width: 100%;
+  color: #aaa9a2;
+  text-decoration: none;
   font-size: 11px;
-  letter-spacing: 0;
+  line-height: 1.4;
+}
+.footer .footer-developer strong {
+  color: #f1f1ec;
+  font-size: inherit;
+  font-weight: 650;
   white-space: nowrap;
 }
-.footer .footer-legal a { color: #bcbcb6; text-decoration: none; transition: color .2s ease; }
-.footer .footer-legal a:hover,
-.footer .footer-legal a:focus-visible { color: #fff; }
-.footer .footer-legal > span { color: #686861; }
-@media (max-width: 700px) {
-  .footer .footer-bottom {
-    flex-direction: column;
-    align-items: flex-start;
-    flex-wrap: nowrap;
-    gap: 19px;
-    margin-top: 29px;
-    padding: 24px 0 29px;
-  }
-  .footer .footer-bottom-identity { gap: 10px; }
-  .footer .footer-copyright { font-size: 9px; letter-spacing: .08em; }
-  .footer .footer-developer { font-size: 12px; }
-  .footer .footer-legal {
-    align-self: flex-start;
-    justify-content: flex-start;
-    font-size: 11px;
-    gap: 11px;
-    padding: 0;
-  }
+.footer .footer-developer svg { flex: none; width: 13px; height: 13px; color: #dfdfd9; }
+.footer .footer-policy-link {
+  color: #93938c;
+  text-decoration: none;
+  font-size: 10px;
+  line-height: 1.4;
 }
-@media (prefers-reduced-motion: reduce) {
-  .footer .footer-developer,
-  .footer .footer-developer strong,
-  .footer .footer-developer > svg { transition: none; }
+.footer .footer-policy-link:hover,
+.footer .footer-developer:hover,
+.footer .footer-policy-link:focus-visible,
+.footer .footer-developer:focus-visible { color: #fff; }
+.footer .footer-developer:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.footer .footer-policy-link:focus-visible,
+.footer .footer-developer:focus-visible { outline: 2px solid #ddd; outline-offset: 3px; }
+@media (max-width: 600px) {
+  .footer .footer-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    flex-direction: initial;
+    align-items: start;
+    gap: 10px;
+    margin-top: 23px;
+    padding: 17px 0 20px;
+  }
+  .footer .footer-bottom-left,
+  .footer .footer-bottom-right { gap: 8px; }
+  .footer .footer-copyright { font-size: 9px; letter-spacing: .025em; }
+  .footer .footer-developer { font-size: 10px; }
+  .footer .footer-policy-link { font-size: 10px; }
 }
