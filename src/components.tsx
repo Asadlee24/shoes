@@ -719,15 +719,26 @@ export function Footer() {
         </div>
       </div>
       <div className="footer-bottom">
-        <span>© {new Date().getFullYear()} QADAM FLEX</span>
-        <span>PAKISTAN · PKR</span>
-        <a href="https://asad-lee-portfolio.vercel.app/" target="_blank" rel="noopener noreferrer" className="footer-developer" aria-label="Designed and developed by Asad Lee — visit developer portfolio">
-          Designed &amp; developed by <strong>Asad Lee</strong> <ArrowUpRight size={14} aria-hidden="true" />
-        </a>
-        <div>
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/terms">Terms</Link>
+        <div className="footer-bottom-meta">
+          <span className="footer-copyright">© {new Date().getFullYear()} QADAM FLEX</span>
+          <span className="footer-location">PAKISTAN · PKR</span>
         </div>
+        <a
+          href="https://asad-lee-portfolio.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footer-developer"
+          aria-label="Website designed and developed by Asad Lee — view developer portfolio"
+        >
+          <span className="footer-developer-mark" aria-hidden="true">AL.</span>
+          <span className="footer-developer-copy"><span className="footer-developer-caption">WEBSITE BY</span><strong>Asad Lee</strong></span>
+          <ArrowUpRight size={15} aria-hidden="true" />
+        </a>
+        <nav className="footer-legal" aria-label="Legal links">
+          <Link to="/privacy">Privacy</Link>
+          <span className="footer-legal-dot" aria-hidden="true">·</span>
+          <Link to="/terms">Terms</Link>
+        </nav>
       </div>
     </footer>
   );
