@@ -6,6 +6,7 @@ import { seedSneakersPostgres } from "./sneaker-listings.mjs";
 import { seedRegentPostgres } from "./regent-loafer-listing.mjs";
 import { postgresCoffee } from "./coffee-variant.mjs";
 import { refreshStudioCoversPostgres } from "./studio-cover-refresh.mjs";
+import { completeProductPhotosPostgres } from "./catalog-photo-completion.mjs";
 import { commerceSchema } from "./commerce-schema.mjs";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { ownerStock, ownerStockRevision } from "./inventory.mjs";
@@ -245,6 +246,7 @@ export async function openPostgresStore(options = {}) {
     await seedRegentPostgres(store);
     await postgresCoffee(store);
     await refreshStudioCoversPostgres(store);
+    await completeProductPhotosPostgres(store);
     await query("DELETE FROM qf_sessions WHERE expires < $1", [Date.now()]);
     await query("DELETE FROM qf_limits WHERE until_ms < $1", [Date.now()]);
   });

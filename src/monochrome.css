@@ -623,6 +623,11 @@ a:focus-visible {
 .gallery-thumbnails img[src$="-cover-studio-v1.webp"] {
   object-fit: contain;
 }
+.gallery-main > img[src$="-gallery-clean-v1.webp"] {
+  object-fit: contain;
+  mix-blend-mode: normal;
+  background: #e5e1dc;
+}
 .product-index {
   font-size: 6px;
   background: transparent;
