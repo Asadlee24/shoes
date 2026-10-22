@@ -130,6 +130,7 @@ export function Header() {
             </Link>
             <Link to="/shop?category=Loafers">Loafers</Link>
             <Link to="/shop?category=Formal+shoes">Formal shoes</Link>
+            <Link to="/shop?category=Sneakers">Sneakers</Link>
             <Link to="/about">About</Link>
           </nav>
           <div className="header-actions">
@@ -210,6 +211,9 @@ export function Header() {
           </Link>
           <Link to="/shop?category=Formal+shoes">
             Formal shoes <ArrowUpRight />
+          </Link>
+          <Link to="/shop?category=Sneakers">
+            Sneakers <ArrowUpRight />
           </Link>
           <Link to="/about">
             About <ArrowUpRight />
