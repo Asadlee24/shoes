@@ -223,7 +223,7 @@ export default function Home() {
         </div>
         <div className="product-grid">
           {products
-            .filter((p) => p.featured)
+            .filter((p) => p.featured && !p.variantOf)
             .map((p, i) => (
               <ProductCard key={p.id} product={p} index={i} />
             ))}

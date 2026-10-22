@@ -3837,3 +3837,13 @@ select:focus {
 .admin-gallery input {
   max-width: 100%;
 }
+
+/* Textured Bit selectable color variants */
+.qf-color-variants { margin: 18px 0; display:flex; flex-direction:column;gap:10px }
+.qf-color-caption {font-size:10px;letter-spacing:.13em;color:#777}
+.qf-color-options {display:flex;flex-wrap:wrap;gap:8px}
+.qf-color-choice {display:inline-flex;align-items:center;gap:9px;padding:9px 12px;border:1px solid #bbb;border-radius:5px;color:inherit;text-decoration:none;font-size:12px}
+.qf-color-choice.active {border:2px solid #151515;padding:8px 11px}
+.qf-color-choice:hover {border-color:#333}
+.qf-color-choice:focus-visible {outline:2px solid #555;outline-offset:3px}
+.qf-color-swatch {width:17px;height:17px;flex:none;border-radius:50%;border:1px solid rgba(0,0,0,.23)}

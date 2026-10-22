@@ -6,6 +6,7 @@ export type Product = {
   category: string;
   color: string;
   swatch: string;
+  variantOf?: string;
   sku?: string;
   price: number | null;
   stock: number | null;

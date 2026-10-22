@@ -54,13 +54,14 @@ export function Shop() {
   const shown = products
     .filter(
       (p) =>
+        !p.variantOf &&
         (!q ||
-          `${p.name} ${p.subtitle} ${p.description} ${p.color}`
+          `${p.name} ${p.subtitle} ${p.description} ${p.color} ${products.filter(v => v.variantOf === p.id).map(v => v.color).join(" ")}`
             .toLowerCase()
             .includes(q.toLowerCase())) &&
         (!category || p.category === category) &&
         (!size || p.sizes.includes(size)) &&
-        (!color || p.color === color),
+        (!color || p.color === color || products.some(v => v.variantOf === p.id && v.color === color)),
     )
     .sort((a, b) =>
       sort === "name"
@@ -296,6 +297,21 @@ export function ProductPage() {
             <span className="color-dot" style={{ background: p.swatch }} />
             {p.color}
           </div>
+          {(p.id === "textured-bit" || p.variantOf === "textured-bit") && (
+            <div className="qf-color-variants" aria-label="Available colors">
+              <span className="qf-color-caption">CHOOSE YOUR COLOR</span>
+              <div className="qf-color-options">
+                {products.filter(v => v.id === "textured-bit" || v.variantOf === "textured-bit").map(v => (
+                  <Link key={v.id} to={`/product/${v.slug}`}
+                    className={`qf-color-choice ${v.id === p.id ? "active" : ""}`}
+                    aria-current={v.id === p.id ? "page" : undefined}>
+                    <span className="qf-color-swatch" style={{background:v.swatch}} />
+                    {v.id === "textured-bit" ? "Black" : "Coffee Brown"}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )>
           <p className="price-large">{money(p.price)}</p>
           <p className="product-story">{p.description}</p>
           <SizeSelector
@@ -390,7 +406,7 @@ export function ProductPage() {
         </div>
         <div className="product-grid related-grid">
           {products
-            .filter((x) => x.id !== p.id)
+            .filter((x) => x.id !== p.id && !x.variantOf)
             .slice(0, 3)
             .map((p, i) => (
               <ProductCard key={p.id} product={p} index={i} />
