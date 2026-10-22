@@ -142,7 +142,7 @@ export default function Home() {
                 <span>FORM.</span>
               </span>
             </h1>
-            <p className="mono-intro">Loafers and formal shoes.</p>
+            <p className="mono-intro">Loafers, sneakers and formal shoes.</p>
             <div className="mono-hero-actions">
               <Link className="mono-button" to="/shop">
                 Shop the collection{" "}
