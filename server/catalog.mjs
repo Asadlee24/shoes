@@ -195,6 +195,49 @@ export const initialProducts = [
       "White textured sole",
     ],
   },
+{
+  "id": "regent-bit-black-2026",
+  "slug": "regent-bit-black-formal-loafers",
+  "name": "The Regent Bit — Black",
+  "subtitle": "Polished black formal bit loafers",
+  "category": "Formal shoes",
+  "color": "Black",
+  "swatch": "#171717",
+  "sku": "QF-008",
+  "price": 250000,
+  "stock": null,
+  "sizes": [
+    "7",
+    "8",
+    "9",
+    "10",
+    "11"
+  ],
+  "published": true,
+  "featured": false,
+  "image": "https://d2ol7oe51mr4n9.cloudfront.net/user_3Is9kobfnwtcyCgM78744SOnddo/c9fe1009-d647-489a-ad35-9ade717fc6e7.jpg",
+  "images": [
+    "https://d2ol7oe51mr4n9.cloudfront.net/user_3Is9kobfnwtcyCgM78744SOnddo/c9fe1009-d647-489a-ad35-9ade717fc6e7.jpg",
+    "https://d2ol7oe51mr4n9.cloudfront.net/user_3Is9kobfnwtcyCgM78744SOnddo/beecd970-13e8-4124-9710-5f01b4416875.jpg",
+    "https://d2ol7oe51mr4n9.cloudfront.net/user_3Is9kobfnwtcyCgM78744SOnddo/15ccfd25-2090-416a-a18b-08b173100fac.jpg",
+    "https://d2ol7oe51mr4n9.cloudfront.net/user_3Is9kobfnwtcyCgM78744SOnddo/ca35a0ca-810d-42a5-b779-95c3e4d65b6a.jpg"
+  ],
+  "imagePosition": "50% 57%",
+  "description": "A sleek polished black loafer with a finely ribbed vamp, glossy metal-bit hardware, elegant almond-shaped toe and low-profile formal sole. A refined option for celebrations, workwear and smart outfits.",
+  "details": [
+    "Polished black upper with fine ribbed vamp",
+    "Glossy metal-bit strap accent",
+    "Smart slip-on formal silhouette",
+    "Low-profile dark sole"
+  ],
+  "stockBySize": {
+    "7": null,
+    "8": null,
+    "9": null,
+    "10": null,
+    "11": null
+  }
+}
 ];
 export const officialDetails = {
   website: "https://qadamflex.bond",
