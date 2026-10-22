@@ -7,6 +7,7 @@ import { seedRegentSqlite } from "./regent-loafer-listing.mjs";
 import { sqliteCoffee } from "./coffee-variant.mjs";
 import { refreshStudioCoversSqlite } from "./studio-cover-refresh.mjs";
 import { completeProductPhotosSqlite } from "./catalog-photo-completion.mjs";
+import { refreshStudioGalleriesSqlite } from "./gallery-studio-refresh.mjs";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import {
@@ -151,6 +152,7 @@ export function openStore(path) {
     sqliteCoffee(db);
     refreshStudioCoversSqlite(db);
     completeProductPhotosSqlite(db);
+    refreshStudioGalleriesSqlite(db);
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");

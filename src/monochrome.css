@@ -628,6 +628,17 @@ a:focus-visible {
   mix-blend-mode: normal;
   background: #e5e1dc;
 }
+.gallery-main > img[src$="-studio-v3.webp"] {
+  object-fit: contain;
+  object-position: center;
+  mix-blend-mode: normal;
+  background: #e5e1dc;
+}
+.gallery-thumbnails img[src$="-studio-v3.webp"] {
+  object-fit: contain;
+  mix-blend-mode: normal;
+  background: #e5e1dc;
+}
 .product-index {
   font-size: 6px;
   background: transparent;
