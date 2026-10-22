@@ -719,25 +719,23 @@ export function Footer() {
         </div>
       </div>
       <div className="footer-bottom">
-        <div className="footer-bottom-identity">
-          <span className="footer-copyright">© {new Date().getFullYear()} QADAM FLEX <span className="footer-copyright-divider" aria-hidden="true">/</span> MADE FOR EVERY STEP</span>
+        <div className="footer-bottom-left">
+          <span className="footer-copyright">© {new Date().getFullYear()} QADAM FLEX</span>
+          <Link to="/privacy" className="footer-policy-link">Privacy</Link>
+        </div>
+        <div className="footer-bottom-right">
           <a
             href="https://asad-lee-portfolio.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
             className="footer-developer"
-            aria-label="Website designed and developed by Asad Lee — visit portfolio"
+            aria-label="Designed and developed by Asad Lee — visit developer portfolio"
           >
-            <span className="footer-developer-label">Designed &amp; developed by</span>
-            <strong>Asad Lee</strong>
-            <ArrowUpRight size={14} aria-hidden="true" />
+            <span>Developed by</span> <strong>Asad Lee</strong>
+            <ArrowUpRight size={13} aria-hidden="true" />
           </a>
+          <Link to="/terms" className="footer-policy-link">Terms</Link>
         </div>
-        <nav className="footer-legal" aria-label="Legal links">
-          <Link to="/privacy">Privacy policy</Link>
-          <span aria-hidden="true">·</span>
-          <Link to="/terms">Terms of service</Link>
-        </nav>
       </div>
     </footer>
   );
