@@ -298,22 +298,22 @@
   transform: translate(-4.1%, -2.7%) rotate(-38deg) scale(0.71);
 }
 /* Match the approved first two collection poses in their gallery and quick view. */
-.gallery-main > img[src="/products/hero-loafer.png"],
-.quick-image > img[src="/products/hero-loafer.png"] {
+.gallery-main > img[src="/products/hero-loafer.webp"],
+.quick-image > img[src="/products/hero-loafer.webp"] {
   object-fit: contain;
   mix-blend-mode: normal;
   filter: drop-shadow(0 18px 7px #0002);
   transform: translate(-2.7%, -1.1%) rotate(-22deg) scale(0.942);
 }
-.gallery-main > img[src="/products/hero-textured.png"],
-.quick-image > img[src="/products/hero-textured.png"] {
+.gallery-main > img[src="/products/hero-textured.webp"],
+.quick-image > img[src="/products/hero-textured.webp"] {
   object-fit: contain;
   mix-blend-mode: normal;
   filter: drop-shadow(0 18px 7px #0002);
   transform: translate(-4.1%, -1.5%) rotate(-38deg) scale(0.69);
 }
-.gallery-thumbnails img[src="/products/hero-loafer.png"],
-.gallery-thumbnails img[src="/products/hero-textured.png"] {
+.gallery-thumbnails img[src="/products/hero-loafer.webp"],
+.gallery-thumbnails img[src="/products/hero-textured.webp"] {
   object-fit: contain;
 }
 .showroom-object > svg {

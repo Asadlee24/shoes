@@ -1,6 +1,7 @@
 import { waitUntil } from "@vercel/functions";
 import { createApplication, passwordHash } from "./index.mjs";
 import { openPostgresStore } from "./postgres.mjs";
+import { serveSeo } from "./seo.mjs";
 
 export function bufferedResponse() {
   return {
@@ -68,7 +69,17 @@ export function createCloudHandler(options = {}) {
       await app.store.withRequest(
         !["GET", "HEAD"].includes(req.method),
         async () => {
-          if (path === "/api/health" && req.method === "GET") {
+          if (path === "/api/sitemap" || path.startsWith("/api/page/")) {
+            await serveSeo(
+              req,
+              buffered,
+              app.store,
+              path === "/api/sitemap"
+                ? "/sitemap.xml"
+                : path.slice("/api/page".length),
+              options.pageTemplate,
+            );
+          } else if (path === "/api/health" && req.method === "GET") {
             buffered.writeHead(200, { "Content-Type": "application/json" });
             buffered.end(
               JSON.stringify({

@@ -13,6 +13,7 @@ import {
 } from "./components";
 import Home from "./Home";
 import { AccountProvider } from "./customer-account";
+import { SiteMetadata } from "./seo";
 const Account = lazy(() => import("./Account"));
 import { Payments } from "./Business";
 import {
@@ -37,13 +38,6 @@ function ScrollPosition() {
 }
 function Storefront() {
   const { loading, error } = useStore();
-  const location = useLocation();
-  useEffect(() => {
-    const page = location.pathname.startsWith("/product/")
-      ? "The collection"
-      : location.pathname.split("/")[1]?.replace(/^./, (s) => s.toUpperCase());
-    document.title = `${page ? page + " — " : ""}QADAM FLEX`;
-  }, [location.pathname]);
   return (
     <>
       <a className="skip-link" href="#main-content">
@@ -118,6 +112,7 @@ export default function App() {
           <StoreProvider>
             <AccountProvider>
               <ScrollPosition />
+              <SiteMetadata />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route

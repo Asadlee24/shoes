@@ -80,7 +80,12 @@ before(async () => {
     "CREATE TABLE qf_limits(id TEXT PRIMARY KEY,count INTEGER NOT NULL,until_ms BIGINT NOT NULL)",
   );
   store = await openPostgresStore({ poolFactory });
-  handler = createCloudHandler({ store, adminHash: passwordHash(password) });
+  handler = createCloudHandler({
+    store,
+    adminHash: passwordHash(password),
+    pageTemplate:
+      '<!doctype html><html><head><title>Old homepage</title><link rel="canonical" href="https://www.qadamflex.bond/"></head><body><div id="root"></div></body></html>',
+  });
 });
 after(async () => {
   await database.close();
@@ -90,14 +95,33 @@ after(async () => {
 test("Postgres schema seeds owner catalog and returns no private settings", async () => {
   const result = await request("/api/catalog");
   assert.equal(result.status, 200);
-  assert.equal(result.data.products.length, 4);
+  assert.equal(result.data.products.length, 8);
   assert.ok(
-    result.data.products.every(
-      (product) =>
-        product.stock === 20 &&
-        Object.values(product.stockBySize).every((count) => count === 4),
-    ),
+    result.data.products
+      .filter((product) =>
+        [
+          "suede-penny",
+          "textured-bit",
+          "evening-bit",
+          "midnight-penny",
+          "brown-textured",
+        ].includes(product.id),
+      )
+      .every(
+        (product) =>
+          product.stock === 20 &&
+          Object.values(product.stockBySize).every((count) => count === 4),
+      ),
   );
+  for (const id of [
+    "metro-court-mocha",
+    "metro-court-onyx",
+    "regent-bit-black-2026",
+  ])
+    assert.equal(
+      result.data.products.find((product) => product.id === id).stock,
+      null,
+    );
   assert.equal("orderNotificationEmail" in result.data.settings, false);
   assert.equal(result.data.settings.shippingFee, 0);
   const health = await request("/api/index?route=health");
@@ -939,4 +963,65 @@ test("owner test cleanup commits once in Postgres and preserves later customer o
   assert.deepEqual(await reopened.settings(), settings);
   const again = await openPostgresStore({ poolFactory });
   assert.equal((await again.product(baseline.id)).stock, baseline.stock + 1);
+});
+
+test("cloud HTML and sitemap use live product data, isolate unpublished pages and support HEAD", async () => {
+  let product;
+  await store.withRequest(true, async () => {
+    const original = await store.product("textured-bit");
+    product = {
+      ...original,
+      id: "seo-live-fixture",
+      slug: "seo-live-fixture",
+      name: "SEO live fixture",
+      published: true,
+      price: 314500,
+      stock: null,
+      stockBySize: Object.fromEntries(
+        original.sizes.map((size) => [size, null]),
+      ),
+      sizeSystem: "Fixture system",
+      footLengthsCm: { 7: 25.5 },
+    };
+    await store.saveProduct(product);
+  });
+  const page = await request("/api/index?route=page/product/seo-live-fixture");
+  assert.equal(page.status, 200);
+  assert.match(page.headers["Content-Type"], /text\/html/);
+  assert.match(
+    page.raw,
+    /<title>SEO live fixture — Qadam Flex Pakistan<\/title>/,
+  );
+  assert.match(
+    page.raw,
+    /rel="canonical" href="https:\/\/www.qadamflex.bond\/product\/seo-live-fixture"/,
+  );
+  assert.match(page.raw, /"price":"3145.00"/);
+  assert.equal(page.raw.includes("orderNotificationEmail"), false);
+  const head = await request(
+    "/api/index?route=page/product/seo-live-fixture",
+    "HEAD",
+  );
+  assert.equal(head.status, 200);
+  assert.equal(head.raw, undefined);
+  const sitemap = await request("/api/index?route=sitemap");
+  assert.match(sitemap.raw, /\/product\/seo-live-fixture/);
+  await store.withRequest(true, async () =>
+    store.saveProduct({ ...product, published: false }),
+  );
+  const missing = await request(
+    "/api/index?route=page/product/seo-live-fixture",
+  );
+  assert.equal(missing.status, 404);
+  assert.match(missing.headers["X-Robots-Tag"], /noindex/);
+  assert.equal(missing.raw.includes("SEO live fixture"), false);
+  assert.equal(
+    (await request("/api/index?route=sitemap")).raw.includes(
+      "/product/seo-live-fixture",
+    ),
+    false,
+  );
+  const adminPage = await request("/api/index?route=page/admin/demo");
+  assert.equal(adminPage.status, 200);
+  assert.match(adminPage.headers["X-Robots-Tag"], /noindex/);
 });

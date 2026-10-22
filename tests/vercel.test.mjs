@@ -24,14 +24,14 @@ test("Vercel catalog exposes approved published products without private setting
   const res = response();
   catalog({ method: "GET" }, res);
   assert.equal(res.statusCode, 200);
-  assert.equal(res.data.products.length, 4);
+  assert.equal(res.data.products.length, 8);
   assert.equal(
     res.data.products.find((p) => p.id === "textured-bit").price,
     220000,
   );
   assert.equal(
     res.data.products.some((p) => p.id === "brown-textured"),
-    false,
+    true,
   );
   assert.equal("discounts" in res.data.settings, false);
   assert.equal("orderNotificationEmail" in res.data.settings, false);

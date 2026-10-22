@@ -2,6 +2,7 @@ import { archiveOwnerTestRequests } from "./test-order-cleanup.mjs";
 import { refreshCatalogCovers } from "./catalog-photo-refresh.mjs";
 import { refreshCatalogGalleries } from "./catalog-gallery-refresh.mjs";
 import { commerceApi } from "./commerce.mjs";
+import { serveSeo } from "./seo.mjs";
 import http from "node:http";
 import { paymentAdminApi } from "./payments.mjs";
 import { customerApi, paymentDetails } from "./customer.mjs";
@@ -342,6 +343,7 @@ export async function createApplication(options = {}) {
           "announcement",
           "deliveryText",
           "returnsText",
+          "deliveryEstimate",
         ])
           if (typeof b[key] === "string") s[key] = b[key].trim().slice(0, 1500);
         if (s.website && !/^https:\/\/[^\s/]+(?:\/[^\s]*)?$/.test(s.website))
@@ -392,6 +394,19 @@ export async function createApplication(options = {}) {
             "Enter a valid shipping amount or leave it unset.",
           );
         s.shippingFee = b.shippingFee;
+        if (b.exchangeWindowDays !== undefined) {
+          if (
+            b.exchangeWindowDays !== null &&
+            (!Number.isInteger(b.exchangeWindowDays) ||
+              b.exchangeWindowDays < 1 ||
+              b.exchangeWindowDays > 365)
+          )
+            throw new HttpError(
+              400,
+              "Enter an exchange request window from 1 to 365 days, or leave it blank.",
+            );
+          s.exchangeWindowDays = b.exchangeWindowDays;
+        }
         s.codEnabled = Boolean(b.codEnabled);
         if (Array.isArray(b.discounts)) {
           s.discounts = b.discounts.slice(0, 30).map((d) => {
@@ -820,6 +835,17 @@ export async function createApplication(options = {}) {
       return;
     }
     const dist = join(root, "dist");
+    if (path === "/sitemap.xml" || !extname(path)) {
+      try {
+        await serveSeo(req, res, store, path, options.pageTemplate);
+      } catch {
+        res.writeHead(503);
+        res.end(
+          "The store could not open this page. Please try again shortly.",
+        );
+      }
+      return;
+    }
     let filename = resolve(dist, `.${path}`);
     if (!filename.startsWith(`${dist}/`) && filename !== dist) {
       res.writeHead(403);

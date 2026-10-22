@@ -1,0 +1,149 @@
+.availability-note,
+.product-readiness {
+  border: 1px solid var(--line);
+  padding: 14px 16px;
+  line-height: 1.55;
+  font-size: 13px;
+  margin: 16px 0;
+  color: var(--ink);
+}
+.product-readiness strong {
+  display: block;
+  margin-bottom: 8px;
+}
+.product-readiness ul {
+  padding-left: 20px;
+  margin: 0 0 10px;
+}
+.product-readiness p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.admin-product-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 25px;
+}
+.admin-product-filters button {
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+.admin-product-filters button.active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.admin-product-meta .admin-setup-note {
+  font-size: 12px;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: normal;
+  margin: 10px 0;
+  color: var(--muted);
+}
+.stock-quick-fill {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 15px;
+  margin: 0 0 20px;
+}
+.stock-quick-fill label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.stock-quick-fill button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.admin-size-guide {
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 8px 0;
+}
+.admin-size-guide summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 28px;
+}
+.admin-size-guide[open] {
+  display: grid;
+  gap: 15px;
+}
+.admin-size-guide label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.size-chart {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 14px;
+}
+.size-chart caption {
+  text-align: left;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.size-chart th,
+.size-chart td {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.foot-measuring-steps {
+  padding-left: 22px;
+  line-height: 1.7;
+  font-size: 14px;
+}
+.foot-measuring-steps li + li {
+  margin-top: 8px;
+}
+@media (max-width: 600px) {
+  .admin-sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 6px;
+  }
+  .admin-sidebar nav > button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px;
+    font-size: 12px;
+    text-align: left;
+    white-space: normal;
+  }
+  .admin-sidebar nav svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+  .admin-product-meta {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .stock-quick-fill {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .stock-quick-fill button {
+    justify-self: start;
+  }
+  .availability-note {
+    font-size: 12px;
+    padding: 12px;
+  }
+}

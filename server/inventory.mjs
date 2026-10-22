@@ -2,8 +2,18 @@
 // The revision prevents redeploys from refilling inventory after sales or edits.
 export const ownerStockRevision = "owner-stock-20-per-style-2026-10-21";
 export function ownerStock(product) {
-  // Stock for newly added sneakers is not owner-confirmed.
-  if (["metro-court-mocha", "metro-court-onyx"].includes(product.id)) return product;
+  // That instruction covered these existing styles. New catalogue entries and
+  // later owner uploads must keep their actual, independently confirmed stock.
+  if (
+    ![
+      "suede-penny",
+      "textured-bit",
+      "evening-bit",
+      "midnight-penny",
+      "brown-textured",
+    ].includes(product.id)
+  )
+    return product;
   if (!Array.isArray(product.sizes) || !product.sizes.length) return product;
   const sizes = [...new Set(product.sizes.map(String))];
   return {

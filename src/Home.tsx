@@ -14,11 +14,12 @@ import { useTheme } from "./theme";
 import { ProductCard } from "./components";
 import Showroom from "./Showroom";
 import { money } from "./api";
+import { catalogueStyles } from "../shared/catalogue.mjs";
 gsap.registerPlugin(ScrollTrigger);
 const focusPairs = [
   {
     id: "textured-bit",
-    image: "/products/hero-textured.png",
+    image: "/products/hero-textured.webp",
     slug: "black-textured-loafer",
     name: "The Textured Bit",
     color: "Black",
@@ -27,7 +28,7 @@ const focusPairs = [
   },
   {
     id: "suede-penny",
-    image: "/products/hero-loafer.png",
+    image: "/products/hero-loafer.webp",
     slug: "brown-suede-loafer",
     name: "The Suede Penny",
     color: "Taupe brown",
@@ -218,7 +219,8 @@ export default function Home() {
             <h2>THE COLLECTION.</h2>
           </div>
           <Link className="mono-text-link" to="/shop">
-            All {products.length} styles <ArrowUpRight size={18} />
+            All {catalogueStyles(products).length} styles{" "}
+            <ArrowUpRight size={18} />
           </Link>
         </div>
         <div className="product-grid">
@@ -251,7 +253,7 @@ export default function Home() {
           <div className="closeup-light" />
           <img
             className="closeup-shoe"
-            src="/products/hero-textured.png"
+            src="/products/hero-textured.webp"
             alt="A closer look at the textured black loafer and dark metal detailing"
             loading="lazy"
           />
@@ -278,7 +280,7 @@ export default function Home() {
           >
             <div className="occasion-photo">
               <img
-                src="/products/dark-suede.jpg"
+                src="/products/midnight-penny-gallery-1-studio-v3.webp"
                 alt="Dark penny loafers for everyday outfits"
                 loading="lazy"
               />
@@ -296,7 +298,7 @@ export default function Home() {
           >
             <div className="occasion-photo">
               <img
-                src="/products/black-formal.jpg"
+                src="/products/evening-bit-gallery-1-studio-v3.webp"
                 alt="Polished black formal loafers"
                 loading="lazy"
               />

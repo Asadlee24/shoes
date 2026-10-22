@@ -3,13 +3,15 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": { "api/index.js": { "includeFiles": "dist/index.html" } },
   "routes": [
+    { "src": "/sitemap.xml", "dest": "/api/index?route=sitemap" },
     { "handle": "filesystem" },
     {
       "src": "/products/(upload-[a-f0-9-]+\\.(?:jpg|png|webp))",
       "dest": "/api/index?route=media/$1"
     },
     { "src": "/api/(.*)", "dest": "/api/index?route=$1" },
-    { "src": "/.*", "dest": "/index.html" }
+    { "src": "/(.*)", "dest": "/api/index?route=page/$1" }
   ]
 }

@@ -23,7 +23,14 @@ import {
 import { useStore } from "./store";
 import { BusinessLinks } from "./Business";
 import { useAccount } from "./customer-account";
-import { PaymentDestination } from "./Payment";
+import {
+  availablePaymentMethods,
+  catalogueStyles,
+  catalogueColors,
+  availabilityText,
+  displayColor,
+  optimizedImage,
+} from "../shared/catalogue.mjs";
 import type { Payment } from "./types";
 import { api, money, requestId } from "./api";
 import {
@@ -51,27 +58,7 @@ export function Shop() {
     else next.delete(key);
     setParams(next, { replace: true });
   };
-  const shown = products
-    .filter(
-      (p) =>
-        !p.variantOf &&
-        (!q ||
-          `${p.name} ${p.subtitle} ${p.description} ${p.color} ${products.filter(v => v.variantOf === p.id).map(v => v.color).join(" ")}`
-            .toLowerCase()
-            .includes(q.toLowerCase())) &&
-        (!category || p.category === category) &&
-        (!size || p.sizes.includes(size)) &&
-        (!color || p.color === color || products.some(v => v.variantOf === p.id && v.color === color)),
-    )
-    .sort((a, b) =>
-      sort === "name"
-        ? a.name.localeCompare(b.name)
-        : sort === "low"
-          ? (a.price ?? Infinity) - (b.price ?? Infinity)
-          : sort === "high"
-            ? (b.price ?? -1) - (a.price ?? -1)
-            : 0,
-    );
+  const shown = catalogueStyles(products, { q, category, size, color, sort });
   const filterContent = (
     <>
       <div className="filter-group">
@@ -91,11 +78,15 @@ export function Shop() {
         <label htmlFor="color">Color</label>
         <select
           id="color"
-          value={color}
+          value={
+            catalogueColors(products).find(
+              (value) => value.toLowerCase() === color.toLowerCase(),
+            ) || color
+          }
           onChange={(e) => set("color", e.target.value)}
         >
           <option value="">All colors</option>
-          {[...new Set(products.map((p) => p.color))].map((c) => (
+          {catalogueColors(products).map((c) => (
             <option key={c}>{c}</option>
           ))}
         </select>
@@ -245,6 +236,16 @@ export function ProductPage() {
   }, [slug]);
   if (!p) return <NotFound />;
   const saved = wishlist.includes(p.id);
+  const familyId = p.variantOf || p.id;
+  const variants = products.filter(
+    (product) => product.id === familyId || product.variantOf === familyId,
+  );
+  const availability = availabilityText(p, size);
+  const enquiryOnly =
+    p.price === null ||
+    (size
+      ? p.stockBySize?.[size] == null
+      : p.sizes.every((value) => p.stockBySize?.[value] == null));
   return (
     <main className="product-page section-pad">
       <nav className="breadcrumbs" aria-label="Breadcrumb">
@@ -264,7 +265,7 @@ export function ProductPage() {
             aria-label={`Enlarge ${p.name} photograph`}
           >
             <img
-              src={p.images[selected]}
+              src={optimizedImage(p.images[selected])}
               alt={`${p.subtitle}, view ${selected + 1}`}
               style={{ objectPosition: p.imagePosition }}
             />
@@ -282,7 +283,7 @@ export function ProductPage() {
                 aria-pressed={selected === i}
               >
                 <img
-                  src={img}
+                  src={optimizedImage(img)}
                   alt=""
                   style={{ objectPosition: p.imagePosition }}
                 />
@@ -295,24 +296,35 @@ export function ProductPage() {
           <h1>{p.name}</h1>
           <div className="product-color">
             <span className="color-dot" style={{ background: p.swatch }} />
-            {p.color}
+            {displayColor(p.color)}
           </div>
-          {(p.id === "textured-bit" || p.variantOf === "textured-bit") && (
+          {variants.length > 1 && (
             <div className="qf-color-variants" aria-label="Available colors">
               <span className="qf-color-caption">CHOOSE YOUR COLOR</span>
               <div className="qf-color-options">
-                {products.filter(v => v.id === "textured-bit" || v.variantOf === "textured-bit").map(v => (
-                  <Link key={v.id} to={`/product/${v.slug}`}
+                {variants.map((v) => (
+                  <Link
+                    key={v.id}
+                    to={`/product/${v.slug}`}
                     className={`qf-color-choice ${v.id === p.id ? "active" : ""}`}
-                    aria-current={v.id === p.id ? "page" : undefined}>
-                    <span className="qf-color-swatch" style={{background:v.swatch}} />
-                    {v.id === "textured-bit" ? "Black" : "Coffee Brown"}
+                    aria-current={v.id === p.id ? "page" : undefined}
+                  >
+                    <span
+                      className="qf-color-swatch"
+                      style={{ background: v.swatch }}
+                    />
+                    {displayColor(v.color)}
                   </Link>
                 ))}
               </div>
             </div>
           )}
           <p className="price-large">{money(p.price)}</p>
+          {availability && (
+            <p className="availability-note" role="status">
+              {availability}
+            </p>
+          )}
           <p className="product-story">{p.description}</p>
           <SizeSelector
             product={p}
@@ -348,7 +360,11 @@ export function ProductPage() {
             }
             disabled={p.stock === 0}
           >
-            {p.stock === 0 ? "Currently unavailable" : "Add to bag"}
+            {p.stock === 0
+              ? "Currently unavailable"
+              : enquiryOnly
+                ? "Add to enquiry"
+                : "Add to bag"}
             <ShoppingBag size={18} />
           </button>
           <p className="purchase-note">
@@ -378,7 +394,19 @@ export function ProductPage() {
               </ul>
             </Accordion>
             <Accordion title="Delivery & exchanges">
+              {settings?.deliveryEstimate && (
+                <p>
+                  <strong>Estimated delivery:</strong>{" "}
+                  {settings.deliveryEstimate}
+                </p>
+              )}
               <p>{settings?.deliveryText}</p>
+              {settings?.exchangeWindowDays != null && (
+                <p>
+                  Exchange requests: within {settings.exchangeWindowDays} days
+                  after delivery, subject to the store’s terms below.
+                </p>
+              )}
               <p>{settings?.returnsText}</p>
               <Link className="text-link" to="/shipping">
                 Read more <ArrowUpRight size={12} />
@@ -386,8 +414,13 @@ export function ProductPage() {
             </Accordion>
             <Accordion title="Finding your fit">
               <p>
-                Select the size you usually wear. We will confirm the sizing
-                system and availability before your order is finalized.
+                {p.sizeSystem
+                  ? `Sizes use the ${p.sizeSystem} system. `
+                  : "Contact us to confirm the sizing system for this pair. "}
+                Measure your foot from heel to longest toe in centimetres and
+                check the size guide above.{" "}
+                {p.fitNotes ||
+                  "Share your measurement if you need help choosing."}
               </p>
             </Accordion>
           </div>
@@ -427,7 +460,11 @@ export function ProductPage() {
             <X />
           </button>
         </div>
-        <img className="zoom-image" src={p.images[selected]} alt={p.subtitle} />
+        <img
+          className="zoom-image"
+          src={optimizedImage(p.images[selected])}
+          alt={p.subtitle}
+        />
       </Modal>
     </main>
   );
@@ -566,9 +603,17 @@ export function Checkout() {
     [discountError, setDiscountError] = useState("");
   const requestRef = useRef({ payload: "", key: requestId() }),
     navigate = useNavigate();
+  const paymentMethods = availablePaymentMethods(settings);
+  const paymentSignature = paymentMethods.join(",");
+  useEffect(() => {
+    const available = paymentSignature.split(",") as Payment["method"][];
+    if (paymentSignature && !available.includes(paymentMethod))
+      setPaymentMethod(available[0]);
+  }, [paymentSignature, paymentMethod]);
   const canOrder = Boolean(
     settings &&
-    settings.shippingFee !== null &&
+    settings.shippingFee != null &&
+    paymentMethods.length > 0 &&
     cart.length &&
     cart.every((i) => {
       const p = products.find((p) => p.id === i.id);
@@ -579,14 +624,14 @@ export function Checkout() {
     e.preventDefault();
     setBusy(true);
     setError("");
-    if (!account.user) {
+    if (canOrder && !account.user) {
       setBusy(false);
       navigate("/account?next=/checkout");
       return;
     }
     const f = new FormData(e.currentTarget);
     const payload = JSON.stringify({
-      paymentMethod,
+      paymentMethod: canOrder ? paymentMethod : "inquiry",
       customer: Object.fromEntries(f),
       items: cart,
       discountCode: applied,
@@ -607,9 +652,14 @@ export function Checkout() {
       );
       sessionStorage.setItem("qf-last-confirmation", JSON.stringify(result));
       clear();
-      navigate(`/account?order=${encodeURIComponent(result.reference)}`, {
-        replace: true,
-      });
+      navigate(
+        account.user
+          ? `/account?order=${encodeURIComponent(result.reference)}`
+          : "/confirmation",
+        {
+          replace: true,
+        },
+      );
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -677,7 +727,9 @@ export function Checkout() {
                 <Link to="/account?mode=register&next=/checkout">
                   create an account
                 </Link>{" "}
-                to track your order and submit payment proof.
+                {canOrder
+                  ? "to track your order and submit payment proof."
+                  : "to keep this enquiry in your account, or send it below without an account."}
               </p>
             )}
           </div>
@@ -742,54 +794,60 @@ export function Checkout() {
                 />
               </label>
             </fieldset>
-            <fieldset className="checkout-payment-options" disabled={busy}>
-              <legend>Payment method</legend>
-              {(
-                [
-                  ["bank", "Bank transfer", "Pay to the owner’s bank account"],
+            {canOrder && (
+              <fieldset className="checkout-payment-options" disabled={busy}>
+                <legend>Payment method</legend>
+                {(
                   [
-                    "easypaisa",
-                    "Easypaisa",
-                    "Transfer from your Easypaisa app",
-                  ],
-                  ...(settings?.codEnabled
-                    ? [
-                        [
-                          "cod",
-                          "Cash on delivery",
-                          "Pay when your order arrives",
-                        ],
-                      ]
-                    : []),
-                ] as const
-              ).map(([method, label, description]) => (
-                <label
-                  key={method}
-                  className={`payment-option ${paymentMethod === method ? "selected" : ""}`}
-                >
-                  <input
-                    type="radio"
-                    name="payment-choice"
-                    checked={paymentMethod === method}
-                    onChange={() =>
-                      setPaymentMethod(method as Payment["method"])
-                    }
-                  />
-                  <span>
-                    <strong>{label}</strong>
-                    <small>{description}</small>
-                  </span>
-                </label>
-              ))}
-              {paymentMethod !== "cod" && (
-                <PaymentDestination
-                  payment={{
-                    method: paymentMethod,
-                    status: canOrder ? "awaiting_payment" : "not_required",
-                  }}
-                />
-              )}
-            </fieldset>
+                    [
+                      "bank",
+                      "Bank transfer",
+                      "Pay to the owner’s bank account",
+                    ],
+                    [
+                      "easypaisa",
+                      "Easypaisa",
+                      "Transfer from your Easypaisa app",
+                    ],
+                    ...(settings?.codEnabled
+                      ? [
+                          [
+                            "cod",
+                            "Cash on delivery",
+                            "Pay when your order arrives",
+                          ],
+                        ]
+                      : []),
+                  ] as const
+                )
+                  .filter(([method]) =>
+                    paymentMethods.some((available) => available === method),
+                  )
+                  .map(([method, label, description]) => (
+                    <label
+                      key={method}
+                      className={`payment-option ${paymentMethod === method ? "selected" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment-choice"
+                        checked={paymentMethod === method}
+                        onChange={() =>
+                          setPaymentMethod(method as Payment["method"])
+                        }
+                      />
+                      <span>
+                        <strong>{label}</strong>
+                        <small>{description}</small>
+                      </span>
+                    </label>
+                  ))}
+                <p className="muted small">
+                  Payment details appear only after your order reference and
+                  total are confirmed.
+                </p>
+              </fieldset>
+            )}
             <div className="checkout-reassurance">
               <CheckCircle2 size={21} />
               <div>
@@ -798,14 +856,14 @@ export function Checkout() {
                     ? paymentMethod === "cod"
                       ? "Cash on delivery"
                       : "Payment proof, kept private"
-                    : "Keep your payment receipt"}
+                    : "No payment required"}
                 </strong>
                 <p>
                   {canOrder
                     ? paymentMethod === "cod"
                       ? "Pay the confirmed total when your order arrives."
                       : "Place your order, then upload your transfer receipt on the payment step. The owner will review it."
-                    : "Save your selection to get an order reference. Include it when sharing your payment receipt with support."}
+                    : "Send your enquiry so the store can confirm availability, your size and delivery. Do not transfer money before the store confirms your order and total."}
                 </p>
               </div>
             </div>
@@ -813,9 +871,9 @@ export function Checkout() {
               {error}
             </p>
             <button
-              type={account.user ? "submit" : "button"}
+              type={account.user || !canOrder ? "submit" : "button"}
               onClick={
-                !account.user
+                !account.user && canOrder
                   ? () => navigate("/account?next=/checkout")
                   : undefined
               }
@@ -829,7 +887,7 @@ export function Checkout() {
                 </>
               ) : (
                 <>
-                  {!account.user
+                  {!account.user && canOrder
                     ? "Sign in to continue"
                     : canOrder
                       ? paymentMethod === "cod"
@@ -914,7 +972,8 @@ export function Confirmation() {
       <p className="muted">
         Keep your reference for any follow-up.
         <br />
-        {result?.kind !== "order" && "No payment has been taken."}
+        {result?.kind !== "order" &&
+          "No payment is required. Wait for the store to confirm availability and your final order total before paying."}
       </p>
       <div className="confirmation-actions">
         <Link className="button" to="/shop">
@@ -1070,17 +1129,31 @@ export function InfoPage({ page }: { page: string }) {
       sections: [
         [
           "Delivery",
-          settings?.deliveryText ||
-            "Tell us your city when you enquire. We will confirm delivery details before you order.",
+          [
+            settings?.deliveryEstimate
+              ? `Estimated delivery: ${settings.deliveryEstimate}.`
+              : "",
+            settings?.deliveryText ||
+              "Tell us your city when you enquire. We will confirm delivery details before you order.",
+          ]
+            .filter(Boolean)
+            .join(" "),
         ],
         [
           "Exchanges & returns",
-          settings?.returnsText ||
-            "Please enquire about exchange and return terms before placing an order.",
+          [
+            settings?.exchangeWindowDays != null
+              ? `Exchange requests: within ${settings.exchangeWindowDays} days after delivery, subject to the terms below.`
+              : "",
+            settings?.returnsText ||
+              "Please enquire about exchange and return terms before placing an order.",
+          ]
+            .filter(Boolean)
+            .join(" "),
         ],
         [
           "Sizes & fit",
-          "Available size labels are 7, 8, 9, 10 and 11. The sizing system and product availability are confirmed when you enquire.",
+          "Check each product’s size guide for its confirmed sizing system and measurements. Measure from your heel to your longest toe in centimetres and contact us if you need help choosing. Measurements and availability can vary by style.",
         ],
         [
           "Order enquiries",

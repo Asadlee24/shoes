@@ -20,6 +20,9 @@ export type Product = {
   imagePosition?: string;
   description: string;
   details: string[];
+  sizeSystem?: string;
+  footLengthsCm?: Record<string, number | null>;
+  fitNotes?: string;
 };
 export type Discount = {
   code: string;
@@ -50,6 +53,8 @@ export type Settings = {
   codEnabled: boolean;
   deliveryText: string;
   returnsText: string;
+  deliveryEstimate?: string;
+  exchangeWindowDays?: number | null;
   discounts?: Discount[];
 };
 export type CartItem = { id: string; size: string; quantity: number };

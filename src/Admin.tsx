@@ -23,6 +23,12 @@ import { previewDashboard } from "./admin-preview";
 import { useStore } from "./store";
 import { Modal } from "./components";
 import type { Discount, Product, Settings, StoreRequest } from "./types";
+import {
+  missingStockSizes,
+  productSetupIssues,
+  optimizedImage,
+} from "../shared/catalogue.mjs";
+import { prepareProductPhoto } from "./upload-photo";
 
 type Dashboard = {
   products: Product[];
@@ -58,7 +64,9 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
     [request, setRequest] = useState<StoreRequest | null>(null),
     [busy, setBusy] = useState(false),
     [settings, setSettings] = useState<Settings | null>(null),
-    [requestFilter, setRequestFilter] = useState("all");
+    [requestFilter, setRequestFilter] = useState("all"),
+    [productFilter, setProductFilter] = useState("all"),
+    [stockForAll, setStockForAll] = useState("");
   const headers = { "X-CSRF-Token": csrf };
   const refresh = useCallback(async () => {
     try {
@@ -130,7 +138,11 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
       setCreating(false);
       await refresh();
       await reload();
-      setNotice("Product saved.");
+      setNotice(
+        missingStockSizes(edit).length
+          ? "Product saved for enquiries. Confirm size stock to enable orders for those sizes."
+          : "Product saved.",
+      );
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -241,28 +253,29 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
     setBusy(true);
     setError("");
     try {
-      const urls: string[] = [];
       for (const file of Array.from(files).slice(0, 12 - edit.images.length)) {
-        if (file.size > 3000000)
-          throw Error("Choose images smaller than 3 MB.");
+        const prepared = await prepareProductPhoto(file);
         const b64 = await new Promise<string>((resolve, reject) => {
           const r = new FileReader();
           r.onload = () => resolve(String(r.result).split(",")[1]);
           r.onerror = () => reject(Error("Could not read image."));
-          r.readAsDataURL(file);
+          r.readAsDataURL(prepared);
         });
         const r = await api<{ url: string }>("/api/admin/upload", {
           method: "POST",
           headers,
-          body: JSON.stringify({ type: file.type, data: b64 }),
+          body: JSON.stringify({ type: prepared.type, data: b64 }),
         });
-        urls.push(r.url);
+        setEdit((current) =>
+          current
+            ? {
+                ...current,
+                images: [...current.images, r.url],
+                image: current.image || r.url,
+              }
+            : current,
+        );
       }
-      setEdit({
-        ...edit,
-        images: [...edit.images, ...urls],
-        image: edit.image || urls[0],
-      });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -271,6 +284,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
   }
   function createProduct() {
     setCreating(true);
+    setStockForAll("");
     setEdit({
       id: "",
       slug: "",
@@ -289,6 +303,9 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
       description: "",
       details: [],
       imagePosition: "50% 70%",
+      sizeSystem: "",
+      footLengthsCm: {},
+      fitNotes: "",
     });
   }
   useEffect(() => {
@@ -352,7 +369,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
     );
   const incomplete =
     data?.products.filter(
-      (p) => p.published && (p.price === null || p.stock === null),
+      (p) => p.published && productSetupIssues(p).length > 0,
     ).length || 0;
   return (
     <div className="admin-app">
@@ -499,14 +516,17 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                       <div>
                         <h3>A few details to finish.</h3>
                         <p>
-                          {incomplete} published products need prices or stock.
-                          Confirm prices, size stock and delivery before
-                          accepting orders.
+                          {incomplete} published products need prices or size
+                          stock. These selections remain enquiries until their
+                          availability is confirmed.
                         </p>
                       </div>
                       <button
                         className="text-link"
-                        onClick={() => setTab("settings")}
+                        onClick={() => {
+                          setTab("products");
+                          setProductFilter("needs-setup");
+                        }}
                       >
                         Complete setup <ArrowUpRight size={15} />
                       </button>
@@ -540,47 +560,84 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                       Add a product <Plus size={16} />
                     </button>
                   </div>
+                  <div
+                    className="admin-product-filters"
+                    aria-label="Filter managed products"
+                  >
+                    <button
+                      className={productFilter === "all" ? "active" : ""}
+                      onClick={() => setProductFilter("all")}
+                    >
+                      All products ({data.products.length})
+                    </button>
+                    <button
+                      className={
+                        productFilter === "needs-setup" ? "active" : ""
+                      }
+                      onClick={() => setProductFilter("needs-setup")}
+                    >
+                      Needs setup (
+                      {
+                        data.products.filter(
+                          (product) => productSetupIssues(product).length > 0,
+                        ).length
+                      }
+                      )
+                    </button>
+                  </div>
                   <div className="admin-products">
-                    {data.products.map((p) => (
-                      <article key={p.id}>
-                        <div className="admin-product-photo">
-                          {p.image ? (
-                            <img
-                              src={p.image}
-                              alt={p.subtitle}
-                              style={{ objectPosition: p.imagePosition }}
-                            />
-                          ) : (
-                            <ImagePlus size={28} />
-                          )}
-                          <span
-                            className={`status-pill ${p.published ? "published" : ""}`}
-                          >
-                            {p.published ? "Published" : "Draft"}
-                          </span>
-                        </div>
-                        <div className="admin-product-meta">
-                          <p>{p.category}</p>
-                          <h3>{p.name}</h3>
-                          <span>
-                            {money(p.price)} ·{" "}
-                            {p.stock === null
-                              ? "Stock unconfirmed"
-                              : `${p.stock} in stock`}
-                          </span>
-                          <button
-                            className="text-link"
-                            onClick={() => {
-                              setCreating(false);
-                              setEdit(structuredClone(p));
-                              setError("");
-                            }}
-                          >
-                            Edit product <ArrowUpRight size={15} />
-                          </button>
-                        </div>
-                      </article>
-                    ))}
+                    {data.products
+                      .filter(
+                        (product) =>
+                          productFilter === "all" ||
+                          productSetupIssues(product).length > 0,
+                      )
+                      .map((p) => (
+                        <article key={p.id}>
+                          <div className="admin-product-photo">
+                            {p.image ? (
+                              <img
+                                src={optimizedImage(p.image)}
+                                alt={p.subtitle}
+                                style={{ objectPosition: p.imagePosition }}
+                              />
+                            ) : (
+                              <ImagePlus size={28} />
+                            )}
+                            <span
+                              className={`status-pill ${p.published ? "published" : ""}`}
+                            >
+                              {p.published ? "Published" : "Draft"}
+                            </span>
+                          </div>
+                          <div className="admin-product-meta">
+                            <p>{p.category}</p>
+                            <h3>{p.name}</h3>
+                            <span>
+                              {money(p.price)} ·{" "}
+                              {p.stock === null
+                                ? "Stock unconfirmed"
+                                : `${p.stock} in stock`}
+                            </span>
+                            {productSetupIssues(p).length > 0 && (
+                              <p className="admin-setup-note">
+                                {productSetupIssues(p).join(" · ")}
+                              </p>
+                            )}
+                            <button
+                              className="text-link"
+                              onClick={() => {
+                                setCreating(false);
+                                setStockForAll("");
+                                setEdit(structuredClone(p));
+                                setError("");
+                              }}
+                            >
+                              Edit product <ArrowUpRight size={15} />
+                            </button>
+                          </div>
+                        </article>
+                      ))}
                   </div>
                 </>
               )}
@@ -911,6 +968,43 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                         />
                       </label>
                       <label>
+                        Estimated delivery time
+                        <input
+                          maxLength={120}
+                          placeholder="Enter the actual estimate and cities covered"
+                          value={settings.deliveryEstimate || ""}
+                          onChange={(event) =>
+                            setSettings({
+                              ...settings,
+                              deliveryEstimate: event.target.value,
+                            })
+                          }
+                        />
+                        <span className="muted small">
+                          Leave blank until your courier estimate is confirmed.
+                          This appears on product and delivery pages.
+                        </span>
+                      </label>
+                      <label>
+                        Exchange request window (days after delivery)
+                        <input
+                          type="number"
+                          min="1"
+                          max="365"
+                          placeholder="Not confirmed"
+                          value={settings.exchangeWindowDays ?? ""}
+                          onChange={(event) =>
+                            setSettings({
+                              ...settings,
+                              exchangeWindowDays:
+                                event.target.value === ""
+                                  ? null
+                                  : Number(event.target.value),
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
                         Returns & exchange terms
                         <textarea
                           rows={3}
@@ -923,6 +1017,11 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                           }
                         />
                       </label>
+                      <p className="muted small">
+                        State the eligible condition, return/exchange process
+                        and who covers courier charges. Do not publish a
+                        delivery estimate or exchange window until confirmed.
+                      </p>
                     </section>
                     <section>
                       <div className="admin-section-title">
@@ -1105,6 +1204,20 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 {error}
               </p>
             )}
+            {productSetupIssues(edit).length > 0 && (
+              <div className="product-readiness" role="status">
+                <strong>Finish setup for direct orders</strong>
+                <ul>
+                  {productSetupIssues(edit).map((issue) => (
+                    <li key={issue}>{issue}</li>
+                  ))}
+                </ul>
+                <p>
+                  You can save a draft or publish for enquiries. Enter actual
+                  quantities; leave unknown sizes blank.
+                </p>
+              </div>
+            )}
             <label>
               Product name
               <input
@@ -1219,6 +1332,37 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 </button>
               ))}
             </div>
+            <div className="stock-quick-fill">
+              <label>
+                Same stock for each selected size
+                <input
+                  type="number"
+                  min="0"
+                  max="100000"
+                  step="1"
+                  value={stockForAll}
+                  placeholder="Enter a confirmed quantity"
+                  onChange={(event) => setStockForAll(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="text-link"
+                disabled={
+                  !/^\d+$/.test(stockForAll) || Number(stockForAll) > 100000
+                }
+                onClick={() =>
+                  setEdit({
+                    ...edit,
+                    stockBySize: Object.fromEntries(
+                      edit.sizes.map((size) => [size, Number(stockForAll)]),
+                    ),
+                  })
+                }
+              >
+                Apply to selected sizes
+              </button>
+            </div>
             <div className="size-stock-grid">
               {edit.sizes.map((s) => (
                 <label key={s}>
@@ -1244,6 +1388,63 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 </label>
               ))}
             </div>
+            <details className="admin-size-guide">
+              <summary>Size guide &amp; measurements</summary>
+              <p className="muted small">
+                Use the sizing system and recommended foot lengths confirmed by
+                your supplier. Leave measurements blank if they are unknown.
+              </p>
+              <label>
+                Sizing system
+                <input
+                  maxLength={40}
+                  placeholder="For example, UK — only if confirmed"
+                  value={edit.sizeSystem || ""}
+                  onChange={(event) =>
+                    setEdit({ ...edit, sizeSystem: event.target.value })
+                  }
+                />
+              </label>
+              <div className="size-stock-grid">
+                {edit.sizes.map((size) => (
+                  <label key={size}>
+                    Size {size} foot length (cm)
+                    <input
+                      type="number"
+                      min="10"
+                      max="45"
+                      step="0.1"
+                      placeholder="Unconfirmed"
+                      value={edit.footLengthsCm?.[size] ?? ""}
+                      onChange={(event) =>
+                        setEdit({
+                          ...edit,
+                          footLengthsCm: {
+                            ...edit.footLengthsCm,
+                            [size]:
+                              event.target.value === ""
+                                ? null
+                                : Number(event.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+              <label>
+                Fit notes
+                <textarea
+                  rows={2}
+                  maxLength={300}
+                  placeholder="Supplier-confirmed fit guidance"
+                  value={edit.fitNotes || ""}
+                  onChange={(event) =>
+                    setEdit({ ...edit, fitNotes: event.target.value })
+                  }
+                />
+              </label>
+            </details>
             <label>
               Description
               <textarea
@@ -1305,7 +1506,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
             </div>
             <label className="upload-label">
               <ImagePlus size={18} />
-              Add photos (JPG, PNG, WebP; up to 3 MB)
+              Add photos (JPG, PNG, WebP; automatically resized)
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -1314,6 +1515,10 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 onChange={(e) => void upload(e.target.files)}
               />
             </label>
+            <p className="muted small">
+              Product photos up to 20 MB are resized before uploading. The first
+              image is the cover.
+            </p>
             <label className="checkbox-label">
               <input
                 type="checkbox"

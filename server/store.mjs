@@ -361,6 +361,35 @@ export function validateProduct(input, id) {
     : [];
   existing.subtitle =
     typeof input.subtitle === "string" ? input.subtitle.slice(0, 120) : "";
+  if (input.sizeSystem !== undefined)
+    existing.sizeSystem =
+      typeof input.sizeSystem === "string"
+        ? input.sizeSystem.trim().slice(0, 40)
+        : "";
+  if (input.fitNotes !== undefined)
+    existing.fitNotes =
+      typeof input.fitNotes === "string"
+        ? input.fitNotes.trim().slice(0, 300)
+        : "";
+  if (input.footLengthsCm !== undefined) {
+    existing.footLengthsCm = Object.fromEntries(
+      existing.sizes.map((size) => {
+        const value = input.footLengthsCm?.[size] ?? null;
+        if (
+          value !== null &&
+          (typeof value !== "number" ||
+            !Number.isFinite(value) ||
+            value < 10 ||
+            value > 45)
+        )
+          throw new HttpError(
+            400,
+            "Foot lengths must be confirmed measurements between 10 and 45 cm, or left blank.",
+          );
+        return [size, value];
+      }),
+    );
+  }
   existing.swatch = /^#[\da-f]{6}$/i.test(input.swatch)
     ? input.swatch
     : "#333333";

@@ -1,27 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { Copy, Upload, CheckCircle2, Clock3, CircleAlert } from "lucide-react";
 import { api, money } from "./api";
 import { useStore } from "./store";
 import { useAccount } from "./customer-account";
 import type { StoreRequest, Payment } from "./types";
+import { paymentRecipient } from "../shared/catalogue.mjs";
 export function PaymentDestination({ payment }: { payment: Payment }) {
-  const { settings, toast } = useStore();
-  // Enquiries have no frozen recipient yet; show the owner's published details.
-  // Confirmed orders continue using the account snapshot saved with the order.
-  const recipient =
-    payment.recipient ||
-    (payment.method === "bank" && settings?.bankIban
-      ? {
-          holder: settings.bankAccountHolder,
-          iban: settings.bankIban,
-          account: settings.bankAccountNumber,
-        }
-      : payment.method === "easypaisa" && settings?.easypaisaNumber
-        ? { holder: settings.easypaisaHolder, number: settings.easypaisaNumber }
-        : null);
-  if (!recipient || !["bank", "easypaisa"].includes(payment.method))
-    return null;
+  const { toast } = useStore();
+  const recipient = paymentRecipient(payment);
+  if (!recipient) return null;
   async function copy(value: string) {
     try {
       await navigator.clipboard.writeText(value);
@@ -59,28 +46,6 @@ export function PaymentDestination({ payment }: { payment: Payment }) {
           ) : null,
         )}
       </dl>
-      {payment.status === "not_required" && (
-        <p className="muted small">
-          Pay using the bank or Easypaisa details above and share your receipt
-          with support. Once your payment is verified, we’ll begin processing
-          your order within a few minutes. Need help?{" "}
-          {settings?.whatsapp ? (
-            <a
-              href={`https://wa.me/${settings.whatsapp}`}
-              target="_blank"
-              rel="noreferrer"
-              className="payment-support-link"
-            >
-              Contact support
-            </a>
-          ) : (
-            <Link to="/contact" className="payment-support-link">
-              Contact support
-            </Link>
-          )}
-          .
-        </p>
-      )}
     </div>
   );
 }
@@ -224,14 +189,11 @@ export function OrderPayment({
           with your reference to arrange a refund.
         </p>
       ) : order.kind === "inquiry" ? (
-        <>
-          {payment && <PaymentDestination payment={payment} />}
-          <p>
-            {payment && ["bank", "easypaisa"].includes(payment.method)
-              ? "Include your order reference when sharing your receipt so our team can match your payment and update this page after review."
-              : "The store will confirm availability and delivery. Check this page for updates."}
-          </p>
-        </>
+        <p>
+          The store will confirm your size, availability, total and delivery
+          before this enquiry becomes an order. Do not transfer money or send a
+          payment receipt yet. Check this page for updates.
+        </p>
       ) : payment?.method === "cod" ? (
         <p>Pay {money(order.data.totals.total)} when your order arrives.</p>
       ) : (

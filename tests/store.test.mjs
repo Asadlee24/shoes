@@ -40,16 +40,23 @@ before(async () => {
   });
   await new Promise((r) => app.server.listen(0, "127.0.0.1", r));
   base = `http://127.0.0.1:${app.server.address().port}`;
+  product = app.store.product("suede-penny");
+  app.store.saveProduct({
+    ...product,
+    id: "test-unpublished",
+    slug: "test-unpublished",
+    published: false,
+  });
 });
 after(async () => {
   await app.close();
   await rm(dir, { recursive: true, force: true });
 });
 
-test("catalog contains four published styles, confirmed PKR prices and size labels", async () => {
+test("catalog contains the published owner catalogue, confirmed PKR prices and size labels", async () => {
   const r = await request("/api/catalog");
   assert.equal(r.status, 200);
-  assert.equal(r.data.products.length, 4);
+  assert.equal(r.data.products.length, 8);
   assert.deepEqual(
     Object.fromEntries(r.data.products.map((p) => [p.id, p.price])),
     {
@@ -57,6 +64,10 @@ test("catalog contains four published styles, confirmed PKR prices and size labe
       "textured-bit": 220000,
       "evening-bit": 280000,
       "midnight-penny": null,
+      "brown-textured": 220000,
+      "metro-court-mocha": 300000,
+      "metro-court-onyx": 300000,
+      "regent-bit-black-2026": 250000,
     },
   );
   assert.ok(r.data.products.every((p) => p.sizes.join(",") === "7,8,9,10,11"));
@@ -143,7 +154,7 @@ test("invalid size, invalid quantity, invalid contact and unpublished product ar
   for (const items of [
     selection(1, "99"),
     selection(-1),
-    [{ id: "brown-textured", size: "7", quantity: 1 }],
+    [{ id: "test-unpublished", size: "7", quantity: 1 }],
     [...selection(), ...selection()],
   ]) {
     assert.equal(

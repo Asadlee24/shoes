@@ -25,6 +25,7 @@ import { BusinessLinks } from "./Business";
 import { SocialLinks } from "./Social";
 import { money } from "./api";
 import type { Product } from "./types";
+import { displayColor, optimizedImage } from "../shared/catalogue.mjs";
 
 export function Brand({ signature = false }: { signature?: boolean }) {
   const wordmarkClip = useId();
@@ -42,7 +43,7 @@ export function Brand({ signature = false }: { signature?: boolean }) {
           focusable="false"
         >
           <image
-            href="/brand/logo-transparent.png"
+            href="/brand/logo-transparent.webp"
             width="1413"
             height="1113"
           />
@@ -56,7 +57,7 @@ export function Brand({ signature = false }: { signature?: boolean }) {
             focusable="false"
           >
             <image
-              href="/brand/logo-transparent.png"
+              href="/brand/logo-transparent.webp"
               width="1413"
               height="1113"
             />
@@ -75,7 +76,7 @@ export function Brand({ signature = false }: { signature?: boolean }) {
               </clipPath>
             </defs>
             <image
-              href="/brand/logo-transparent.png"
+              href="/brand/logo-transparent.webp"
               width="1413"
               height="1113"
               clipPath={`url(#${wordmarkClip})`}
@@ -337,24 +338,28 @@ export function ProductCard({
   const { wishlist, toggleWish, setQuick } = useStore();
   const saved = wishlist.includes(product.id);
   const studioCover = product.image.endsWith("-cover-studio-v1.webp");
-  const studioImage =
-    product.id === "textured-bit"
-      ? "/products/hero-textured.png"
-      : product.id === "suede-penny"
-        ? "/products/hero-loafer.png"
-        : null;
+  const studioImage = [
+    "/products/hero-textured.png",
+    "/products/hero-textured.webp",
+    "/products/hero-loafer.png",
+    "/products/hero-loafer.webp",
+  ].includes(product.image)
+    ? product.image
+    : null;
   return (
     <article className="product-card reveal">
       <div
-        className={`product-media ${product.id === "midnight-penny" ? "midnight-media" : ""} ${studioImage ? "cutout-card" : ""} ${product.id === "textured-bit" ? "textured-cutout-card" : ""} ${studioCover ? "studio-cover-card" : ""}`}
+        className={`product-media ${product.id === "midnight-penny" ? "midnight-media" : ""} ${studioImage ? "cutout-card" : ""} ${studioImage?.includes("hero-textured") ? "textured-cutout-card" : ""} ${studioCover ? "studio-cover-card" : ""}`}
       >
-        <span className="product-index">0{index + 1} / QF</span>
+        <span className="product-index">
+          {String(index + 1).padStart(2, "0")} / QF
+        </span>
         <Link
           to={`/product/${product.slug}`}
           aria-label={`View ${product.name}`}
         >
           <img
-            src={studioImage || product.image}
+            src={optimizedImage(studioImage || product.image)}
             alt={product.subtitle}
             style={
               studioImage
@@ -383,7 +388,7 @@ export function ProductCard({
             <h3>{product.name}</h3>
           </Link>
           <p>
-            {product.category} <span>·</span> {product.color}
+            {product.category} <span>·</span> {displayColor(product.color)}
           </p>
         </div>
         <span
@@ -444,12 +449,57 @@ export function SizeSelector({
             <X />
           </button>
         </div>
-        <p>Available size labels: {product.sizes.join(", ")}.</p>
-        <p className="muted">
-          Tell us the size you usually wear when you enquire. We will confirm
-          the sizing system, fit and availability for your selected pair. A
-          measurement chart has not been provided yet.
-        </p>
+        {product.sizeSystem && (
+          <p>
+            Sizing system: <strong>{product.sizeSystem}</strong>
+          </p>
+        )}
+        {product.sizes.some(
+          (value) => product.footLengthsCm?.[value] != null,
+        ) ? (
+          <table className="size-chart">
+            <caption>Supplier-confirmed recommended foot lengths</caption>
+            <thead>
+              <tr>
+                <th scope="col">Size {product.sizeSystem || "label"}</th>
+                <th scope="col">Foot length (cm)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {product.sizes.map((value) => (
+                <tr key={value}>
+                  <th scope="row">{value}</th>
+                  <td>{product.footLengthsCm?.[value] ?? "Ask us"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>
+            Available size labels: {product.sizes.join(", ")}. Contact us to
+            confirm the sizing system and fit for this pair.
+          </p>
+        )}
+        {product.fitNotes && <p>{product.fitNotes}</p>}
+        <h3>Measure your foot</h3>
+        <ol className="foot-measuring-steps">
+          <li>Stand on a sheet of paper with your heel against a wall.</li>
+          <li>
+            Mark your longest toe and measure from the wall to the mark in
+            centimetres.
+          </li>
+          <li>
+            Measure both feet and use the longer measurement. Share it with us
+            to confirm the fit.
+          </li>
+        </ol>
+        <Link
+          className="text-link"
+          to="/contact"
+          onClick={() => setGuide(false)}
+        >
+          Ask about sizing <ArrowUpRight size={14} />
+        </Link>
       </Modal>
     </>
   );
@@ -480,7 +530,7 @@ export function QuickView() {
           <div className="quick-layout">
             <div className="quick-image">
               <img
-                src={p.image}
+                src={optimizedImage(p.image)}
                 style={{ objectPosition: p.imagePosition }}
                 alt={p.subtitle}
               />
@@ -488,7 +538,7 @@ export function QuickView() {
             <div>
               <p className="eyebrow">{p.category}</p>
               <h2>{p.name}</h2>
-              <p className="muted">{p.color}</p>
+              <p className="muted">{displayColor(p.color)}</p>
               <p className="price-large">{money(p.price)}</p>
               <SizeSelector
                 product={p}
@@ -569,7 +619,7 @@ export function BagLines() {
                   className="bag-image"
                 >
                   <img
-                    src={p.image}
+                    src={optimizedImage(p.image)}
                     alt={p.subtitle}
                     style={{ objectPosition: p.imagePosition }}
                   />

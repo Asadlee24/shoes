@@ -51,7 +51,8 @@ test("existing stores receive confirmed prices once without overwriting admin ed
     assert.equal(current.product("brown-textured").price, 220000);
     assert.equal(current.product("textured-bit").price, 199900);
     assert.equal(current.product("midnight-penny").price, null);
-    assert.equal(current.product("brown-textured").published, false);
+    assert.equal(current.product("brown-textured").published, true);
+    assert.equal(current.product("brown-textured").variantOf, "textured-bit");
     assert.equal(
       current.product("suede-penny").description,
       "Administrator's existing description",
@@ -165,12 +166,29 @@ test("owner stock migration sets 20 per style once, preserves business data and 
       .run(ownerStockRevision);
     store.db.close();
     store = openStore(path);
-    for (const product of store.products()) {
+    for (const id of [
+      "suede-penny",
+      "textured-bit",
+      "evening-bit",
+      "midnight-penny",
+      "brown-textured",
+    ]) {
+      const product = store.product(id);
       assert.equal(product.stock, 20);
       assert.deepEqual(product.stockBySize, { 7: 4, 8: 4, 9: 4, 10: 4, 11: 4 });
     }
     assert.equal(store.product(before.id).price, 399900);
-    assert.equal(store.product("brown-textured").published, false);
+    assert.equal(store.product("brown-textured").published, true);
+    for (const id of [
+      "metro-court-mocha",
+      "metro-court-onyx",
+      "regent-bit-black-2026",
+    ])
+      assert.equal(
+        store.product(id).stock,
+        null,
+        "Later styles need their own stock confirmation",
+      );
     assert.equal(store.settings().shippingFee, 22500);
     assert.equal(store.settings().orderNotificationEmail, "owner@example.test");
     assert.ok(
@@ -256,15 +274,19 @@ test("owner free delivery fills an existing unset fee once without changing orde
   }
 });
 
-
 test("Coffee Brown variant is seeded when original placeholder row is missing", async () => {
   const { DatabaseSync } = await import("node:sqlite");
-  const { sqliteCoffee, updateCoffee } = await import("../server/coffee-variant.mjs");
+  const { sqliteCoffee, updateCoffee } =
+    await import("../server/coffee-variant.mjs");
   const db = new DatabaseSync(":memory:");
   try {
-    db.exec("CREATE TABLE products(id TEXT PRIMARY KEY,data TEXT NOT NULL); CREATE TABLE migrations(id TEXT PRIMARY KEY,applied TEXT NOT NULL)");
+    db.exec(
+      "CREATE TABLE products(id TEXT PRIMARY KEY,data TEXT NOT NULL); CREATE TABLE migrations(id TEXT PRIMARY KEY,applied TEXT NOT NULL)",
+    );
     sqliteCoffee(db);
-    const row = db.prepare("SELECT data FROM products WHERE id=?").get("brown-textured");
+    const row = db
+      .prepare("SELECT data FROM products WHERE id=?")
+      .get("brown-textured");
     assert.ok(row, "missing placeholder must be inserted");
     const p = JSON.parse(row.data);
     assert.equal(p.variantOf, "textured-bit");
@@ -272,9 +294,14 @@ test("Coffee Brown variant is seeded when original placeholder row is missing", 
     assert.equal(p.price, 220000);
     const before = db.prepare("SELECT COUNT(*) AS n FROM products").get().n;
     sqliteCoffee(db);
-    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM products").get().n, before);
-    const edited = updateCoffee({ ...p, price: 185000, stockBySize: { "7": 3 } });
+    assert.equal(
+      db.prepare("SELECT COUNT(*) AS n FROM products").get().n,
+      before,
+    );
+    const edited = updateCoffee({ ...p, price: 185000, stockBySize: { 7: 3 } });
     assert.equal(edited.price, 185000);
     assert.equal(edited.stockBySize["7"], 3);
-  } finally { db.close(); }
+  } finally {
+    db.close();
+  }
 });
