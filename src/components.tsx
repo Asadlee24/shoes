@@ -719,25 +719,24 @@ export function Footer() {
         </div>
       </div>
       <div className="footer-bottom">
-        <div className="footer-bottom-meta">
-          <span className="footer-copyright">© {new Date().getFullYear()} QADAM FLEX</span>
-          <span className="footer-location">PAKISTAN · PKR</span>
+        <div className="footer-bottom-identity">
+          <span className="footer-copyright">© {new Date().getFullYear()} QADAM FLEX <span className="footer-copyright-divider" aria-hidden="true">/</span> MADE FOR EVERY STEP</span>
+          <a
+            href="https://asad-lee-portfolio.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-developer"
+            aria-label="Website designed and developed by Asad Lee — visit portfolio"
+          >
+            <span className="footer-developer-label">Designed &amp; developed by</span>
+            <strong>Asad Lee</strong>
+            <ArrowUpRight size={14} aria-hidden="true" />
+          </a>
         </div>
-        <a
-          href="https://asad-lee-portfolio.vercel.app/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="footer-developer"
-          aria-label="Website designed and developed by Asad Lee — view developer portfolio"
-        >
-          <span className="footer-developer-mark" aria-hidden="true">AL.</span>
-          <span className="footer-developer-copy"><span className="footer-developer-caption">WEBSITE BY</span><strong>Asad Lee</strong></span>
-          <ArrowUpRight size={15} aria-hidden="true" />
-        </a>
         <nav className="footer-legal" aria-label="Legal links">
-          <Link to="/privacy">Privacy</Link>
-          <span className="footer-legal-dot" aria-hidden="true">·</span>
-          <Link to="/terms">Terms</Link>
+          <Link to="/privacy">Privacy policy</Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/terms">Terms of service</Link>
         </nav>
       </div>
     </footer>
