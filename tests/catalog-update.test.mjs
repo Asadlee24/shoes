@@ -255,3 +255,26 @@ test("owner free delivery fills an existing unset fee once without changing orde
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+
+test("Coffee Brown variant is seeded when original placeholder row is missing", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { sqliteCoffee, updateCoffee } = await import("../server/coffee-variant.mjs");
+  const db = new DatabaseSync(":memory:");
+  try {
+    db.exec("CREATE TABLE products(id TEXT PRIMARY KEY,data TEXT NOT NULL); CREATE TABLE migrations(id TEXT PRIMARY KEY,applied TEXT NOT NULL)");
+    sqliteCoffee(db);
+    const row = db.prepare("SELECT data FROM products WHERE id=?").get("brown-textured");
+    assert.ok(row, "missing placeholder must be inserted");
+    const p = JSON.parse(row.data);
+    assert.equal(p.variantOf, "textured-bit");
+    assert.equal(p.images.length, 5);
+    assert.equal(p.price, 220000);
+    const before = db.prepare("SELECT COUNT(*) AS n FROM products").get().n;
+    sqliteCoffee(db);
+    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM products").get().n, before);
+    const edited = updateCoffee({ ...p, price: 185000, stockBySize: { "7": 3 } });
+    assert.equal(edited.price, 185000);
+    assert.equal(edited.stockBySize["7"], 3);
+  } finally { db.close(); }
+});
