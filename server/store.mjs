@@ -1,7 +1,7 @@
 import { commerceSchema } from "./commerce-schema.mjs";
 import { DatabaseSync } from "node:sqlite";
 import { ownerStock, ownerStockRevision } from "./inventory.mjs";
-import { ownerNewGalleryRevision, ownerNewGalleryPhotos } from "./owner-gallery-photos.mjs";
+import { rollbackMistakenPhotosSqlite } from "./owner-gallery-rollback.mjs";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import {
@@ -140,16 +140,7 @@ export function openStore(path) {
         new Date().toISOString(),
       );
     }
-    if (!db.prepare("SELECT id FROM migrations WHERE id=?").get(ownerNewGalleryRevision)) {
-      for (const [id, additions] of Object.entries(ownerNewGalleryPhotos)) {
-        const row = db.prepare("SELECT data FROM products WHERE id=?").get(id);
-        if (!row) continue;
-        const product = JSON.parse(row.data);
-        const images = [...new Set([...(product.images || []), ...additions])];
-        db.prepare("UPDATE products SET data=? WHERE id=?").run(JSON.stringify({ ...product, images }), id);
-      }
-      db.prepare("INSERT INTO migrations VALUES(?,?)").run(ownerNewGalleryRevision, new Date().toISOString());
-    }
+    rollbackMistakenPhotosSqlite(db);
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");
