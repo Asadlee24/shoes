@@ -83,6 +83,7 @@ export function Shop() {
           <option value="">All shoes</option>
           <option>Loafers</option>
           <option>Formal shoes</option>
+          <option>Sneakers</option>
         </select>
       </div>
       <div className="filter-group">
