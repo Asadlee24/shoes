@@ -2,6 +2,7 @@ import { commerceSchema } from "./commerce-schema.mjs";
 import { DatabaseSync } from "node:sqlite";
 import { ownerStock, ownerStockRevision } from "./inventory.mjs";
 import { rollbackMistakenPhotosSqlite } from "./owner-gallery-rollback.mjs";
+import { seedSneakersSqlite } from "./sneaker-listings.mjs";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import {
@@ -141,6 +142,7 @@ export function openStore(path) {
       );
     }
     rollbackMistakenPhotosSqlite(db);
+    seedSneakersSqlite(db);
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");
@@ -286,7 +288,7 @@ export function validateProduct(input, id) {
   existing.slug = requiredText(input.slug, "Product link", 100);
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(existing.slug))
     throw new HttpError(400, "Use a lowercase, hyphenated product link.");
-  if (!["Loafers", "Formal shoes"].includes(input.category))
+  if (!["Loafers", "Formal shoes", "Sneakers"].includes(input.category))
     throw new HttpError(400, "Choose a valid collection.");
   existing.color = requiredText(input.color, "Color", 60);
   existing.sizes = Array.isArray(input.sizes)
