@@ -3839,80 +3839,27 @@ select:focus {
 }
 
 
-/* Compact two-sided footer — same alignment on phones and desktop. */
-.footer .footer-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: start;
-  gap: 12px;
-  margin-top: 32px;
-  padding: 20px 0 24px;
-  border-top: 1px solid rgba(255,255,255,.18);
-  font-size: 11px;
-  color: #aaa9a2;
-  letter-spacing: 0;
-}
-.footer .footer-bottom-left,
-.footer .footer-bottom-right {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-.footer .footer-bottom-left { align-items: flex-start; text-align: left; }
-.footer .footer-bottom-right { align-items: flex-end; text-align: right; }
-.footer .footer-copyright {
-  font-size: 10px;
-  letter-spacing: .07em;
-  color: #c6c6bf;
-  white-space: nowrap;
-}
-.footer .footer-developer {
+/* Developer attribution: unobtrusive, accessible and consistent with the store footer. */
+.footer-bottom .footer-developer {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  column-gap: 4px;
-  row-gap: 1px;
-  max-width: 100%;
-  color: #aaa9a2;
-  text-decoration: none;
-  font-size: 11px;
-  line-height: 1.4;
-}
-.footer .footer-developer strong {
-  color: #f1f1ec;
-  font-size: inherit;
-  font-weight: 650;
-  white-space: nowrap;
-}
-.footer .footer-developer svg { flex: none; width: 13px; height: 13px; color: #dfdfd9; }
-.footer .footer-policy-link {
-  color: #93938c;
-  text-decoration: none;
+  justify-content: center;
+  gap: 5px;
+  color: inherit;
   font-size: 10px;
-  line-height: 1.4;
+  letter-spacing: .015em;
+  text-decoration: none;
+  transition: color .2s ease;
 }
-.footer .footer-policy-link:hover,
-.footer .footer-developer:hover,
-.footer .footer-policy-link:focus-visible,
-.footer .footer-developer:focus-visible { color: #fff; }
-.footer .footer-developer:hover strong { text-decoration: underline; text-underline-offset: 3px; }
-.footer .footer-policy-link:focus-visible,
-.footer .footer-developer:focus-visible { outline: 2px solid #ddd; outline-offset: 3px; }
-@media (max-width: 600px) {
-  .footer .footer-bottom {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    flex-direction: initial;
-    align-items: start;
-    gap: 10px;
-    margin-top: 23px;
-    padding: 17px 0 20px;
-  }
-  .footer .footer-bottom-left,
-  .footer .footer-bottom-right { gap: 8px; }
-  .footer .footer-copyright { font-size: 9px; letter-spacing: .025em; }
-  .footer .footer-developer { font-size: 10px; }
-  .footer .footer-policy-link { font-size: 10px; }
+.footer-bottom .footer-developer strong {
+  color: var(--paper, #f4f4f1);
+  font-weight: 600;
+}
+.footer-bottom .footer-developer svg { width: 13px; height: 13px; }
+.footer-bottom .footer-developer:hover,
+.footer-bottom .footer-developer:focus-visible { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.footer-bottom .footer-developer:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+@media(max-width: 640px) {
+  .footer-bottom .footer-developer { width: 100%; justify-content: flex-start; font-size: 10px; order: 2; }
+  .footer-bottom > div { order: 3; }
 }
