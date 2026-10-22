@@ -11,7 +11,27 @@ import {
   cleanedGalleryPhotos,
   coffeeScreenshot,
   photoCompletionRevision,
+  completedProductPhotos,
+  copiedCoffeeOriginal,
 } from "../server/catalog-photo-completion.mjs";
+
+test("Coffee Brown accepts the verified original upload copy and preserves unrelated later uploads", () => {
+  const product = {
+    id: "brown-textured",
+    image: copiedCoffeeOriginal,
+    images: [copiedCoffeeOriginal, "/products/coffee-owner-detail.webp"],
+    price: 220000,
+    stock: 7,
+  };
+  assert.deepEqual(completedProductPhotos(product), {
+    ...product,
+    image: "/products/coffee-cover-studio-v1.webp",
+    imagePosition: "50% 50%",
+    images: ["/products/coffee-cover-studio-v1.webp", ...product.images],
+  });
+  const later = { ...product, image: "/products/new-owner-coffee.jpg" };
+  assert.equal(completedProductPhotos(later), later);
+});
 
 async function fixture(backend) {
   if (backend === "SQLite") {

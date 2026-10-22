@@ -16,6 +16,11 @@ The five covers from the preceding update remain unchanged. Gallery edits are sa
 
 New covers are 1536 × 1024 with genuine transparency. New gallery photographs are portrait 4:5 on a neutral studio background. WebP quality is 91; cover alpha quality is 100.
 
+Coffee Brown's original photo was reuploaded during the update. The new upload
+was verified byte-for-byte with SHA-256 against the edited source before its
+exact URL was added to migration revision v2. Other later owner uploads remain
+protected.
+
 `server/catalog-photo-completion.mjs` applies changes once inside both database adapters' existing startup transactions. Matching is restricted to exact product IDs and original image URLs; later owner uploads win. Prices, inventory, descriptions, order/customer data and product identities are preserved.
 
 ## Final ImageGen prompts
