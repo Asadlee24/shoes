@@ -3837,29 +3837,3 @@ select:focus {
 .admin-gallery input {
   max-width: 100%;
 }
-
-
-/* Developer attribution: unobtrusive, accessible and consistent with the store footer. */
-.footer-bottom .footer-developer {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  color: inherit;
-  font-size: 10px;
-  letter-spacing: .015em;
-  text-decoration: none;
-  transition: color .2s ease;
-}
-.footer-bottom .footer-developer strong {
-  color: var(--paper, #f4f4f1);
-  font-weight: 600;
-}
-.footer-bottom .footer-developer svg { width: 13px; height: 13px; }
-.footer-bottom .footer-developer:hover,
-.footer-bottom .footer-developer:focus-visible { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
-.footer-bottom .footer-developer:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
-@media(max-width: 640px) {
-  .footer-bottom .footer-developer { width: 100%; justify-content: flex-start; font-size: 10px; order: 2; }
-  .footer-bottom > div { order: 3; }
-}
