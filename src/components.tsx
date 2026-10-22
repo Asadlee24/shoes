@@ -336,6 +336,7 @@ export function ProductCard({
 }) {
   const { wishlist, toggleWish, setQuick } = useStore();
   const saved = wishlist.includes(product.id);
+  const studioCover = product.image.endsWith("-cover-studio-v1.webp");
   const studioImage =
     product.id === "textured-bit"
       ? "/products/hero-textured.png"
@@ -345,7 +346,7 @@ export function ProductCard({
   return (
     <article className="product-card reveal">
       <div
-        className={`product-media ${product.id === "midnight-penny" ? "midnight-media" : ""} ${studioImage ? "cutout-card" : ""} ${product.id === "textured-bit" ? "textured-cutout-card" : ""}`}
+        className={`product-media ${product.id === "midnight-penny" ? "midnight-media" : ""} ${studioImage ? "cutout-card" : ""} ${product.id === "textured-bit" ? "textured-cutout-card" : ""} ${studioCover ? "studio-cover-card" : ""}`}
       >
         <span className="product-index">0{index + 1} / QF</span>
         <Link

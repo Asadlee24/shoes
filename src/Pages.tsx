@@ -311,7 +311,7 @@ export function ProductPage() {
                 ))}
               </div>
             </div>
-          )>
+          )}
           <p className="price-large">{money(p.price)}</p>
           <p className="product-story">{p.description}</p>
           <SizeSelector

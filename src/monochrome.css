@@ -601,6 +601,28 @@ a:focus-visible {
 .textured-cutout-card:hover > a > img {
   transform: translateY(-8px) rotate(20deg) scale(1.03);
 }
+.product-media.studio-cover-card > a > img {
+  object-fit: contain;
+  object-position: center;
+  padding: 12px;
+  mix-blend-mode: normal;
+  filter: drop-shadow(0 18px 7px #0002);
+  transform: none;
+}
+.product-media.studio-cover-card:hover > a > img {
+  transform: translateY(-6px) scale(1.025);
+}
+.gallery-main > img[src$="-cover-studio-v1.webp"],
+.quick-image > img[src$="-cover-studio-v1.webp"] {
+  object-fit: contain;
+  object-position: center;
+  padding: 6%;
+  mix-blend-mode: normal;
+  filter: drop-shadow(0 18px 7px #0002);
+}
+.gallery-thumbnails img[src$="-cover-studio-v1.webp"] {
+  object-fit: contain;
+}
 .product-index {
   font-size: 6px;
   background: transparent;

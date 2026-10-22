@@ -5,6 +5,7 @@ import { rollbackMistakenPhotosSqlite } from "./owner-gallery-rollback.mjs";
 import { seedSneakersSqlite } from "./sneaker-listings.mjs";
 import { seedRegentSqlite } from "./regent-loafer-listing.mjs";
 import { sqliteCoffee } from "./coffee-variant.mjs";
+import { refreshStudioCoversSqlite } from "./studio-cover-refresh.mjs";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import {
@@ -147,6 +148,7 @@ export function openStore(path) {
     seedSneakersSqlite(db);
     seedRegentSqlite(db);
     sqliteCoffee(db);
+    refreshStudioCoversSqlite(db);
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");
