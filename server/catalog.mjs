@@ -52,7 +52,7 @@ export const initialProducts = [
     published: true,
     featured: true,
     image: "/products/black-textured.jpg",
-    images: ["/products/black-textured.jpg"],
+    images: ["/products/black-textured.jpg", "/products/texture-pair-qf-2026.jpg", "/products/texture-alt-qf-2026.jpg", "/products/texture-angle-qf-2026.jpg"],
     imagePosition: "50% 73%",
     description:
       "An expressive textured upper meets dark metal detailing. A squared-off moccasin toe and substantial sole create a confident silhouette for dressing up your everyday wardrobe.",
@@ -78,7 +78,7 @@ export const initialProducts = [
     published: true,
     featured: true,
     image: "/products/black-formal.jpg",
-    images: ["/products/black-formal.jpg"],
+    images: ["/products/black-formal.jpg", "/products/formal-pair-qf-2026.jpg", "/products/formal-angle-qf-2026.jpg", "/products/formal-side-qf-2026.jpg"],
     imagePosition: "50% 66%",
     description:
       "A polished black silhouette with a contrasting textured vamp and refined metal hardware. A considered choice for your more dressed-up moments.",
