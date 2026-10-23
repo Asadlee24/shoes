@@ -15,6 +15,7 @@ import {
   Save,
   Settings2,
   ShoppingBag,
+  Trash2,
   X,
 } from "lucide-react";
 import { api, money } from "./api";
@@ -143,6 +144,32 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
           ? "Product saved for enquiries. Confirm size stock to enable orders for those sizes."
           : "Product saved.",
       );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function deleteProduct(product: Product) {
+    if (
+      preview ||
+      busy ||
+      !window.confirm(
+        `Delete "${product.name}" from the store? Existing orders will be kept.`,
+      )
+    )
+      return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await api(`/api/admin/products/${encodeURIComponent(product.id)}`, {
+        method: "DELETE",
+        headers,
+      });
+      await refresh();
+      await reload();
+      setNotice("Product deleted.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -634,6 +661,15 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                               }}
                             >
                               Edit product <ArrowUpRight size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              className="text-link admin-delete-product"
+                              disabled={busy || preview}
+                              aria-label={`Delete ${p.name}`}
+                              onClick={() => void deleteProduct(p)}
+                            >
+                              Delete <Trash2 size={15} />
                             </button>
                           </div>
                         </article>

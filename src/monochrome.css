@@ -434,6 +434,14 @@ a:focus-visible {
 .stage-product > div:first-child {
   min-width: 0;
 }
+.admin-product-meta .admin-delete-product {
+  color: #ba3d32;
+  margin-left: 18px;
+}
+.admin-delete-product:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 .stage-product a > svg {
   flex-shrink: 0;
 }

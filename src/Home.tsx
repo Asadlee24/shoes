@@ -60,7 +60,10 @@ export default function Home() {
   const root = useRef<HTMLElement>(null);
   const [focus, setFocus] = useState(0),
     [reset, setReset] = useState(0);
-  const pair = focusPairs[focus];
+  const availablePairs = focusPairs.filter((pair) =>
+    products.some((p) => p.id === pair.id),
+  );
+  const pair = availablePairs[focus] || availablePairs[0];
   useEffect(() => {
     if (!root.current || matchMedia("(prefers-reduced-motion: reduce)").matches)
       return;
@@ -160,57 +163,61 @@ export default function Home() {
               </a>
             </div>
           </div>
-          <div className="mono-stage">
-            <Showroom
-              key={pair.id}
-              image={pair.image}
-              dark={theme === "dark"}
-              reset={reset}
-            />
-            <div className="stage-interaction">
-              <span>
-                <MousePointer2 size={12} /> MOVE MOUSE · DRAG TO FLIP
-              </span>
-              <div className="stage-buttons">
-                <button
-                  type="button"
-                  onClick={() => setReset((v) => v + 1)}
-                  aria-label="Reset product display"
-                >
-                  <RotateCcw size={14} />
-                </button>
-              </div>
-            </div>
-            <div className="stage-product">
-              <div>
-                <Link to={`/product/${pair.slug}`}>
-                  {pair.name}
-                  <ArrowUpRight size={19} />
-                </Link>
-                <p>
-                  {pair.color} ·{" "}
-                  {money(products.find((p) => p.id === pair.id)?.price ?? null)}
-                </p>
-              </div>
-              <div
-                className="stage-pair-picker"
-                aria-label="Choose a featured pair"
-              >
-                {focusPairs.map((p, i) => (
+          {pair && (
+            <div className="mono-stage">
+              <Showroom
+                key={pair.id}
+                image={pair.image}
+                dark={theme === "dark"}
+                reset={reset}
+              />
+              <div className="stage-interaction">
+                <span>
+                  <MousePointer2 size={12} /> MOVE MOUSE · DRAG TO FLIP
+                </span>
+                <div className="stage-buttons">
                   <button
-                    key={p.id}
-                    className={focus === i ? "selected" : ""}
-                    onClick={() => setFocus(i)}
-                    aria-label={`Display ${p.name}`}
-                    aria-pressed={focus === i}
+                    type="button"
+                    onClick={() => setReset((v) => v + 1)}
+                    aria-label="Reset product display"
                   >
-                    <span style={{ background: p.swatch }} />
-                    <span className="pair-number">{p.index}</span>
+                    <RotateCcw size={14} />
                   </button>
-                ))}
+                </div>
+              </div>
+              <div className="stage-product">
+                <div>
+                  <Link to={`/product/${pair.slug}`}>
+                    {pair.name}
+                    <ArrowUpRight size={19} />
+                  </Link>
+                  <p>
+                    {pair.color} ·{" "}
+                    {money(
+                      products.find((p) => p.id === pair.id)?.price ?? null,
+                    )}
+                  </p>
+                </div>
+                <div
+                  className="stage-pair-picker"
+                  aria-label="Choose a featured pair"
+                >
+                  {availablePairs.map((p, i) => (
+                    <button
+                      key={p.id}
+                      className={pair.id === p.id ? "selected" : ""}
+                      onClick={() => setFocus(i)}
+                      aria-label={`Display ${p.name}`}
+                      aria-pressed={pair.id === p.id}
+                    >
+                      <span style={{ background: p.swatch }} />
+                      <span className="pair-number">{p.index}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
       <section className="mono-collection section-pad" id="collection">

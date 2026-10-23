@@ -445,6 +445,52 @@ test("order notification recipients are editable only through admin and absent f
   );
   reopened.db.close();
 });
+test("product deletion requires admin and CSRF, removes the listing and keeps order history and inventory data", async () => {
+  const fixture = {
+    ...product,
+    id: "delete-test",
+    slug: "delete-test",
+    published: true,
+  };
+  app.store.saveProduct(fixture);
+  const path = "/api/admin/products/delete-test";
+  const history = app.store.db
+    .prepare("SELECT * FROM requests ORDER BY id")
+    .all();
+  assert.equal((await request(path, "DELETE")).status, 401);
+  assert.equal(
+    (await request(path, "DELETE", null, { Cookie: cookie })).status,
+    403,
+  );
+  assert.equal(
+    (await request(path, "DELETE", null, adminHeaders())).status,
+    200,
+  );
+  const removed = app.store.product(fixture.id);
+  assert.equal(removed.published, false);
+  assert.equal(removed.featured, false);
+  assert.ok(removed.deletedAt);
+  assert.deepEqual(removed.stockBySize, fixture.stockBySize);
+  assert.equal(removed.price, fixture.price);
+  assert.deepEqual(
+    app.store.db.prepare("SELECT * FROM requests ORDER BY id").all(),
+    history,
+  );
+  assert.ok(
+    !(await request("/api/catalog")).data.products.some(
+      (p) => p.id === fixture.id,
+    ),
+  );
+  assert.ok(
+    !(
+      await request("/api/admin/dashboard", "GET", null, adminHeaders())
+    ).data.products.some((p) => p.id === fixture.id),
+  );
+  assert.equal(
+    (await request(path, "DELETE", null, adminHeaders())).status,
+    404,
+  );
+});
 test("administrator logout invalidates the session", async () => {
   assert.equal(
     (await request("/api/admin/logout", "POST", {}, adminHeaders())).status,

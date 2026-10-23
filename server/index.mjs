@@ -283,7 +283,7 @@ export async function createApplication(options = {}) {
       }
       if (method === "GET" && path === "/api/admin/dashboard")
         return json(res, 200, {
-          products: await store.products(),
+          products: (await store.products()).filter((p) => !p.deletedAt),
           settings: await store.settings(),
           requests: (
             await store.db
@@ -294,6 +294,20 @@ export async function createApplication(options = {}) {
           ).map((r) => ({ ...r, data: JSON.parse(r.data) })),
           notifications: await notifications.status(),
         });
+      const deletingProduct = path.match(/^\/api\/admin\/products\/([^/]+)$/);
+      if (method === "DELETE" && deletingProduct) {
+        const product = await store.product(deletingProduct[1]);
+        if (!product || product.deletedAt)
+          throw new HttpError(404, "Product not found.");
+        // Retain the record and uploaded media for existing orders and stock returns.
+        await store.saveProduct({
+          ...product,
+          published: false,
+          featured: false,
+          deletedAt: new Date().toISOString(),
+        });
+        return json(res, 200, { ok: true });
+      }
       if (
         (method === "PUT" || method === "POST") &&
         /^\/api\/admin\/products(?:\/[^/]+)?$/.test(path)
@@ -308,7 +322,7 @@ export async function createApplication(options = {}) {
         const product = validateProduct(input, id);
         if (
           (await store.products()).some(
-            (p) => p.id !== id && p.slug === product.slug,
+            (p) => p.id !== id && !p.deletedAt && p.slug === product.slug,
           )
         )
           throw new HttpError(400, "This product link is already used.");
