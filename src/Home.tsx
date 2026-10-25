@@ -60,10 +60,9 @@ export default function Home() {
   const root = useRef<HTMLElement>(null);
   const [focus, setFocus] = useState(0),
     [reset, setReset] = useState(0);
-  const availablePairs = focusPairs.filter((pair) =>
-    products.some((p) => p.id === pair.id),
-  );
-  const pair = availablePairs[focus] || availablePairs[0];
+  // The hero is a four-pair showcase, independent of catalogue availability.
+  const pair = focusPairs[focus] || focusPairs[0];
+  const product = products.find((p) => p.id === pair.id);
   useEffect(() => {
     if (!root.current || matchMedia("(prefers-reduced-motion: reduce)").matches)
       return;
@@ -187,22 +186,20 @@ export default function Home() {
               </div>
               <div className="stage-product">
                 <div>
-                  <Link to={`/product/${pair.slug}`}>
+                  <Link to={product ? `/product/${product.slug}` : "/shop"}>
                     {pair.name}
                     <ArrowUpRight size={19} />
                   </Link>
                   <p>
                     {pair.color} ·{" "}
-                    {money(
-                      products.find((p) => p.id === pair.id)?.price ?? null,
-                    )}
+                    {product ? money(product.price) : "Explore available pairs"}
                   </p>
                 </div>
                 <div
                   className="stage-pair-picker"
                   aria-label="Choose a featured pair"
                 >
-                  {availablePairs.map((p, i) => (
+                  {focusPairs.map((p, i) => (
                     <button
                       key={p.id}
                       className={pair.id === p.id ? "selected" : ""}
