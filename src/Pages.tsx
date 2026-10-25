@@ -241,11 +241,6 @@ export function ProductPage() {
     (product) => product.id === familyId || product.variantOf === familyId,
   );
   const availability = availabilityText(p, size);
-  const enquiryOnly =
-    p.price === null ||
-    (size
-      ? p.stockBySize?.[size] == null
-      : p.sizes.every((value) => p.stockBySize?.[value] == null));
   return (
     <main className="product-page section-pad">
       <nav className="breadcrumbs" aria-label="Breadcrumb">
@@ -362,8 +357,8 @@ export function ProductPage() {
           >
             {p.stock === 0
               ? "Currently unavailable"
-              : enquiryOnly
-                ? "Add to enquiry"
+              : p.price === null
+                ? "Ask about this pair"
                 : "Add to bag"}
             <ShoppingBag size={18} />
           </button>
@@ -856,14 +851,14 @@ export function Checkout() {
                     ? paymentMethod === "cod"
                       ? "Cash on delivery"
                       : "Payment proof, kept private"
-                    : "No payment required"}
+                    : "Your selection"}
                 </strong>
                 <p>
                   {canOrder
                     ? paymentMethod === "cod"
                       ? "Pay the confirmed total when your order arrives."
                       : "Place your order, then upload your transfer receipt on the payment step. The owner will review it."
-                    : "Send your enquiry so the store can confirm availability, your size and delivery. Do not transfer money before the store confirms your order and total."}
+                    : "Send your selection and contact details. The store will follow up with your size, order total and delivery details."}
                 </p>
               </div>
             </div>
@@ -973,7 +968,7 @@ export function Confirmation() {
         Keep your reference for any follow-up.
         <br />
         {result?.kind !== "order" &&
-          "No payment is required. Wait for the store to confirm availability and your final order total before paying."}
+          "The store will follow up with your order total and delivery details."}
       </p>
       <div className="confirmation-actions">
         <Link className="button" to="/shop">
@@ -1201,7 +1196,7 @@ export function InfoPage({ page }: { page: string }) {
         ],
         [
           "Orders & payments",
-          "An enquiry is not a purchase. Confirmed orders support bank transfer, Easypaisa or cash on delivery where available. Upload transfer receipts in your account; the store confirms payments manually. Do not pay for an enquiry until the store confirms the order and total.",
+          "An enquiry is not a purchase. Confirmed orders support bank transfer, Easypaisa or cash on delivery where available. Payment details appear with your confirmed order total. Upload transfer receipts in your account; the store confirms payments manually.",
         ],
         [
           "Delivery & exchanges",
