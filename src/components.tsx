@@ -775,7 +775,7 @@ export function Footer() {
       </div>
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} QADAM FLEX</span>
-        <span>PAKISTAN · PKR</span>
+        <span>Built by <a href="https://asad-lee-portfolio.vercel.app/" target="_blank" rel="noopener noreferrer">Asad Lee</a></span>
         <div>
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
