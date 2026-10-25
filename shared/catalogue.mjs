@@ -76,15 +76,10 @@ export function productSetupIssues(product) {
 export function availabilityText(product, size = "") {
   if (size && product.stockBySize?.[size] === 0)
     return `Size ${size} is currently sold out.`;
-  if (product.price == null)
-    return "Price and availability confirmed on enquiry. No payment is required.";
-  const missing = missingStockSizes(product);
-  if (size && missing.includes(size))
-    return `Availability for size ${size} needs confirmation. Send an enquiry; do not pay yet.`;
-  if (missing.length === product.sizes.length)
-    return "Availability on request. Send an enquiry; do not pay yet.";
-  if (missing.length && !size) return "Choose a size to check availability.";
-  if (product.sizes.every((value) => product.stockBySize?.[value] === 0))
+  if (
+    product.sizes.length &&
+    product.sizes.every((value) => product.stockBySize?.[value] === 0)
+  )
     return "Currently sold out.";
   return "";
 }
