@@ -147,3 +147,8 @@
     padding: 12px;
   }
 }
+
+/* Keep the creator credit readable and tappable on phones. */
+.footer-bottom {font-size:11px;line-height:1.6;gap:12px 24px;flex-wrap:wrap}
+.footer-bottom > span:nth-child(2) {display:block}
+.footer-bottom > span:nth-child(2) a {display:inline-block;min-height:44px;padding:12px 0;text-decoration:underline;text-underline-offset:3px;color:#e6e6de}

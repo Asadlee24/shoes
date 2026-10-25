@@ -3506,7 +3506,7 @@ select:focus {
     padding: 20px 0;
   }
   .footer-bottom > span:nth-child(2) {
-    display: none;
+    display: block;
   }
   .modal-content {
     padding: 25px;
