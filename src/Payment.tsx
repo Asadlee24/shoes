@@ -190,9 +190,9 @@ export function OrderPayment({
         </p>
       ) : order.kind === "inquiry" ? (
         <p>
-          The store will confirm your size, availability, total and delivery
-          before this enquiry becomes an order. Do not transfer money or send a
-          payment receipt yet. Check this page for updates.
+          Your selection is with the store. Your order total, delivery details
+          and payment options will appear here once confirmed. Check this page
+          for updates.
         </p>
       ) : payment?.method === "cod" ? (
         <p>Pay {money(order.data.totals.total)} when your order arrives.</p>
