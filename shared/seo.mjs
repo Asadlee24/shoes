@@ -61,7 +61,7 @@ export function pageMetadata(pathname, products = []) {
   }
   const defaults = {
     canonical: `${siteOrigin}${path === "/" ? "/" : path}`,
-    image: absoluteImage("/products/hero-textured.webp"),
+    image: absoluteImage("/brand/share-logo-v2.jpg"),
     robots: "index, follow, max-image-preview:large",
     status: 200,
     type: "website",
