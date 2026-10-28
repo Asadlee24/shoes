@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --env-file-if-exists=.env server/index.mjs",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/generate-brand-favicon.mjs public/brand/logo-transparent.png public/brand/favicon-logo.png 160,0,1150,735 && tsc -b && vite build",
     "start": "node --env-file-if-exists=.env server/index.mjs --production",
     "test": "node --test tests/*.test.mjs",
     "admin:setup": "node --env-file-if-exists=.env server/setup-admin.mjs",
