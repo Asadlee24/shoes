@@ -1,7 +1,8 @@
 import { AdminReviews, SalesSummary, TrackingEditor } from "./Commerce";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  ArrowLeft,
   ArrowUpRight,
   Check,
   ChevronDown,
@@ -93,6 +94,10 @@ type NotificationSummary = {
 };
 export default function Admin({ preview = false }: { preview?: boolean }) {
   const { reload } = useStore();
+  const requestHeading = useRef<HTMLHeadingElement>(null);
+  const listPosition = useRef<{ scroll: number; requestId: string } | null>(
+    null,
+  );
   const [csrf, setCsrf] = useState(""),
     [loading, setLoading] = useState(true),
     [loginError, setLoginError] = useState(""),
@@ -382,6 +387,27 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
     const id = setTimeout(() => setNotice(""), 4000);
     return () => clearTimeout(id);
   }, [notice]);
+  const selectedRequestId = request?.id;
+  useEffect(() => {
+    if (showOrderCard) return;
+    if (selectedRequestId) {
+      window.scrollTo(0, 0);
+      requestHeading.current?.focus({ preventScroll: true });
+    } else if (listPosition.current) {
+      const { scroll, requestId } = listPosition.current;
+      listPosition.current = null;
+      document
+        .getElementById(`open-request-${requestId}`)
+        ?.focus({ preventScroll: true });
+      window.scrollTo(0, scroll);
+    }
+  }, [selectedRequestId, showOrderCard]);
+
+  function openRequest(selected: StoreRequest) {
+    listPosition.current = { scroll: window.scrollY, requestId: selected.id };
+    setRequest(selected);
+  }
+
   if (loading)
     return (
       <div className="admin-login">
@@ -442,6 +468,179 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
         order={request}
         onBack={() => setShowOrderCard(false)}
       />
+    );
+  if (request)
+    return (
+      <main
+        className="admin-app admin-order-page"
+        aria-labelledby="admin-request-title"
+      >
+        <div className="admin-order-content">
+          <button
+            type="button"
+            className="admin-order-back"
+            onClick={() => setRequest(null)}
+          >
+            <ArrowLeft size={17} aria-hidden="true" /> Back to{" "}
+            {tab === "overview" ? "overview" : "orders & enquiries"}
+          </button>
+          <header className="admin-order-heading">
+            <div>
+              <p className="eyebrow">
+                {request.kind === "order" ? "ORDER DETAILS" : "ENQUIRY DETAILS"}
+              </p>
+              <h1 id="admin-request-title" tabIndex={-1} ref={requestHeading}>
+                {request.id}
+              </h1>
+              <p className="muted">
+                {new Date(request.created).toLocaleString()}
+              </p>
+            </div>
+            <div className="request-status">
+              <span className="eyebrow">STATUS</span>
+              <select
+                aria-label="Request status"
+                disabled={busy || preview || Boolean(request.data.archivedAt)}
+                value={request.status}
+                onChange={(e) => void changeStatus(request, e.target.value)}
+              >
+                {(request.kind === "inquiry"
+                  ? ["new", "contacted", "resolved"]
+                  : [
+                      "pending",
+                      "confirmed",
+                      "processing",
+                      "shipped",
+                      "delivered",
+                      "cancelled",
+                    ]
+                ).map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+              <ChevronDown size={13} />
+            </div>
+          </header>
+          {error && (
+            <div className="error-banner" role="alert">
+              {error}
+            </div>
+          )}
+          {notice && (
+            <div className="success-banner" role="status">
+              <Check size={17} />
+              {notice}
+            </div>
+          )}
+          {!preview &&
+            request.kind === "order" &&
+            request.status !== "cancelled" &&
+            !request.data.archivedAt && (
+              <OrderInsert onPreview={() => setShowOrderCard(true)} />
+            )}
+          <div className="admin-order-grid">
+            <div className="admin-order-column">
+              <section
+                className="admin-order-panel"
+                aria-labelledby="admin-order-customer"
+              >
+                <h2 id="admin-order-customer">Customer details</h2>
+                <div className="request-customer">
+                  <h3>{request.data.customer.name}</h3>
+                  <a href={`tel:${request.data.customer.phone}`}>
+                    {request.data.customer.phone}
+                  </a>
+                  <p>{request.data.customer.city}</p>
+                  <p>{request.data.customer.address}</p>
+                  {request.data.customer.notes && (
+                    <div className="customer-note">
+                      {request.data.customer.notes}
+                    </div>
+                  )}
+                </div>
+              </section>
+              <section
+                className="admin-order-panel"
+                aria-labelledby="admin-order-items"
+              >
+                <h2 id="admin-order-items">Items</h2>
+                {request.data.items.length === 0 && (
+                  <p className="muted">No items attached to this request.</p>
+                )}
+                {request.data.items.map((i) => (
+                  <div className="request-item" key={`${i.id}:${i.size}`}>
+                    <div>
+                      <h4>{i.name}</h4>
+                      <p>
+                        Size {i.size} · Quantity {i.quantity}
+                      </p>
+                    </div>
+                    <span>{money(i.price)}</span>
+                  </div>
+                ))}
+                {request.data.totals.total !== null && (
+                  <div className="total-line grand-total">
+                    <span>Total</span>
+                    <strong>{money(request.data.totals.total)}</strong>
+                  </div>
+                )}
+              </section>
+            </div>
+            <section
+              className="admin-order-column"
+              aria-label="Payment and delivery"
+            >
+              {!request.data.archivedAt && (
+                <AdminPayment
+                  key={request.id}
+                  order={request}
+                  headers={headers}
+                  preview={preview}
+                  onUpdated={(updated) => {
+                    setRequest(updated);
+                    void refresh();
+                    setNotice("Order payment updated.");
+                  }}
+                />
+              )}
+              <TrackingEditor
+                key={`tracking-${request.id}`}
+                order={request}
+                headers={headers}
+                preview={preview}
+                onUpdated={(updated) => {
+                  setRequest(updated);
+                  void refresh();
+                }}
+              />
+            </section>
+          </div>
+          <div className="request-archive-actions">
+            <button
+              type="button"
+              className="text-link"
+              disabled={
+                busy ||
+                preview ||
+                (!request.data.archivedAt &&
+                  request.kind === "order" &&
+                  !["cancelled", "delivered"].includes(request.status))
+              }
+              onClick={() => void archiveRequest(request)}
+            >
+              {request.data.archivedAt ? "Restore request" : "Archive request"}
+            </button>
+            <p className="muted small">
+              {request.data.archivedAt
+                ? "This request is hidden from the active list and customer account. Restore it to show it again."
+                : request.kind === "order" &&
+                    !["cancelled", "delivered"].includes(request.status)
+                  ? "Cancel a test order first to return its reserved stock, then archive it."
+                  : "Hide test records from the active list and customer account. Archived records can be restored."}
+            </p>
+          </div>
+        </div>
+      </main>
     );
   const incomplete =
     data?.products.filter(
@@ -632,7 +831,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                     requests={data.requests
                       .filter((r) => !r.data.archivedAt)
                       .slice(0, 6)}
-                    onSelect={setRequest}
+                    onSelect={openRequest}
                   />
                 </>
               )}
@@ -770,7 +969,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                   </div>
                   <RequestTable
                     requests={matchingRequests}
-                    onSelect={setRequest}
+                    onSelect={openRequest}
                     filtered={Boolean(query) || requestFilter !== "all"}
                   />
                 </>
@@ -1647,146 +1846,6 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
           </form>
         )}
       </Modal>
-      <Modal
-        open={Boolean(request)}
-        onClose={() => setRequest(null)}
-        label="Request details"
-        drawer
-      >
-        {request && (
-          <>
-            <div className="modal-heading">
-              <div>
-                <p className="eyebrow">{request.kind.toUpperCase()}</p>
-                <h2>{request.id}</h2>
-              </div>
-              <button
-                onClick={() => setRequest(null)}
-                aria-label="Close request"
-              >
-                <X />
-              </button>
-            </div>
-            <p className="muted">
-              {new Date(request.created).toLocaleString()}
-            </p>
-            <div className="request-status">
-              <span className="eyebrow">STATUS</span>
-              <select
-                aria-label="Request status"
-                disabled={busy || preview || Boolean(request.data.archivedAt)}
-                value={request.status}
-                onChange={(e) => void changeStatus(request, e.target.value)}
-              >
-                {(request.kind === "inquiry"
-                  ? ["new", "contacted", "resolved"]
-                  : [
-                      "pending",
-                      "confirmed",
-                      "processing",
-                      "shipped",
-                      "delivered",
-                      "cancelled",
-                    ]
-                ).map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-              <ChevronDown size={13} />
-            </div>
-            {!preview &&
-              request.kind === "order" &&
-              request.status !== "cancelled" &&
-              !request.data.archivedAt && (
-                <OrderInsert onPreview={() => setShowOrderCard(true)} />
-              )}
-            <div className="request-customer">
-              <h3>{request.data.customer.name}</h3>
-              <a href={`tel:${request.data.customer.phone}`}>
-                {request.data.customer.phone}
-              </a>
-              <p>{request.data.customer.city}</p>
-              <p>{request.data.customer.address}</p>
-              {request.data.customer.notes && (
-                <div className="customer-note">
-                  {request.data.customer.notes}
-                </div>
-              )}
-            </div>
-            {!request.data.archivedAt && (
-              <AdminPayment
-                key={request.id}
-                order={request}
-                headers={headers}
-                preview={preview}
-                onUpdated={(updated) => {
-                  setRequest(updated);
-                  void refresh();
-                  setNotice("Order payment updated.");
-                }}
-              />
-            )}
-            <TrackingEditor
-              key={`tracking-${request.id}`}
-              order={request}
-              headers={headers}
-              preview={preview}
-              onUpdated={(updated) => {
-                setRequest(updated);
-                void refresh();
-              }}
-            />
-            {request.data.items.map((i) => (
-              <div className="request-item" key={`${i.id}:${i.size}`}>
-                <div>
-                  <h4>{i.name}</h4>
-                  <p>
-                    Size {i.size} · Quantity {i.quantity}
-                  </p>
-                </div>
-                <span>{money(i.price)}</span>
-              </div>
-            ))}
-            {request.data.totals.total !== null && (
-              <div className="total-line grand-total">
-                <span>Total</span>
-                <strong>{money(request.data.totals.total)}</strong>
-              </div>
-            )}
-            <div className="request-archive-actions">
-              <button
-                type="button"
-                className="text-link"
-                disabled={
-                  busy ||
-                  preview ||
-                  (!request.data.archivedAt &&
-                    request.kind === "order" &&
-                    !["cancelled", "delivered"].includes(request.status))
-                }
-                onClick={() => void archiveRequest(request)}
-              >
-                {request.data.archivedAt
-                  ? "Restore request"
-                  : "Archive request"}
-              </button>
-              <p className="muted small">
-                {request.data.archivedAt
-                  ? "This request is hidden from the active list and customer account. Restore it to show it again."
-                  : request.kind === "order" &&
-                      !["cancelled", "delivered"].includes(request.status)
-                    ? "Cancel a test order first to return its reserved stock, then archive it."
-                    : "Hide test records from the active list and customer account. Archived records can be restored."}
-              </p>
-            </div>
-            {error && (
-              <p className="field-error" role="alert">
-                {error}
-              </p>
-            )}
-          </>
-        )}
-      </Modal>
     </div>
   );
 }
@@ -1819,7 +1878,7 @@ function RequestTable({
   filtered?: boolean;
 }) {
   return requests.length ? (
-    <div className="admin-table-wrap">
+    <div className="admin-table-wrap admin-request-list">
       <table
         className="admin-table admin-request-table"
         role="table"
@@ -1880,6 +1939,7 @@ function RequestTable({
               </td>
               <td role="cell">
                 <button
+                  id={`open-request-${r.id}`}
                   className="admin-open-request"
                   aria-label={`Open request ${r.id}`}
                   onClick={() => onSelect(r)}
