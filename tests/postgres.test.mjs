@@ -95,7 +95,7 @@ after(async () => {
 test("Postgres schema seeds owner catalog and returns no private settings", async () => {
   const result = await request("/api/catalog");
   assert.equal(result.status, 200);
-  assert.equal(result.data.products.length, 8);
+  assert.equal(result.data.products.length, 11);
   assert.ok(
     result.data.products
       .filter((product) =>
@@ -117,6 +117,9 @@ test("Postgres schema seeds owner catalog and returns no private settings", asyn
     "metro-court-mocha",
     "metro-court-onyx",
     "regent-bit-black-2026",
+    "chelsea-black",
+    "chelsea-brown",
+    "olive-gum-penny",
   ])
     assert.equal(
       result.data.products.find((product) => product.id === id).stock,

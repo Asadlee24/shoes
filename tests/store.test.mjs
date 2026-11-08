@@ -56,7 +56,7 @@ after(async () => {
 test("catalog contains the published owner catalogue, confirmed PKR prices and size labels", async () => {
   const r = await request("/api/catalog");
   assert.equal(r.status, 200);
-  assert.equal(r.data.products.length, 8);
+  assert.equal(r.data.products.length, 11);
   assert.deepEqual(
     Object.fromEntries(r.data.products.map((p) => [p.id, p.price])),
     {
@@ -68,6 +68,9 @@ test("catalog contains the published owner catalogue, confirmed PKR prices and s
       "metro-court-mocha": 300000,
       "metro-court-onyx": 300000,
       "regent-bit-black-2026": 250000,
+      "chelsea-black": 325000,
+      "chelsea-brown": 325000,
+      "olive-gum-penny": 345000,
     },
   );
   assert.ok(r.data.products.every((p) => p.sizes.join(",") === "7,8,9,10,11"));

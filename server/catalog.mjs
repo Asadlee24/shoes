@@ -6,6 +6,103 @@ export const confirmedPrices = {
   "evening-bit": 280000,
   "brown-textured": 220000,
 };
+
+export const novemberStockRevision = "owner-november-shoe-listings-2026-11-08";
+export const novemberStockProducts = [
+  {
+    id: "chelsea-black",
+    slug: "classic-chelsea-black",
+    name: "The Classic Chelsea — Black",
+    subtitle: "Polished black Chelsea ankle boots",
+    category: "Formal shoes",
+    color: "Black",
+    swatch: "#171717",
+    sku: "QF-CHELSEA-BLK",
+    price: 325000,
+    stock: null,
+    sizes: ["7", "8", "9", "10", "11"],
+    published: true,
+    featured: false,
+    image: "/products/classic-chelsea-black-1.webp",
+    images: [
+      "/products/classic-chelsea-black-1.webp",
+      "/products/classic-chelsea-black-2.webp",
+    ],
+    imagePosition: "50% 55%",
+    description:
+      "A polished black Chelsea boot with a rounded toe and a low-profile sole. Elastic side panels and a heel pull tab make it easy to slip on with dark denim or tailored trousers.",
+    details: [
+      "Smooth black finish",
+      "Elastic side panels",
+      "Heel pull tab",
+      "Low-profile black sole",
+    ],
+  },
+  {
+    id: "chelsea-brown",
+    slug: "classic-chelsea-brown",
+    name: "The Classic Chelsea — Brown",
+    subtitle: "Deep brown Chelsea ankle boots",
+    variantOf: "chelsea-black",
+    category: "Formal shoes",
+    color: "Brown",
+    swatch: "#453029",
+    sku: "QF-CHELSEA-BRN",
+    price: 325000,
+    stock: null,
+    sizes: ["7", "8", "9", "10", "11"],
+    published: true,
+    featured: false,
+    image: "/products/classic-chelsea-brown-1.webp",
+    images: [
+      "/products/classic-chelsea-brown-1.webp",
+      "/products/classic-chelsea-brown-2.webp",
+    ],
+    imagePosition: "50% 55%",
+    description:
+      "A deep brown Chelsea boot with a fine-grained finish, black elastic side panels and a low black sole. The warm brown tone works well with denim, chinos and relaxed tailoring.",
+    details: [
+      "Fine-grained deep brown finish",
+      "Black elastic side panels",
+      "Heel pull tab",
+      "Low-profile black sole",
+    ],
+  },
+  {
+    id: "olive-gum-penny",
+    slug: "olive-gum-sole-penny-loafer",
+    name: "The Olive Penny — Gum Sole",
+    subtitle: "Olive slip-on penny loafers with a gum-brown sole",
+    category: "Loafers",
+    color: "Olive-Khaki",
+    swatch: "#565845",
+    sku: "QF-PENNY-OLV-GUM",
+    price: 345000,
+    stock: null,
+    sizes: ["7", "8", "9", "10", "11"],
+    published: true,
+    featured: false,
+    image: "/products/olive-gum-penny-1.webp",
+    images: [
+      "/products/olive-gum-penny-1.webp",
+      "/products/olive-gum-penny-2.webp",
+      "/products/olive-gum-penny-3.webp",
+    ],
+    imagePosition: "50% 56%",
+    description:
+      "A muted olive penny loafer with a matte textured finish, tonal toe stitching and a dark accent on the penny strap. A low gum-brown sole gives this slip-on an easy look for chinos and everyday smart-casual wear.",
+    details: [
+      "Matte olive textured finish",
+      "Penny strap with a dark accent",
+      "Tonal stitching around the toe",
+      "Low gum-brown sole",
+    ],
+  },
+].map((product) => ({
+  ...product,
+  stockBySize: Object.fromEntries(product.sizes.map((size) => [size, null])),
+}));
+
 export const initialProducts = [
   {
     id: "suede-penny",
@@ -239,7 +336,8 @@ export const initialProducts = [
     "10": null,
     "11": null
   }
-}
+},
+  ...novemberStockProducts,
 ];
 export const officialDetails = {
   website: "https://qadamflex.bond",

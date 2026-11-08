@@ -13,6 +13,8 @@ import { dirname } from "node:path";
 import {
   initialProducts,
   initialSettings,
+  novemberStockProducts,
+  novemberStockRevision,
   confirmedPrices,
   officialDetails,
   ownerFreeDeliveryRevision,
@@ -149,6 +151,16 @@ export function openStore(path) {
     rollbackMistakenPhotosSqlite(db);
     seedSneakersSqlite(db);
     seedRegentSqlite(db);
+    const novemberStock = db
+      .prepare("INSERT INTO migrations(id,applied) VALUES(?,?) ON CONFLICT(id) DO NOTHING")
+      .run(novemberStockRevision, new Date().toISOString());
+    if (novemberStock.changes) {
+      const insert = db.prepare(
+        "INSERT INTO products(id,data) VALUES(?,?) ON CONFLICT(id) DO NOTHING",
+      );
+      for (const product of novemberStockProducts)
+        insert.run(product.id, JSON.stringify(product));
+    }
     sqliteCoffee(db);
     refreshStudioCoversSqlite(db);
     completeProductPhotosSqlite(db);

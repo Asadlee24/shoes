@@ -15,6 +15,8 @@ import { createHash } from "node:crypto";
 import {
   initialProducts,
   initialSettings,
+  novemberStockProducts,
+  novemberStockRevision,
   ownerFreeDeliveryRevision,
   ownerNotificationRevision,
 } from "./catalog.mjs";
@@ -245,6 +247,17 @@ export async function openPostgresStore(options = {}) {
     await rollbackMistakenPhotosStore(store);
     await seedSneakersPostgres(store);
     await seedRegentPostgres(store);
+    const novemberStock = await query(
+      "INSERT INTO qf_migrations(id,applied) VALUES($1,$2) ON CONFLICT(id) DO NOTHING RETURNING id",
+      [novemberStockRevision, new Date().toISOString()],
+    );
+    if (novemberStock.rows.length) {
+      for (const product of novemberStockProducts)
+        await query(
+          "INSERT INTO qf_products(id,data) VALUES($1,$2) ON CONFLICT(id) DO NOTHING",
+          [product.id, JSON.stringify(product)],
+        );
+    }
     await postgresCoffee(store);
     await refreshStudioCoversPostgres(store);
     await completeProductPhotosPostgres(store);

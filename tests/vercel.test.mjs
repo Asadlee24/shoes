@@ -24,7 +24,7 @@ test("Vercel catalog exposes approved published products without private setting
   const res = response();
   catalog({ method: "GET" }, res);
   assert.equal(res.statusCode, 200);
-  assert.equal(res.data.products.length, 8);
+  assert.equal(res.data.products.length, 11);
   assert.equal(
     res.data.products.find((p) => p.id === "textured-bit").price,
     220000,
