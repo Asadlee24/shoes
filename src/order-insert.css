@@ -88,11 +88,10 @@
   --card-ink: #18323f;
   --card-accent: #255a6d;
   box-sizing: border-box;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-content: space-between;
-  align-items: center;
-  gap: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
   width: min(100%, 560px);
   min-height: 310px;
   margin-inline: auto;
@@ -116,7 +115,6 @@
 
 .qf-insert header,
 .qf-insert footer {
-  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -160,7 +158,19 @@
   overflow-wrap: anywhere;
 }
 
+.qf-insert-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.qf-insert-copy {
+  min-width: 0;
+}
+
 .qf-insert-mark {
+  flex-shrink: 0;
   width: clamp(48px, 16vw, 108px);
   height: auto;
   fill: none;
@@ -192,7 +202,7 @@
     page: qf-thank-you;
     min-height: 0;
     margin: 0;
-    padding: 0;
+    padding: 3mm 0;
     background: #fff;
   }
 
@@ -201,9 +211,9 @@
   }
 
   .qf-print-page .qf-insert {
-    width: 148mm;
-    max-width: 100%;
-    height: 105mm;
+    width: 142mm;
+    max-width: calc(100% - 6mm);
+    height: 99mm;
     min-height: 0;
     padding: 8mm 10mm;
     border-radius: 0;
@@ -214,7 +224,16 @@
   }
 
   .qf-print-page .qf-insert h2 {
-    font-size: 38pt;
+    font-size: 33pt;
+  }
+
+  .qf-print-page .qf-insert-body {
+    margin-block: 4mm;
+  }
+
+  .qf-print-page .qf-insert header img {
+    width: 23mm;
+    height: 16mm;
   }
 
   .qf-print-page .qf-insert-mark {

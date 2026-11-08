@@ -80,27 +80,31 @@ export function OrderInsertPrintView({
             PACKED WITH CARE
           </p>
         </header>
-        <div className="qf-insert-copy">
-          <p className="qf-insert-kicker">A LITTLE NOTE FOR YOU</p>
-          <h2>
-            Good steps
-            <br />
-            start here.
-          </h2>
-          <p className="qf-insert-message">
-            <strong>{greeting}</strong> Thanks for stepping out with Qadam Flex.
-            We hope your new pair takes you somewhere good.
-          </p>
+        <div className="qf-insert-body">
+          <div className="qf-insert-copy">
+            <p className="qf-insert-kicker">A LITTLE NOTE FOR YOU</p>
+            <h2>
+              Good steps
+              <br />
+              start here.
+            </h2>
+            <p className="qf-insert-message">
+              <strong>{greeting}</strong> Thanks for stepping out with Qadam
+              Flex. We hope your new pair takes you somewhere good.
+            </p>
+          </div>
+          <svg
+            className="qf-insert-mark"
+            viewBox="0 0 108 108"
+            fill="none"
+            stroke="#255a6d"
+            aria-hidden="true"
+          >
+            <circle cx="54" cy="54" r="48" />
+            <circle cx="54" cy="54" r="41" strokeDasharray="1 4" />
+            <path d="M34 69 66 37m-17 0h17v17M45 74l27-27m-2 20 4-4" />
+          </svg>
         </div>
-        <svg
-          className="qf-insert-mark"
-          viewBox="0 0 108 108"
-          aria-hidden="true"
-        >
-          <circle cx="54" cy="54" r="48" />
-          <circle cx="54" cy="54" r="41" strokeDasharray="1 4" />
-          <path d="M34 69 66 37m-17 0h17v17M45 74l27-27m-2 20 4-4" />
-        </svg>
         <footer>
           <span>QADAMFLEX.BOND</span>
           <span>ORDER {order.id}</span>
