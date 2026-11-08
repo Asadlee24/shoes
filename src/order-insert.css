@@ -86,7 +86,8 @@
 
 .qf-insert {
   --card-ink: #18323f;
-  --card-accent: #255a6d;
+  --card-accent: #775b32;
+  position: relative;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -95,17 +96,24 @@
   width: min(100%, 560px);
   min-height: 310px;
   margin-inline: auto;
-  padding: clamp(15px, 5vw, 35px);
-  border: 1px solid #81949b;
-  border-top: 5px solid #255a6d;
+  padding: clamp(18px, 5.8vw, 38px);
+  border: 1px solid #3a5b69;
   border-radius: 2px;
-  background: #fffcf5;
+  background: #fffbf1;
   color: var(--card-ink);
   color-scheme: only light;
   font:
     14px/1.45 system-ui,
     sans-serif;
   box-shadow: 0 12px 28px #18323f18;
+}
+
+.qf-insert::before {
+  position: absolute;
+  inset: 6px;
+  border: 1px solid #b29767;
+  content: "";
+  pointer-events: none;
 }
 
 .qf-insert :is(header, footer, p, h2, strong, span) {
@@ -136,6 +144,10 @@
   text-align: right;
 }
 
+.qf-insert header p span {
+  color: var(--card-accent);
+}
+
 .qf-insert .qf-insert-kicker {
   margin: 0 0 7px;
   color: var(--card-accent);
@@ -147,15 +159,23 @@
 .qf-insert h2 {
   margin: 0;
   font:
-    500 clamp(32px, 8.7vw, 57px)/0.95 Georgia,
+    500 clamp(30px, 8.7vw, 65px)/0.95 Georgia,
     serif;
   letter-spacing: -0.055em;
 }
 
 .qf-insert-message {
-  max-width: 34ch;
+  max-width: 38ch;
   margin: 13px 0 0;
   overflow-wrap: anywhere;
+}
+
+.qf-insert .qf-insert-signoff {
+  margin-top: 8px;
+  color: var(--card-accent);
+  font:
+    italic 14px/1.35 Georgia,
+    serif;
 }
 
 .qf-insert-body {
@@ -171,10 +191,10 @@
 
 .qf-insert-mark {
   flex-shrink: 0;
-  width: clamp(48px, 16vw, 108px);
+  width: clamp(50px, 19vw, 126px);
   height: auto;
   fill: none;
-  stroke: var(--card-accent);
+  stroke: var(--card-ink);
   stroke-width: 1.75;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -182,7 +202,7 @@
 
 .qf-insert footer {
   flex-wrap: wrap;
-  border-top: 1px solid #81949b;
+  border-top: 1px solid #b29767;
   padding-top: 9px;
   overflow-wrap: anywhere;
 }
@@ -224,7 +244,7 @@
   }
 
   .qf-print-page .qf-insert h2 {
-    font-size: 33pt;
+    font-size: 41pt;
   }
 
   .qf-print-page .qf-insert-body {
@@ -237,6 +257,6 @@
   }
 
   .qf-print-page .qf-insert-mark {
-    width: 27mm;
+    width: 31mm;
   }
 }

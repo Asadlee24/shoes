@@ -75,34 +75,44 @@ export function OrderInsertPrintView({
             />
           )}
           <p>
-            THE QADAM FLEX EDIT
+            THE SHOEBOX EDIT
             <br />
-            PACKED WITH CARE
+            <span>PACKED WITH CARE</span>
           </p>
         </header>
         <div className="qf-insert-body">
           <div className="qf-insert-copy">
-            <p className="qf-insert-kicker">A LITTLE NOTE FOR YOU</p>
-            <h2>
-              Good steps
-              <br />
-              start here.
-            </h2>
+            <p className="qf-insert-kicker">A NOTE FROM QADAM FLEX</p>
+            <h2>Thank you.</h2>
             <p className="qf-insert-message">
-              <strong>{greeting}</strong> Thanks for stepping out with Qadam
-              Flex. We hope your new pair takes you somewhere good.
+              <strong>{greeting}</strong> We’re glad you picked this pair. Wear
+              them well, take the long way home, and make them yours.
             </p>
+            <p className="qf-insert-signoff">See you out there, Qadam Flex</p>
           </div>
           <svg
             className="qf-insert-mark"
-            viewBox="0 0 108 108"
+            viewBox="0 0 144 144"
             fill="none"
             stroke="#255a6d"
             aria-hidden="true"
           >
-            <circle cx="54" cy="54" r="48" />
-            <circle cx="54" cy="54" r="41" strokeDasharray="1 4" />
-            <path d="M34 69 66 37m-17 0h17v17M45 74l27-27m-2 20 4-4" />
+            <circle cx="72" cy="72" r="66" stroke="#8d6c3c" strokeWidth="0.8" />
+            <circle
+              cx="72"
+              cy="72"
+              r="60"
+              stroke="#8d6c3c"
+              strokeWidth="0.65"
+              strokeDasharray="1 3"
+            />
+            <path d="M25 78c3-6 4-17 6-23 1-4 5-5 8-2l10 9c4 4 11 4 16 1l10-6c3-2 7 0 10 4l10 10c5 5 11 7 18 8 5 1 8 4 8 8v5H24v-8l1-6Z" />
+            <path d="M25 84h92M24 92h97M34 58l13 10c5 4 14 5 20 1l12-7M70 72l7 4m0-8 7 4m1-4 7 4M37 85v7m62-7v7" />
+            <path
+              d="M72 25v12m-6-6h12m-6 75v12m-6-6h12M98 42l6-6m-6 0 6 6"
+              stroke="#8d6c3c"
+              strokeWidth="1.2"
+            />
           </svg>
         </div>
         <footer>
