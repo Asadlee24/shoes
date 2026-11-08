@@ -31,7 +31,7 @@ import {
   optimizedImage,
 } from "../shared/catalogue.mjs";
 import { prepareProductPhoto } from "./upload-photo";
-import OrderInsert from "./OrderInsert";
+import OrderInsert, { OrderInsertPrintView } from "./OrderInsert";
 import "./admin-workspace.css";
 
 const workspaceTabs = [
@@ -103,6 +103,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
     [edit, setEdit] = useState<Product | null>(null),
     [creating, setCreating] = useState(false),
     [request, setRequest] = useState<StoreRequest | null>(null),
+    [showOrderCard, setShowOrderCard] = useState(false),
     [busy, setBusy] = useState(false),
     [settings, setSettings] = useState<Settings | null>(null),
     [requestFilter, setRequestFilter] = useState("all"),
@@ -434,6 +435,13 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
           Back to the store <ArrowUpRight size={14} />
         </Link>
       </main>
+    );
+  if (showOrderCard && request)
+    return (
+      <OrderInsertPrintView
+        order={request}
+        onBack={() => setShowOrderCard(false)}
+      />
     );
   const incomplete =
     data?.products.filter(
@@ -1690,7 +1698,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
               request.kind === "order" &&
               request.status !== "cancelled" &&
               !request.data.archivedAt && (
-                <OrderInsert key={`insert-${request.id}`} order={request} />
+                <OrderInsert onPreview={() => setShowOrderCard(true)} />
               )}
             <div className="request-customer">
               <h3>{request.data.customer.name}</h3>

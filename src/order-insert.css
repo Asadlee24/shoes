@@ -1,5 +1,8 @@
 .qf-insert-section {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-block: 16px 22px;
   padding: 14px;
@@ -9,68 +12,124 @@
   color: #102f40;
 }
 
-.qf-insert-section summary {
-  cursor: pointer;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-.qf-insert-section summary span {
-  margin-inline-start: 8px;
-  font-size: 0.75em;
-  font-weight: 400;
+.qf-insert-section p {
+  margin-top: 4px;
+  font-size: 12px;
 }
 
 .qf-insert-section > button {
-  justify-self: start;
   min-height: 44px;
   gap: 9px;
 }
 
-.qf-insert-section details[open] .qf-insert {
-  margin-top: 12px;
+.qf-print-page {
+  min-height: 100dvh;
+  padding: 24px 16px 40px;
+  background: #edeae4;
+  color: #18323f;
+  color-scheme: only light;
+}
+
+.qf-print-tools,
+.qf-print-help {
+  max-width: 560px;
+  margin-inline: auto;
+}
+
+.qf-print-tools {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.qf-print-tools h1 {
+  font-size: clamp(25px, 5vw, 38px);
+  line-height: 1.1;
+  outline: none;
+}
+
+.qf-print-tools p,
+.qf-print-help {
+  font-size: 13px;
+  color: #405763;
+}
+
+.qf-print-help {
+  margin-top: 15px;
+}
+
+.qf-print-tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 44px;
+  justify-self: start;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.qf-print-back {
+  color: #18323f;
+}
+
+.qf-print-action {
+  padding-inline: 18px;
+  border-radius: 6px;
+  background: #18323f;
+  color: #fff;
+}
+
+.qf-print-action:disabled {
+  opacity: 0.65;
 }
 
 .qf-insert {
+  --card-ink: #18323f;
+  --card-accent: #255a6d;
   box-sizing: border-box;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-content: space-between;
-  gap: 12px;
-  width: 100%;
-  min-height: 275px;
-  padding: clamp(18px, 5%, 38px);
-  border: 1px solid #7b939e;
-  border-top: 4px solid #286481;
-  border-radius: 3px;
-  background: #fff;
-  color: #102f40;
+  align-items: center;
+  gap: 14px 12px;
+  width: min(100%, 560px);
+  min-height: 310px;
+  margin-inline: auto;
+  padding: clamp(15px, 5vw, 35px);
+  border: 1px solid #81949b;
+  border-top: 5px solid #255a6d;
+  border-radius: 2px;
+  background: #fffcf5;
+  color: var(--card-ink);
   color-scheme: only light;
   font:
-    15px/1.45 system-ui,
+    14px/1.45 system-ui,
     sans-serif;
+  box-shadow: 0 12px 28px #18323f18;
 }
 
-.qf-insert :is(header, footer, p, strong, span) {
-  color: #102f40;
+.qf-insert :is(header, footer, p, h2, strong, span) {
+  color: var(--card-ink);
   -webkit-text-fill-color: currentColor;
 }
 
 .qf-insert header,
 .qf-insert footer {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  font:
-    700 9px/1.5 system-ui,
-    sans-serif;
+  gap: 8px 12px;
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: 0.12em;
 }
 
 .qf-insert header img {
   display: block;
-  width: 84px;
-  height: 66px;
+  width: 88px;
+  height: 69px;
   object-fit: contain;
 }
 
@@ -79,25 +138,86 @@
   text-align: right;
 }
 
-.qf-insert h3 {
+.qf-insert .qf-insert-kicker {
+  margin: 0 0 7px;
+  color: var(--card-accent);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+}
+
+.qf-insert h2 {
   margin: 0;
-  color: #102f40;
-  -webkit-text-fill-color: currentColor;
   font:
-    500 clamp(32px, 7vw, 48px)/0.97 Georgia,
+    500 clamp(32px, 8.7vw, 57px)/0.95 Georgia,
     serif;
   letter-spacing: -0.055em;
 }
 
 .qf-insert-message {
   max-width: 34ch;
-  margin: 0;
+  margin: 13px 0 0;
   overflow-wrap: anywhere;
+}
+
+.qf-insert-mark {
+  width: clamp(48px, 16vw, 108px);
+  height: auto;
+  fill: none;
+  stroke: var(--card-accent);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .qf-insert footer {
   flex-wrap: wrap;
-  border-top: 1px solid #7b939e;
+  border-top: 1px solid #81949b;
   padding-top: 9px;
   overflow-wrap: anywhere;
+}
+
+@page qf-thank-you {
+  size: 148mm 105mm;
+  margin: 0;
+}
+
+@media print {
+  body:has(.qf-print-page) {
+    margin: 0;
+    background: #fff;
+  }
+
+  .qf-print-page {
+    page: qf-thank-you;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .qf-print-page :is(.qf-print-tools, .qf-print-help) {
+    display: none;
+  }
+
+  .qf-print-page .qf-insert {
+    width: 148mm;
+    max-width: 100%;
+    height: 105mm;
+    min-height: 0;
+    padding: 8mm 10mm;
+    border-radius: 0;
+    break-inside: avoid;
+    box-shadow: none;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .qf-print-page .qf-insert h2 {
+    font-size: 38pt;
+  }
+
+  .qf-print-page .qf-insert-mark {
+    width: 27mm;
+  }
 }
