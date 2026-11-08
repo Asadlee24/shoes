@@ -10,7 +10,13 @@ import { completeProductPhotosPostgres } from "./catalog-photo-completion.mjs";
 import { refreshStudioGalleriesPostgres } from "./gallery-studio-refresh.mjs";
 import { commerceSchema } from "./commerce-schema.mjs";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { ownerStock, ownerStockRevision } from "./inventory.mjs";
+import {
+  confirmNovemberStock,
+  novemberStockConfirmation,
+  novemberStockIds,
+  ownerStock,
+  ownerStockRevision,
+} from "./inventory.mjs";
 import { createHash } from "node:crypto";
 import {
   initialProducts,
@@ -257,6 +263,17 @@ export async function openPostgresStore(options = {}) {
           "INSERT INTO qf_products(id,data) VALUES($1,$2) ON CONFLICT(id) DO NOTHING",
           [product.id, JSON.stringify(product)],
         );
+    }
+    const confirmation = await query(
+      "INSERT INTO qf_migrations(id,applied) VALUES($1,$2) ON CONFLICT(id) DO NOTHING RETURNING id",
+      [novemberStockConfirmation, new Date().toISOString()],
+    );
+    if (confirmation.rows.length) {
+      for (const id of novemberStockIds) {
+        const before = await store.product(id);
+        const after = confirmNovemberStock(before);
+        if (after !== before) await store.saveProduct(after);
+      }
     }
     await postgresCoffee(store);
     await refreshStudioCoversPostgres(store);

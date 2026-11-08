@@ -117,14 +117,18 @@ test("Postgres schema seeds owner catalog and returns no private settings", asyn
     "metro-court-mocha",
     "metro-court-onyx",
     "regent-bit-black-2026",
-    "chelsea-black",
-    "chelsea-brown",
-    "olive-gum-penny",
   ])
     assert.equal(
       result.data.products.find((product) => product.id === id).stock,
       null,
     );
+  for (const id of ["chelsea-black", "chelsea-brown", "olive-gum-penny"]) {
+    const product = result.data.products.find((product) => product.id === id);
+    assert.equal(product.stock, 10);
+    assert.deepEqual(product.stockBySize, {
+      7: 2, 8: 2, 9: 2, 10: 2, 11: 2,
+    });
+  }
   assert.equal("orderNotificationEmail" in result.data.settings, false);
   assert.equal(result.data.settings.shippingFee, 0);
   const health = await request("/api/index?route=health");

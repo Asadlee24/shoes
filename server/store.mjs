@@ -1,6 +1,12 @@
 import { commerceSchema } from "./commerce-schema.mjs";
 import { DatabaseSync } from "node:sqlite";
-import { ownerStock, ownerStockRevision } from "./inventory.mjs";
+import {
+  confirmNovemberStock,
+  novemberStockConfirmation,
+  novemberStockIds,
+  ownerStock,
+  ownerStockRevision,
+} from "./inventory.mjs";
 import { rollbackMistakenPhotosSqlite } from "./owner-gallery-rollback.mjs";
 import { seedSneakersSqlite } from "./sneaker-listings.mjs";
 import { seedRegentSqlite } from "./regent-loafer-listing.mjs";
@@ -160,6 +166,22 @@ export function openStore(path) {
       );
       for (const product of novemberStockProducts)
         insert.run(product.id, JSON.stringify(product));
+    }
+    const confirmation = db
+      .prepare(
+        "INSERT INTO migrations(id,applied) VALUES(?,?) ON CONFLICT(id) DO NOTHING",
+      )
+      .run(novemberStockConfirmation, new Date().toISOString());
+    if (confirmation.changes) {
+      const select = db.prepare("SELECT data FROM products WHERE id=?");
+      const update = db.prepare("UPDATE products SET data=? WHERE id=?");
+      for (const id of novemberStockIds) {
+        const row = select.get(id);
+        if (!row) continue;
+        const before = JSON.parse(row.data);
+        const after = confirmNovemberStock(before);
+        if (after !== before) update.run(JSON.stringify(after), id);
+      }
     }
     sqliteCoffee(db);
     refreshStudioCoversSqlite(db);
