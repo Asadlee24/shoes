@@ -7,7 +7,7 @@ import cardStyles from "./order-insert.css?raw";
 import "./order-insert.css";
 
 const printStyles = `
-  html { color-scheme: light; }
+  html { color-scheme: only light; }
   body { margin: 0; padding: 24px; background: #eeefed; font: 14px system-ui, sans-serif; }
   .print-toolbar { max-width: 148mm; margin: 0 auto 18px; display: flex; flex-wrap: wrap;
     align-items: center; gap: 10px 16px; color: #292f32; }
@@ -117,11 +117,7 @@ export default function OrderInsert({ order }: { order: StoreRequest }) {
           </footer>
         </article>
       </details>
-      <button
-        type="button"
-        className="button button-outline"
-        onClick={() => void printCard()}
-      >
+      <button type="button" className="button" onClick={() => void printCard()}>
         <Printer size={17} aria-hidden="true" /> Print thank-you card
       </button>
       {error && (

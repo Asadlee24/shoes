@@ -1,0 +1,259 @@
+.admin-app {
+  background: #f3f5f5;
+}
+
+.admin-sidebar {
+  background: #17262d;
+  color: #e0eaee;
+}
+
+.admin-sidebar nav > button {
+  font-size: 13px;
+  font-weight: 550;
+  min-height: 44px;
+}
+
+.admin-sidebar nav > button:hover {
+  background: #223841;
+}
+
+.admin-sidebar nav > button.active {
+  background: #284753;
+  color: #fff;
+}
+
+.admin-app :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid #28738f;
+  outline-offset: 3px;
+}
+
+.admin-topbar {
+  height: 64px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.admin-user {
+  font-size: 11px;
+}
+
+.admin-body {
+  margin-inline: auto;
+}
+
+.admin-page-heading {
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.admin-page-heading .eyebrow,
+.admin-stat > span,
+.admin-table th,
+.admin-table td:nth-child(2) > span,
+.admin-app .request-customer > p,
+.admin-app .request-item :is(p, span) {
+  color: #505e64;
+}
+
+.admin-page-heading .muted,
+.admin-stat > span,
+.admin-app .request-customer > p,
+.admin-app .request-item :is(p, span) {
+  font-size: 13px;
+}
+
+.admin-stat,
+.admin-empty,
+.admin-app .admin-settings > section {
+  background: #fff;
+  border-radius: 10px;
+}
+
+.admin-app .status-pill {
+  background: #e6eef0;
+  color: #263e49;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.admin-app .status-pill.new-status {
+  background: #e2f0f7;
+  color: #17455a;
+}
+
+.admin-request-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.admin-request-search {
+  flex: 1 1 250px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding-inline: 12px;
+  border: 1px solid #bcc9cd;
+  border-radius: 8px;
+  background: #fff;
+  color: #40545e;
+}
+
+.admin-request-search:focus-within {
+  outline: 2px solid #28738f;
+  outline-offset: 2px;
+}
+
+.admin-app .admin-request-search input,
+.admin-app .admin-request-tools select {
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 16px;
+  color: #1d2e36;
+  background: #fff;
+}
+
+.admin-app .admin-request-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+}
+
+.admin-app .admin-request-tools select {
+  max-width: 100%;
+  border: 1px solid #bcc9cd;
+  border-radius: 8px;
+}
+
+.admin-request-tools > span {
+  font-size: 13px;
+}
+
+.admin-request-table {
+  background: #fff;
+  font-size: 13px;
+}
+
+.admin-request-table th {
+  background: #e9eff1;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.admin-request-table td:nth-child(2) > strong,
+.admin-request-table td > .text-link {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.admin-request-table td:nth-child(2) > span {
+  font-size: 12px;
+}
+
+.admin-open-request {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 5px 9px;
+  border: 1px solid #bbcbd2;
+  border-radius: 7px;
+  color: #163b4c;
+}
+
+.admin-open-request:hover {
+  background: #eef5f8;
+}
+
+.admin-app .modal[aria-label="Request details"] {
+  background: #fff;
+  color: #232323;
+}
+
+.admin-app .request-status select {
+  min-height: 44px;
+  font-size: 14px;
+}
+
+@media (max-width: 800px) {
+  .admin-sidebar {
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .admin-sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(135px, 100%), 1fr));
+  }
+
+  .admin-sidebar nav > button {
+    font-size: 12px;
+  }
+
+  .admin-topbar {
+    height: 48px;
+    padding-inline: 16px;
+  }
+
+  .admin-body {
+    padding: 20px 16px;
+  }
+
+  .admin-request-table,
+  .admin-request-table tbody {
+    display: block;
+    background: transparent;
+  }
+
+  .admin-request-table thead {
+    position: absolute;
+    clip-path: inset(50%);
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .admin-request-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+    margin-bottom: 10px;
+    padding: 13px;
+    border: 1px solid #d4dfe2;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .admin-request-table td {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-request-table td:first-child,
+  .admin-request-table td:nth-child(2),
+  .admin-request-table td:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .admin-request-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: #505e64;
+    font-size: 11px;
+    font-weight: 650;
+  }
+
+  .admin-open-request {
+    width: 100%;
+  }
+}

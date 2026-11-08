@@ -1,13 +1,18 @@
 .qf-insert-section {
   display: grid;
   gap: 12px;
-  margin-block: 22px;
+  margin-block: 16px 22px;
+  padding: 14px;
+  border: 1px solid #cddbe1;
+  border-radius: 10px;
+  background: #eef5f8;
+  color: #102f40;
 }
 
 .qf-insert-section summary {
-  margin-bottom: 10px;
   cursor: pointer;
   font-weight: 600;
+  line-height: 1.45;
 }
 
 .qf-insert-section summary span {
@@ -18,6 +23,12 @@
 
 .qf-insert-section > button {
   justify-self: start;
+  min-height: 44px;
+  gap: 9px;
+}
+
+.qf-insert-section details[open] .qf-insert {
+  margin-top: 12px;
 }
 
 .qf-insert {
@@ -33,9 +44,15 @@
   border-radius: 3px;
   background: #fff;
   color: #102f40;
+  color-scheme: only light;
   font:
     15px/1.45 system-ui,
     sans-serif;
+}
+
+.qf-insert :is(header, footer, p, strong, span) {
+  color: #102f40;
+  -webkit-text-fill-color: currentColor;
 }
 
 .qf-insert header,
@@ -65,6 +82,7 @@
 .qf-insert h3 {
   margin: 0;
   color: #102f40;
+  -webkit-text-fill-color: currentColor;
   font:
     500 clamp(32px, 7vw, 48px)/0.97 Georgia,
     serif;

@@ -1152,15 +1152,13 @@ a:focus-visible {
 .admin-login {
   --ink: #232323;
   --paper: #f6f6f2;
-  --muted: #777;
+  --muted: #555;
   --line: #d7d7d2;
   --surface: #edede8;
+  --surface-raised: #fff;
   --tint: #deded8;
-  color: #232323;
-}
-.admin-app .button,
-.admin-login .button {
-  color: #fff;
+  color: var(--ink);
+  color-scheme: light;
 }
 .admin-app .customer-form input,
 .admin-app .customer-form textarea,

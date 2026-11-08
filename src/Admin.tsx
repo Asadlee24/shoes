@@ -13,6 +13,7 @@ import {
   Package,
   Plus,
   Save,
+  Search,
   Settings2,
   ShoppingBag,
   Trash2,
@@ -31,6 +32,15 @@ import {
 } from "../shared/catalogue.mjs";
 import { prepareProductPhoto } from "./upload-photo";
 import OrderInsert from "./OrderInsert";
+import "./admin-workspace.css";
+
+const workspaceTabs = [
+  ["overview", "Overview", LayoutGrid],
+  ["products", "Collection", Package],
+  ["requests", "Orders & enquiries", ShoppingBag],
+  ["reviews", "Customer reviews", MessageSquare],
+  ["settings", "Store settings", Settings2],
+] as const;
 
 type Dashboard = {
   products: Product[];
@@ -67,6 +77,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
     [busy, setBusy] = useState(false),
     [settings, setSettings] = useState<Settings | null>(null),
     [requestFilter, setRequestFilter] = useState("all"),
+    [requestSearch, setRequestSearch] = useState(""),
     [productFilter, setProductFilter] = useState("all"),
     [stockForAll, setStockForAll] = useState("");
   const headers = { "X-CSRF-Token": csrf };
@@ -399,6 +410,24 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
     data?.products.filter(
       (p) => p.published && productSetupIssues(p).length > 0,
     ).length || 0;
+  const query = requestSearch.trim().toLowerCase();
+  const matchingRequests = (data?.requests ?? [])
+    .filter((r) => {
+      if (requestFilter === "archived") return Boolean(r.data.archivedAt);
+      if (r.data.archivedAt) return false;
+      if (requestFilter === "receipts")
+        return (
+          r.data.payment?.status === "under_review" && r.status !== "cancelled"
+        );
+      if (requestFilter === "new") return r.status === "new";
+      return requestFilter === "all" || r.kind === requestFilter;
+    })
+    .filter(
+      (r) =>
+        !query ||
+        r.id.toLowerCase().includes(query) ||
+        r.data.customer.name.toLowerCase().includes(query),
+    );
   return (
     <div className="admin-app">
       <aside className="admin-sidebar">
@@ -406,24 +435,20 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
           QADAM<span>FLEX / STORE</span>
         </Link>
         <p className="eyebrow">WORKSPACE</p>
-        <nav>
-          {[
-            ["overview", "Overview", LayoutGrid],
-            ["products", "Collection", Package],
-            ["requests", "Orders & enquiries", ShoppingBag],
-            ["reviews", "Customer reviews", MessageSquare],
-            ["settings", "Store settings", Settings2],
-          ].map(([id, label, Icon]) => (
+        <nav aria-label="Store workspace">
+          {workspaceTabs.map(([id, label, Icon]) => (
             <button
-              key={String(id)}
+              key={id}
               onClick={() => {
-                setTab(String(id));
+                setTab(id);
                 setError("");
+                window.scrollTo(0, 0);
               }}
               className={tab === id ? "active" : ""}
+              aria-current={tab === id ? "page" : undefined}
             >
-              <Icon size={18} />
-              {String(label)}
+              <Icon size={18} aria-hidden="true" />
+              {label}
             </button>
           ))}
         </nav>
@@ -452,10 +477,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
           </div>
         )}
         <header className="admin-topbar">
-          <span>
-            QADAM FLEX /{" "}
-            {tab === "requests" ? "ORDERS & ENQUIRIES" : tab.toUpperCase()}
-          </span>
+          <span>{workspaceTabs.find(([id]) => id === tab)?.[1]}</span>
           <span className="admin-user">
             {preview ? "PREVIEW" : "ADMIN"} <span className="user-dot">A</span>
           </span>
@@ -684,34 +706,43 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                     <div>
                       <p className="eyebrow">CUSTOMER CONVERSATIONS</p>
                       <h1>Orders & enquiries.</h1>
+                      <p className="muted">
+                        Find an order, review payment, or prepare a delivery.
+                      </p>
                     </div>
+                  </div>
+                  <div className="admin-request-tools">
+                    <label className="admin-request-search">
+                      <Search size={17} aria-hidden="true" />
+                      <input
+                        type="search"
+                        aria-label="Search orders and enquiries"
+                        placeholder="Search by reference or customer name"
+                        value={requestSearch}
+                        onChange={(e) => setRequestSearch(e.target.value)}
+                      />
+                    </label>
                     <select
                       aria-label="Filter requests"
                       value={requestFilter}
                       onChange={(e) => setRequestFilter(e.target.value)}
                     >
                       <option value="all">All requests</option>
-                      <option value="inquiry">Enquiries</option>
                       <option value="order">Orders</option>
+                      <option value="inquiry">Enquiries</option>
                       <option value="new">New enquiries</option>
                       <option value="receipts">Receipts to review</option>
                       <option value="archived">Archived requests</option>
                     </select>
+                    <span className="muted" role="status">
+                      {matchingRequests.length}{" "}
+                      {matchingRequests.length === 1 ? "result" : "results"}
+                    </span>
                   </div>
                   <RequestTable
-                    requests={data.requests.filter((r) =>
-                      requestFilter === "archived"
-                        ? Boolean(r.data.archivedAt)
-                        : r.data.archivedAt
-                          ? false
-                          : requestFilter === "receipts"
-                            ? r.data.payment?.status === "under_review" &&
-                              r.status !== "cancelled"
-                            : requestFilter === "all" || requestFilter === "new"
-                              ? requestFilter === "all" || r.status === "new"
-                              : r.kind === requestFilter,
-                    )}
+                    requests={matchingRequests}
                     onSelect={setRequest}
+                    filtered={Boolean(query) || requestFilter !== "all"}
                   />
                 </>
               )}
@@ -1634,6 +1665,12 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
               </select>
               <ChevronDown size={13} />
             </div>
+            {!preview &&
+              request.kind === "order" &&
+              request.status !== "cancelled" &&
+              !request.data.archivedAt && (
+                <OrderInsert key={`insert-${request.id}`} order={request} />
+              )}
             <div className="request-customer">
               <h3>{request.data.customer.name}</h3>
               <a href={`tel:${request.data.customer.phone}`}>
@@ -1647,12 +1684,6 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 </div>
               )}
             </div>
-            {!preview &&
-              request.kind === "order" &&
-              request.status !== "cancelled" &&
-              !request.data.archivedAt && (
-                <OrderInsert key={request.id} order={request} />
-              )}
             {!request.data.archivedAt && (
               <AdminPayment
                 key={request.id}
@@ -1733,54 +1764,79 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
 function RequestTable({
   requests,
   onSelect,
+  filtered = false,
 }: {
   requests: StoreRequest[];
   onSelect: (r: StoreRequest) => void;
+  filtered?: boolean;
 }) {
   return requests.length ? (
     <div className="admin-table-wrap">
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>Reference</th>
-            <th>Customer</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Payment</th>
-            <th>Received</th>
-            <th />
+      <table
+        className="admin-table admin-request-table"
+        role="table"
+        aria-label="Orders and enquiries"
+      >
+        <thead role="rowgroup">
+          <tr role="row">
+            <th scope="col" role="columnheader">
+              Reference
+            </th>
+            <th scope="col" role="columnheader">
+              Customer
+            </th>
+            <th scope="col" role="columnheader">
+              Type
+            </th>
+            <th scope="col" role="columnheader">
+              Status
+            </th>
+            <th scope="col" role="columnheader">
+              Payment
+            </th>
+            <th scope="col" role="columnheader">
+              Received
+            </th>
+            <th scope="col" role="columnheader">
+              Details
+            </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           {requests.map((r) => (
-            <tr key={r.id}>
-              <td>
+            <tr key={r.id} role="row">
+              <td role="cell">
                 <button className="text-link" onClick={() => onSelect(r)}>
                   {r.id}
                 </button>
               </td>
-              <td>
+              <td role="cell">
                 <strong>{r.data.customer.name}</strong>
                 <span>{r.data.customer.city || r.data.customer.phone}</span>
               </td>
-              <td>{r.kind}</td>
-              <td>
+              <td role="cell" data-label="Type">
+                {r.kind}
+              </td>
+              <td role="cell" data-label="Status">
                 <span
                   className={`status-pill ${r.status === "new" ? "new-status" : ""}`}
                 >
                   {r.status}
                 </span>
               </td>
-              <td>
+              <td role="cell" data-label="Payment">
                 {r.data.payment ? paymentLabel(r.data.payment.status) : "—"}
               </td>
-              <td>{new Date(r.created).toLocaleDateString()}</td>
-              <td>
+              <td role="cell" data-label="Received">
+                {new Date(r.created).toLocaleDateString()}
+              </td>
+              <td role="cell">
                 <button
+                  className="admin-open-request"
                   aria-label={`Open request ${r.id}`}
                   onClick={() => onSelect(r)}
                 >
-                  <ArrowUpRight size={18} />
+                  Open <ArrowUpRight size={15} aria-hidden="true" />
                 </button>
               </td>
             </tr>
@@ -1791,8 +1847,12 @@ function RequestTable({
   ) : (
     <div className="admin-empty">
       <ShoppingBag size={28} />
-      <h3>No conversations yet.</h3>
-      <p>Customer enquiries and orders will appear here.</p>
+      <h3>{filtered ? "No matching requests." : "No conversations yet."}</h3>
+      <p>
+        {filtered
+          ? "Try a different search or filter."
+          : "Customer enquiries and orders will appear here."}
+      </p>
     </div>
   );
 }
