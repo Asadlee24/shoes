@@ -48,6 +48,29 @@
   margin-bottom: 22px;
 }
 
+.admin-app .admin-product-photo {
+  aspect-ratio: 1;
+  height: auto;
+  background: #eeedea;
+}
+
+.admin-app .admin-product-photo > img {
+  position: absolute;
+  inset: 0;
+  object-fit: contain;
+  mix-blend-mode: normal;
+}
+
+.admin-app .admin-product-photo > .collection-studio-photo {
+  object-fit: cover;
+}
+
+.admin-app
+  .admin-product-photo
+  > img[src$="/evening-bit-gallery-1-studio-v3.webp"] {
+  object-position: 50% 65%;
+}
+
 .admin-page-heading .eyebrow,
 .admin-stat > span,
 .admin-table th,

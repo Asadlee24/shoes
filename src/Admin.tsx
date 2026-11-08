@@ -42,6 +42,35 @@ const workspaceTabs = [
   ["settings", "Store settings", Settings2],
 ] as const;
 
+const collectionPairPhotos: Record<string, string> = {
+  "/products/hero-textured.webp":
+    "/products/textured-bit-gallery-5-studio-v3.webp",
+  "/products/evening-cover-studio-v1.webp":
+    "/products/evening-bit-gallery-1-studio-v3.webp",
+  "/products/midnight-cover-studio-v1.webp":
+    "/products/midnight-penny-gallery-1-studio-v3.webp",
+  "/products/coffee-cover-studio-v1.webp":
+    "/products/brown-textured-gallery-1-studio-v3.webp",
+  "/products/black-suede-cover-studio-v1.webp":
+    "/products/black-loafer-gallery-1-v2.webp",
+  "/products/chocolate-cover-studio-v1.webp":
+    "/products/brown-loafer-gallery-1-v2.webp",
+  "/products/glossy-cover-studio-v1.webp":
+    "/products/glossy-loafer-gallery-1-v2.webp",
+  "/products/mocha-cover-studio-v1.webp":
+    "/products/metro-court-mocha-gallery-3-studio-v3.webp",
+  "/products/regent-cover-studio-v1.webp":
+    "/products/regent-bit-black-2026-gallery-1-studio-v3.webp",
+};
+
+const squareCollectionCovers = new Set([
+  "/products/olive-loafer-studio-v1.webp",
+  "/products/metro-court-onyx-gallery-1-studio-v3.webp",
+  "/products/classic-chelsea-black-1.webp",
+  "/products/classic-chelsea-brown-1.webp",
+  "/products/olive-gum-penny-1.webp",
+]);
+
 type Dashboard = {
   products: Product[];
   settings: Settings;
@@ -645,15 +674,7 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                       .map((p) => (
                         <article key={p.id}>
                           <div className="admin-product-photo">
-                            {p.image ? (
-                              <img
-                                src={optimizedImage(p.image)}
-                                alt={p.subtitle}
-                                style={{ objectPosition: p.imagePosition }}
-                              />
-                            ) : (
-                              <ImagePlus size={28} />
-                            )}
+                            <CollectionPhoto product={p} />
                             <span
                               className={`status-pill ${p.published ? "published" : ""}`}
                             >
@@ -1761,6 +1782,25 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
     </div>
   );
 }
+function CollectionPhoto({ product }: { product: Product }) {
+  if (!product.image) return <ImagePlus size={28} aria-hidden="true" />;
+  const cover = optimizedImage(product.image);
+  const pair = collectionPairPhotos[cover];
+  const photo = pair && product.images.includes(pair) ? pair : cover;
+  return (
+    <img
+      className={
+        photo !== cover || squareCollectionCovers.has(cover)
+          ? "collection-studio-photo"
+          : undefined
+      }
+      src={photo}
+      alt={product.name}
+      loading="lazy"
+    />
+  );
+}
+
 function RequestTable({
   requests,
   onSelect,
