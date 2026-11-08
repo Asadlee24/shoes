@@ -1,0 +1,85 @@
+.qf-insert-section {
+  display: grid;
+  gap: 12px;
+  margin-block: 22px;
+}
+
+.qf-insert-section summary {
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.qf-insert-section summary span {
+  margin-inline-start: 8px;
+  font-size: 0.75em;
+  font-weight: 400;
+}
+
+.qf-insert-section > button {
+  justify-self: start;
+}
+
+.qf-insert {
+  box-sizing: border-box;
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 275px;
+  padding: clamp(18px, 5%, 38px);
+  border: 1px solid #7b939e;
+  border-top: 4px solid #286481;
+  border-radius: 3px;
+  background: #fff;
+  color: #102f40;
+  font:
+    15px/1.45 system-ui,
+    sans-serif;
+}
+
+.qf-insert header,
+.qf-insert footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font:
+    700 9px/1.5 system-ui,
+    sans-serif;
+  letter-spacing: 0.12em;
+}
+
+.qf-insert header img {
+  display: block;
+  width: 84px;
+  height: 66px;
+  object-fit: contain;
+}
+
+.qf-insert header p {
+  margin: 0;
+  text-align: right;
+}
+
+.qf-insert h3 {
+  margin: 0;
+  color: #102f40;
+  font:
+    500 clamp(32px, 7vw, 48px)/0.97 Georgia,
+    serif;
+  letter-spacing: -0.055em;
+}
+
+.qf-insert-message {
+  max-width: 34ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.qf-insert footer {
+  flex-wrap: wrap;
+  border-top: 1px solid #7b939e;
+  padding-top: 9px;
+  overflow-wrap: anywhere;
+}

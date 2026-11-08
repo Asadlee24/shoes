@@ -30,6 +30,7 @@ import {
   optimizedImage,
 } from "../shared/catalogue.mjs";
 import { prepareProductPhoto } from "./upload-photo";
+import OrderInsert from "./OrderInsert";
 
 type Dashboard = {
   products: Product[];
@@ -1646,6 +1647,12 @@ export default function Admin({ preview = false }: { preview?: boolean }) {
                 </div>
               )}
             </div>
+            {!preview &&
+              request.kind === "order" &&
+              request.status !== "cancelled" &&
+              !request.data.archivedAt && (
+                <OrderInsert key={request.id} order={request} />
+              )}
             {!request.data.archivedAt && (
               <AdminPayment
                 key={request.id}
