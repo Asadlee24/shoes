@@ -16,6 +16,11 @@ import Showroom from "./Showroom";
 import { money } from "./api";
 import { catalogueStyles } from "../shared/catalogue.mjs";
 gsap.registerPlugin(ScrollTrigger);
+const newArrivalIds = new Set([
+  "chelsea-black",
+  "chelsea-brown",
+  "olive-gum-penny",
+]);
 const focusPairs = [
   {
     id: "textured-bit",
@@ -63,6 +68,12 @@ export default function Home() {
   // The hero is a four-pair showcase, independent of catalogue availability.
   const pair = focusPairs[focus] || focusPairs[0];
   const product = products.find((p) => p.id === pair.id);
+  const collection = [
+    ...products.filter((p) => newArrivalIds.has(p.id)),
+    ...products.filter(
+      (p) => p.featured && !p.variantOf && !newArrivalIds.has(p.id),
+    ),
+  ];
   useEffect(() => {
     if (!root.current || matchMedia("(prefers-reduced-motion: reduce)").matches)
       return;
@@ -228,11 +239,9 @@ export default function Home() {
           </Link>
         </div>
         <div className="product-grid">
-          {products
-            .filter((p) => p.featured && !p.variantOf)
-            .map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
+          {collection.map((p, i) => (
+            <ProductCard key={p.id} product={p} index={i} />
+          ))}
         </div>
       </section>
       <section className="mono-closeup">
