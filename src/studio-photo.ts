@@ -15,14 +15,14 @@ const photos = {
   olive: {
     width: 1536,
     height: 1024,
-    angle: -18,
-    bounds: [-725.57, -280.872, 814.672, 347.278],
+    angle: -10,
+    bounds: [-724, -291, 791, 362],
   },
   chocolate: {
     width: 1536,
     height: 1024,
-    angle: -12,
-    bounds: [-724.862, -262.667, 784.671, 339.109],
+    angle: -5,
+    bounds: [-724, -270, 767, 354],
   },
 };
 export function studioPhoto(image: string) {
