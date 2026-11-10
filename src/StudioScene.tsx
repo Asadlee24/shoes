@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import type { RefObject } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import {
@@ -11,7 +11,14 @@ import {
 } from "three";
 import type { Group } from "three";
 import { studioPose } from "./studio-motion";
-import { studioPhoto, studioPhotoHeight, studioZoom } from "./studio-photo";
+import {
+  studioCamera,
+  studioPhoto,
+  studioPhotoHeight,
+  studioPlinth,
+  studioShoeDepth,
+  studioZoom,
+} from "./studio-photo";
 import type { StudioPosition } from "./studio-motion";
 
 type Props = {
@@ -23,7 +30,7 @@ type Props = {
 function DisplayWorld({ image, dark, onReady, motion }: Props) {
   const texture = useLoader(TextureLoader, image);
   const { camera, size, invalidate } = useThree();
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (camera instanceof OrthographicCamera) {
       camera.zoom = studioZoom(size.width, size.height);
       camera.updateProjectionMatrix();
@@ -31,7 +38,9 @@ function DisplayWorld({ image, dark, onReady, motion }: Props) {
     }
   }, [camera, size.width, size.height, invalidate]);
   const shoe = useRef<Group>(null);
+  const hasDrawn = useRef(false);
   const layout = studioPhoto(image);
+  const { topRadius, bottomRadius, height, rimHeight } = studioPlinth;
   const depth = useMemo(
     () =>
       new MeshDepthMaterial({
@@ -42,19 +51,22 @@ function DisplayWorld({ image, dark, onReady, motion }: Props) {
       }),
     [texture],
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     texture.colorSpace = SRGBColorSpace;
     texture.needsUpdate = true;
-    onReady();
-  }, [texture, onReady]);
+  }, [texture]);
   useEffect(() => () => depth.dispose(), [depth]);
   useFrame(({ camera }) => {
     if (!shoe.current) return;
     const pose = studioPose(motion.current);
     shoe.current.rotation.set(pose.pitch, pose.yaw, pose.roll);
-    shoe.current.position.set(0, studioPhotoHeight(layout, pose), 0.3);
+    shoe.current.position.set(
+      0,
+      studioPhotoHeight(layout, pose),
+      studioShoeDepth,
+    );
     camera.position.x = Math.sin(pose.yaw) * 0.12;
-    camera.lookAt(0, 0.95, 0);
+    camera.lookAt(0, studioCamera.targetY, 0);
   });
   return (
     <>
@@ -72,15 +84,15 @@ function DisplayWorld({ image, dark, onReady, motion }: Props) {
         shadow-bias={-0.0002}
         shadow-normalBias={0.025}
       />
-      <mesh position={[0, -0.11, 0]} receiveShadow>
-        <cylinderGeometry args={[2.8, 2.83, 0.22, 96]} />
+      <mesh position={[0, -height / 2, 0]} receiveShadow>
+        <cylinderGeometry args={[topRadius, bottomRadius, height, 96]} />
         <meshStandardMaterial
           color={dark ? "#292929" : "#dededb"}
           roughness={0.75}
         />
       </mesh>
-      <mesh position={[0, -0.235, 0]}>
-        <cylinderGeometry args={[2.83, 2.83, 0.03, 96]} />
+      <mesh position={[0, -height - rimHeight / 2, 0]}>
+        <cylinderGeometry args={[bottomRadius, bottomRadius, rimHeight, 96]} />
         <meshStandardMaterial
           color={dark ? "#454545" : "#b9b9b6"}
           metalness={0.65}
@@ -93,6 +105,11 @@ function DisplayWorld({ image, dark, onReady, motion }: Props) {
             rotation={[0, 0, (-layout.angle * Math.PI) / 180]}
             castShadow
             customDepthMaterial={depth}
+            onAfterRender={() => {
+              if (hasDrawn.current) return;
+              hasDrawn.current = true;
+              onReady();
+            }}
           >
             <planeGeometry args={[layout.planeWidth, layout.planeHeight]} />
             <meshBasicMaterial
@@ -123,14 +140,19 @@ export default function StudioScene({
     <Canvas
       className="showroom-canvas"
       orthographic
-      camera={{ position: [0, 3.2, 10.3], zoom: 50, near: 0.1, far: 250 }}
+      camera={{
+        position: [0, studioCamera.y, studioCamera.z],
+        zoom: 50,
+        near: 0.1,
+        far: 250,
+      }}
       dpr={[1, 1.5]}
       shadows
       frameloop="demand"
       style={{ pointerEvents: "none" }}
       gl={{ alpha: true, antialias: true, powerPreference: "default" }}
       onCreated={({ camera, gl, invalidate }) => {
-        camera.lookAt(0, 0.95, 0);
+        camera.lookAt(0, studioCamera.targetY, 0);
         gl.setClearAlpha(0);
         onInvalidate(invalidate);
         gl.domElement.addEventListener(

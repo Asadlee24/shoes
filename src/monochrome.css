@@ -292,61 +292,47 @@ a:focus-visible {
 .showroom-canvas {
   position: absolute !important;
   inset: 0;
-  opacity: 0;
-  transition: opacity 0.65s ease;
+  visibility: hidden;
   pointer-events: none !important;
 }
 .scene-ready .showroom-canvas {
-  opacity: 1;
+  visibility: visible;
 }
 .showroom-fallback {
   position: absolute;
   inset: 0;
-  opacity: 1;
-  transition: opacity 0.65s ease;
   pointer-events: none;
   perspective: 1000px;
 }
 .scene-ready .showroom-fallback {
-  opacity: 0;
+  visibility: hidden;
 }
-.showroom-fallback > img {
-  position: absolute;
-  width: 76%;
-  height: 80%;
-  top: 5%;
-  left: 12%;
-  object-fit: contain;
-  filter: drop-shadow(0 25px 13px #0002);
-}
-.showroom-fallback > img.black-cutout {
-  transform: rotate(25deg);
-}
-.showroom-fallback > img.brown-cutout {
-  transform: rotate(-7deg);
-  width: 93%;
-  left: 3%;
-  top: 4%;
-  height: 85%;
+.fallback-plinth,
+.showroom-object > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .fallback-plinth {
   position: absolute;
-  bottom: 19%;
-  left: 13%;
-  width: 76%;
-  height: 19%;
-  border-radius: 50%;
-  background: linear-gradient(#ebebe8, #d8d8d5);
-  box-shadow:
-    0 8px 0 #c8c8c5,
-    0 30px 30px #0001;
-  transform: perspective(700px) rotateX(38deg);
+  inset: 0;
+  --plinth-top: #e2e2e0;
+  --plinth-side: #d6d6d4;
+  --plinth-rim: #8f8f8b;
+}
+.fallback-plinth > ellipse:first-child {
+  fill: var(--plinth-rim);
+}
+.fallback-plinth > path {
+  fill: var(--plinth-side);
+}
+.fallback-plinth > ellipse:last-child {
+  fill: var(--plinth-top);
 }
 [data-theme="dark"] .fallback-plinth {
-  background: linear-gradient(#242424, #181818);
-  box-shadow:
-    0 8px 0 #363636,
-    0 30px 30px #0005;
+  --plinth-top: #303030;
+  --plinth-side: #262626;
+  --plinth-rim: #555;
 }
 .stage-axis {
   position: absolute;
@@ -1389,24 +1375,6 @@ a:focus-visible {
     right: 5%;
     bottom: 111px;
   }
-  .showroom-fallback > img {
-    width: 70%;
-    left: 15%;
-    height: 77%;
-    top: 0;
-  }
-  .showroom-fallback > img.brown-cutout {
-    width: 90%;
-    left: 5%;
-    height: 90%;
-    top: -5%;
-  }
-  .fallback-plinth {
-    left: 15%;
-    width: 70%;
-    height: 16%;
-    bottom: 23%;
-  }
   .mono-hero-bottom {
     font-size: 6px;
     padding: 18px 0;
@@ -1748,24 +1716,6 @@ a:focus-visible {
     width: 25px;
     height: 25px;
   }
-  .showroom-fallback > img {
-    top: 4%;
-    height: 74%;
-    width: 82%;
-    left: 9%;
-  }
-  .showroom-fallback > img.brown-cutout {
-    top: 4%;
-    height: 74%;
-    width: 100%;
-    left: 0;
-  }
-  .fallback-plinth {
-    bottom: 24%;
-    left: 10%;
-    width: 80%;
-    height: 16%;
-  }
   .mono-hero-bottom {
     padding: 17px 0;
     font-size: 5px;
@@ -1996,8 +1946,6 @@ a:focus-visible {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .showroom-fallback,
-  .showroom-canvas,
   .mono-button,
   .mono-scroll,
   .theme-toggle svg {
@@ -2148,26 +2096,6 @@ a:focus-visible {
   inset: 0;
   transform-style: preserve-3d;
   will-change: transform;
-}
-.showroom-object > img {
-  position: absolute;
-  width: 76%;
-  height: 80%;
-  top: 5%;
-  left: 12%;
-  object-fit: contain;
-  filter: drop-shadow(0 25px 13px #0002);
-  pointer-events: none;
-}
-.showroom-object > img.black-cutout {
-  transform: rotate(25deg);
-}
-.showroom-object > img.brown-cutout {
-  transform: rotate(-7deg);
-  width: 93%;
-  left: 3%;
-  top: 4%;
-  height: 85%;
 }
 .showroom-help {
   position: absolute;

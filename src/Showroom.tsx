@@ -16,8 +16,25 @@ import {
   studioPose,
 } from "./studio-motion";
 import type { StudioMotion, StudioPosition } from "./studio-motion";
-import { studioPhoto } from "./studio-photo";
+import {
+  studioDepthScale,
+  studioFrame,
+  studioPhoto,
+  studioPhotoHeight,
+  studioPlinth,
+  studioScreenY,
+  studioShoeDepth,
+  studioVerticalScale,
+} from "./studio-photo";
 const StudioScene = lazy(() => import("./StudioScene"));
+const frameViewBox = `${-studioFrame.width / 2} ${-studioFrame.height / 2} ${studioFrame.width} ${studioFrame.height}`;
+const restingPose = studioPose({ x: 0, y: 0 });
+const { topRadius, bottomRadius, height, rimHeight } = studioPlinth;
+const topY = studioScreenY(0);
+const baseY = studioScreenY(-height);
+const rimY = studioScreenY(-height - rimHeight);
+const topDepth = topRadius * studioDepthScale;
+const baseDepth = bottomRadius * studioDepthScale;
 class SceneBoundary extends Component<
   { children: ReactNode; onError: () => void },
   { failed: boolean }
@@ -52,6 +69,10 @@ export default function Showroom({
     [supported, setSupported] = useState(false);
   const help = useId();
   const layout = studioPhoto(image);
+  const shoeTop = studioScreenY(
+    studioPhotoHeight(layout, restingPose) + layout.halfHeight,
+    studioShoeDepth,
+  );
   const onReady = useCallback(() => setReady(true), []);
   const onFailure = useCallback(() => {
     setReady(false);
@@ -212,21 +233,35 @@ export default function Showroom({
         the display. Arrow keys rotate it. Home resets it.
       </span>
       <div className="showroom-fallback" aria-hidden="true">
-        <span className="fallback-plinth" />
+        <svg className="fallback-plinth" viewBox={frameViewBox}>
+          <ellipse cy={rimY} rx={bottomRadius} ry={baseDepth} />
+          <path
+            d={`M ${-topRadius} ${topY} L ${-bottomRadius} ${baseY}
+              A ${bottomRadius} ${baseDepth} 0 0 0 ${bottomRadius} ${baseY}
+              L ${topRadius} ${topY} Z`}
+          />
+          <ellipse cy={topY} rx={topRadius} ry={topDepth} />
+        </svg>
         <div className="showroom-object" ref={photo}>
-          <svg
-            viewBox={`${layout.bounds[0]} ${layout.bounds[1]} ${layout.cropWidth} ${layout.cropHeight}`}
-            width={layout.cropWidth}
-            height={layout.cropHeight}
-          >
-            <image
-              href={image}
-              x={-layout.width / 2}
-              y={-layout.height / 2}
-              width={layout.width}
-              height={layout.height}
-              transform={`rotate(${layout.angle})`}
-            />
+          <svg viewBox={frameViewBox}>
+            <svg
+              x={-layout.halfWidth}
+              y={shoeTop}
+              width={2 * layout.halfWidth}
+              height={2 * layout.halfHeight * studioVerticalScale}
+              viewBox={`${layout.bounds[0]} ${layout.bounds[1]} ${layout.cropWidth} ${layout.cropHeight}`}
+              preserveAspectRatio="none"
+              overflow="visible"
+            >
+              <image
+                href={image}
+                x={-layout.width / 2}
+                y={-layout.height / 2}
+                width={layout.width}
+                height={layout.height}
+                transform={`rotate(${layout.angle})`}
+              />
+            </svg>
           </svg>
         </div>
       </div>

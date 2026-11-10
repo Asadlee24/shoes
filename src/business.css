@@ -316,22 +316,6 @@
 .gallery-thumbnails img[src="/products/hero-textured.webp"] {
   object-fit: contain;
 }
-.showroom-object > svg {
-  position: absolute;
-  left: 9%;
-  bottom: 31%;
-  width: 82%;
-  height: auto;
-  overflow: visible;
-  filter: drop-shadow(0 22px 12px #0002);
-  pointer-events: none;
-}
-.showroom-fallback .fallback-plinth {
-  bottom: 12%;
-  height: 15%;
-  left: 14%;
-  width: 72%;
-}
 .mono-stage {
   overflow: hidden;
 }

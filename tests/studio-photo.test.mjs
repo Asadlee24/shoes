@@ -2,8 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Euler, Vector3, OrthographicCamera } from "three";
 import {
+  studioCamera,
+  studioDepthScale,
   studioPhoto,
   studioPhotoHeight,
+  studioPlinth,
+  studioScreenY,
+  studioShoeDepth,
+  studioVerticalScale,
   studioZoom,
 } from "../src/studio-photo.ts";
 import { studioPose } from "../src/studio-motion.ts";
@@ -13,6 +19,45 @@ const approvedPhotos = [
   "/products/hero-olive-v1.webp",
   "/products/hero-chocolate-v1.webp",
 ];
+
+test("the loading preview matches the rendered shoe and plinth at rest", () => {
+  const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 250);
+  camera.position.set(0, studioCamera.y, studioCamera.z);
+  camera.lookAt(0, studioCamera.targetY, 0);
+  camera.updateMatrixWorld(true);
+  const assertProjection = (world, previewX, previewY) => {
+    const projected = world.project(camera);
+    assert.ok(Math.abs(projected.x - previewX) < 1e-9);
+    assert.ok(Math.abs(-projected.y - previewY) < 1e-9);
+  };
+  for (const image of approvedPhotos) {
+    const photo = studioPhoto(image);
+    const y = studioPhotoHeight(photo, studioPose({ x: 0, y: 0 }));
+    const previewTop = studioScreenY(y + photo.halfHeight, studioShoeDepth);
+    assertProjection(
+      new Vector3(-photo.halfWidth, y + photo.halfHeight, studioShoeDepth),
+      -photo.halfWidth,
+      previewTop,
+    );
+    assertProjection(
+      new Vector3(photo.halfWidth, y - photo.halfHeight, studioShoeDepth),
+      photo.halfWidth,
+      previewTop + 2 * photo.halfHeight * studioVerticalScale,
+    );
+  }
+  const { topRadius, bottomRadius, height, rimHeight } = studioPlinth;
+  for (const [y, radius] of [
+    [0, topRadius],
+    [-height - rimHeight, bottomRadius],
+  ]) {
+    assertProjection(new Vector3(radius, y, 0), radius, studioScreenY(y));
+    assertProjection(
+      new Vector3(0, y, radius),
+      0,
+      studioScreenY(y) + radius * studioDepthScale,
+    );
+  }
+});
 
 test("approved photo crops have equal visible width and clear the platform at every full-turn angle", () => {
   for (const image of approvedPhotos) {

@@ -91,12 +91,6 @@ export default function Home() {
           { y: 18, opacity: 0 },
           { y: 0, opacity: 1, duration: 0.85, stagger: 0.1 },
           0.35,
-        )
-        .fromTo(
-          ".mono-stage",
-          { opacity: 0, y: 35 },
-          { opacity: 1, y: 0, duration: 1.15 },
-          0.15,
         );
       gsap.utils.toArray<HTMLElement>(".mono-reveal").forEach((el) =>
         gsap.fromTo(

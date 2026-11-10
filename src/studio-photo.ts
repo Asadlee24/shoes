@@ -25,6 +25,27 @@ const photos = {
     bounds: [-724, -270, 767, 354],
   },
 };
+export const studioFrame = { width: 7, height: 4.8 };
+export const studioCamera = { y: 3.2, z: 10.3, targetY: 0.95 };
+export const studioPlinth = {
+  topRadius: 2.8,
+  bottomRadius: 2.83,
+  height: 0.22,
+  rimHeight: 0.03,
+};
+export const studioShoeDepth = 0.3;
+const cameraRise = studioCamera.y - studioCamera.targetY;
+const cameraDistance = Math.hypot(cameraRise, studioCamera.z);
+export const studioVerticalScale = studioCamera.z / cameraDistance;
+export const studioDepthScale = cameraRise / cameraDistance;
+
+// Project onto the same centered frame as the resting orthographic camera.
+export function studioScreenY(y: number, z = 0) {
+  return (
+    (studioCamera.targetY - y) * studioVerticalScale + z * studioDepthScale
+  );
+}
+
 export function studioPhoto(image: string) {
   const photo = image.includes("hero-olive")
     ? photos.olive
@@ -69,5 +90,8 @@ export function studioPhotoHeight(
 
 // Fit the whole shoe and plinth with a margin on narrow and wide displays.
 export function studioZoom(width: number, height: number) {
-  return Math.min(Math.max(width, 1) / 7, Math.max(height, 1) / 4.8);
+  return Math.min(
+    Math.max(width, 1) / studioFrame.width,
+    Math.max(height, 1) / studioFrame.height,
+  );
 }
