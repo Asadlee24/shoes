@@ -1,5 +1,5 @@
 :root {
-  font-family: "DM Sans", sans-serif;
+  font-family: "DM Sans Variable", sans-serif;
   color: #252525;
   background: #f7f7f7;
   font-synthesis: none;
@@ -63,7 +63,7 @@ p {
 h1,
 h2,
 h3 {
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   font-weight: 500;
   letter-spacing: -0.055em;
 }
@@ -96,7 +96,7 @@ select:focus {
   line-height: 1.65;
 }
 .eyebrow {
-  font-family: "DM Sans", sans-serif;
+  font-family: "DM Sans Variable", sans-serif;
   letter-spacing: 0.12em;
   font-size: 10px;
   font-weight: 550;
@@ -271,7 +271,7 @@ select:focus {
   transform: scale(1.1);
 }
 .brand-name {
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   font-size: 20px;
   letter-spacing: 0.035em;
   font-weight: 800;
@@ -279,7 +279,7 @@ select:focus {
 }
 .brand-name > span {
   display: block;
-  font-family: "DM Sans", sans-serif;
+  font-family: "DM Sans Variable", sans-serif;
   font-size: 8px;
   color: #7e7e7e;
   letter-spacing: 0.38em;
@@ -330,7 +330,7 @@ select:focus {
 }
 .count {
   font-size: 10px;
-  font-family: "DM Sans", sans-serif;
+  font-family: "DM Sans Variable", sans-serif;
 }
 .wish-nav .count {
   position: absolute;
@@ -464,7 +464,7 @@ select:focus {
   border-color: #9e9e9e1a;
 }
 .scene-number {
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   position: absolute;
   right: 9%;
   top: 3%;
@@ -523,7 +523,7 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 20px;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   font-size: 15px;
   margin-top: 7px;
   letter-spacing: -0.02em;
@@ -943,7 +943,7 @@ select:focus {
   color: #ffffff;
 }
 .footer-wordmark {
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   font-size: clamp(100px, 20.3vw, 350px);
   letter-spacing: -0.08em;
   font-weight: 600;
@@ -1033,7 +1033,7 @@ select:focus {
   padding-top: 25px;
 }
 .small-count {
-  font-family: "DM Sans", sans-serif;
+  font-family: "DM Sans Variable", sans-serif;
   font-size: 12px;
   padding-left: 8px;
   letter-spacing: 0;
@@ -1284,7 +1284,7 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 25px;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   font-size: 29px;
   letter-spacing: -0.04em;
   margin: 35px 0 auto;
@@ -2064,7 +2064,7 @@ select:focus {
   padding: 36px 20px;
 }
 .admin-logo {
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   font-size: 27px;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -2073,7 +2073,7 @@ select:focus {
 }
 .admin-logo span {
   display: block;
-  font-family: "DM Sans", sans-serif;
+  font-family: "DM Sans Variable", sans-serif;
   font-size: 8px;
   letter-spacing: 0.23em;
   margin-top: 8px;
@@ -2198,7 +2198,7 @@ select:focus {
 }
 .admin-stat > strong {
   font-size: 37px;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   font-weight: 500;
 }
 .setup-banner {
