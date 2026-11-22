@@ -4,17 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f4f4f2" />
-    <script>
-      try {
-        const t = localStorage.getItem("qf-theme");
-        document.documentElement.dataset.theme =
-          t === "dark" ? "dark" : "light";
-        document.documentElement.style.colorScheme =
-          t === "dark" ? "dark" : "light";
-      } catch {
-        document.documentElement.dataset.theme = "light";
-      }
-    </script>
+    <script src="/theme-init.js"></script>
     <meta
       name="description"
       content="Shop Qadam Flex men’s loafers and formal shoes in Pakistan. Browse stylish footwear, available sizes and prices in PKR at the official Qadam Flex online shoe store."
