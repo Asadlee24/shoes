@@ -1,0 +1,28 @@
+# Owner-authorized, unauthenticated ZAP baseline scan.
+# Scans the public storefront/login pages only; no active exploitation.
+name: ZAP Baseline - qadam-flex
+on:
+  push:
+    branches:
+      - security/zap-baseline-2026-11
+    paths:
+      - .github/workflows/zap-baseline.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  baseline:
+    name: Passive security baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: 'https://www.qadamflex.bond/'
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: 'zap-report-qadam-flex'
+          cmd_options: '-m 1 -I'
