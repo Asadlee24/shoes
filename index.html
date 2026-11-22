@@ -4,17 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f4f4f2" />
-    <script>
-      try {
-        const t = localStorage.getItem("qf-theme");
-        document.documentElement.dataset.theme =
-          t === "dark" ? "dark" : "light";
-        document.documentElement.style.colorScheme =
-          t === "dark" ? "dark" : "light";
-      } catch {
-        document.documentElement.dataset.theme = "light";
-      }
-    </script>
+    <script src="/theme-init.js"></script>
     <meta
       name="description"
       content="Shop Qadam Flex men’s loafers and formal shoes in Pakistan. Browse stylish footwear, available sizes and prices in PKR at the official Qadam Flex online shoe store."
@@ -46,12 +36,6 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png"><link rel="shortcut icon" href="/favicon.ico"><link rel="apple-touch-icon" sizes="192x192" href="/favicon.png">
     <link rel="preload" as="image" href="/brand/logo-transparent.webp" />
     <link rel="preload" as="image" href="/products/hero-textured.webp" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
   </head>
   <body>
     <div id="root"></div>

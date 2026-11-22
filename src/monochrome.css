@@ -130,7 +130,7 @@ a:focus-visible {
   font-weight: 500;
   letter-spacing: 0.12em;
   line-height: 1.5;
-  font-family: "DM Sans", sans-serif;
+  font-family: "DM Sans Variable", sans-serif;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -187,7 +187,7 @@ a:focus-visible {
   position: relative;
   margin-left: -9px;
   max-width: 100%;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
 }
 .mono-title-line {
   display: block;
@@ -403,7 +403,7 @@ a:focus-visible {
   align-items: center;
   gap: 30px;
   margin-top: 5px;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   letter-spacing: -0.04em;
   font-weight: 600;
 }
@@ -487,7 +487,7 @@ a:focus-visible {
   will-change: transform;
   font-size: clamp(38px, 4.9vw, 78px);
   font-weight: 700;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   letter-spacing: -0.07em;
   line-height: 1;
 }
@@ -771,7 +771,7 @@ a:focus-visible {
   position: absolute;
   right: 4%;
   top: 9%;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope Variable", sans-serif;
   font-size: 250px;
   font-weight: 650;
   letter-spacing: -0.1em;
